@@ -151,16 +151,29 @@ export const healthHabitsSchema = z
   .partial()
   .default({});
 
-export const privacyPreferencesSchema = z.object({
-  profileVisibility: z.enum(PRIVACY_VISIBILITY).default("private"),
-  shareWithResearch: z.boolean().default(false),
-  shareWithCoaches: z.boolean().default(false),
-  emailNotifications: z.object({
-    insights: z.boolean().default(true),
-    reminders: z.boolean().default(true),
-    marketing: z.boolean().default(false)
+export const privacyPreferencesSchema = z
+  .object({
+    profileVisibility: z.enum(PRIVACY_VISIBILITY).optional(),
+    shareWithResearch: z.boolean().optional(),
+    shareWithCoaches: z.boolean().optional(),
+    emailNotifications: z
+      .object({
+        insights: z.boolean().optional(),
+        reminders: z.boolean().optional(),
+        marketing: z.boolean().optional()
+      })
+      .optional()
   })
-});
+  .transform((prefs) => ({
+    profileVisibility: prefs.profileVisibility ?? "private",
+    shareWithResearch: prefs.shareWithResearch ?? false,
+    shareWithCoaches: prefs.shareWithCoaches ?? false,
+    emailNotifications: {
+      insights: prefs.emailNotifications?.insights ?? true,
+      reminders: prefs.emailNotifications?.reminders ?? true,
+      marketing: prefs.emailNotifications?.marketing ?? false
+    }
+  }));
 
 export const consentSchema = z.object({
   consentType: z.enum(CONSENT_TYPES),
