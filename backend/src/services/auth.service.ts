@@ -45,6 +45,46 @@ const ensureMfa = (code: string | undefined, secret: string | undefined) => {
   return true;
 };
 
+const ensureUserBootstrap = async (
+  uid: string,
+  email: string,
+  emailVerified: boolean
+) => {
+  const existing = await getUserById(uid);
+  if (existing) {
+    return existing;
+  }
+
+  const defaultPrivacy = privacyPreferencesSchema.parse({});
+
+  await createUserDocument(uid, {
+    email,
+    emailVerified,
+    profileVersionId: null,
+    privacy: {
+      profileVisibility: defaultPrivacy.profileVisibility,
+      shareWithCoaches: defaultPrivacy.shareWithCoaches,
+      shareWithResearch: defaultPrivacy.shareWithResearch,
+      emailNotifications: defaultPrivacy.emailNotifications
+    },
+    mfa: {
+      enabled: false
+    }
+  });
+
+  await setConsents(uid, {
+    agreements: {},
+    sharingPreferences: {
+      shareWithCoaches: defaultPrivacy.shareWithCoaches,
+      shareWithResearch: defaultPrivacy.shareWithResearch
+    },
+    notifications: defaultPrivacy.emailNotifications,
+    auditTrail: []
+  });
+
+  return getUserById(uid);
+};
+
 export const registerUser = async ({ email, password, displayName }: RegisterInput) => {
   try {
     const auth = firebaseAuth();
@@ -113,7 +153,15 @@ export const loginWithEmailPassword = async (
       }
     );
 
-    const user = await getUserById(data.localId);
+    if (!data.emailVerified) {
+      throw forbidden("Email not verified. Please confirm your account before logging in.");
+    }
+
+    const user = await ensureUserBootstrap(
+      data.localId,
+      data.email ?? email,
+      Boolean(data.emailVerified)
+    );
     if (user?.mfa?.enabled) {
       ensureMfa(mfaCode, user.mfa.secret ?? undefined);
     }
@@ -158,13 +206,23 @@ export const loginWithOAuth = async (
       requestPayload
     );
 
-    const user = await getUserById(data.localId);
+    const emailVerified = Boolean(data.emailVerified ?? data.verifiedEmail ?? true);
+    if (!emailVerified) {
+      throw forbidden("Email not verified for this provider account.");
+    }
+
+    const bootstrapEmail = data.email ?? (await getUserById(data.localId))?.email ?? "";
+    if (!bootstrapEmail) {
+      throw internalError("Unable to resolve OAuth user email");
+    }
+
+    const user = await ensureUserBootstrap(data.localId, bootstrapEmail, emailVerified);
     if (user?.mfa?.enabled) {
       ensureMfa(mfaCode, user.mfa.secret ?? undefined);
     }
 
     await updateUserDocument(data.localId, {
-      emailVerified: Boolean(data.emailVerified ?? data.verifiedEmail ?? user?.emailVerified)
+      emailVerified
     });
 
     return {

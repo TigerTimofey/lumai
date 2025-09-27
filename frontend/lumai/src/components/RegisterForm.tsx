@@ -1,12 +1,13 @@
 import { useRegisterForm } from './useRegisterForm';
 
 const RegisterForm = () => {
-  const { formData, handleChange, handleSubmit, loading, error } = useRegisterForm();
+  const { formData, handleChange, handleSubmit, loading, error, success } = useRegisterForm();
 
   return (
     <form onSubmit={handleSubmit}>
       <h2>Register</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
+      {success && <p style={{ color: 'green' }}>{success}</p>}
       <div>
         <label htmlFor="email">Email:</label>
         <input

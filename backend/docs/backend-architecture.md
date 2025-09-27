@@ -67,6 +67,7 @@ backend/
 | `FIREBASE_SERVICE_ACCOUNT_KEY` | Base64-encoded service account JSON (Auth/Firestore) |
 | `WEB_API_KEY` | Firebase Web API key (used for Identity Toolkit sign-in/refresh) |
 | `ANONYMIZATION_SALT` | Secret salt for hashing user identifiers in processed AI payloads |
+| `FRONTEND_URL` | Public URL used as callback for Firebase OAuth flows (local dev: `http://localhost:5173`) |
 | `PORT` | Express HTTP port (defaults to 4000) |
 
 > ⚠️ Create a Firebase service account with roles: **Firebase Admin** and **Cloud Datastore User**. Cloud Storage permissions can be granted later when export functionality is re-enabled.

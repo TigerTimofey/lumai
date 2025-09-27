@@ -1,4 +1,11 @@
 import { useState } from 'react';
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  signOut,
+  updateProfile
+} from 'firebase/auth';
+import { auth } from '../config/firebase';
 
 interface RegisterFormData {
   email: string;
@@ -12,6 +19,7 @@ interface UseRegisterFormReturn {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   loading: boolean;
   error: string | null;
+  success: string | null;
 }
 
 export const useRegisterForm = (): UseRegisterFormReturn => {
@@ -22,6 +30,7 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -32,23 +41,30 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccess(null);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const credential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
+      if (formData.displayName) {
+        await updateProfile(credential.user, { displayName: formData.displayName });
       }
 
-      console.log('Registration successful:', data);
-      // TODO: Handle success, e.g., redirect to login or dashboard
+      await sendEmailVerification(credential.user);
+
+      const idToken = await credential.user.getIdToken();
+
+      console.group('CLIENT REGISTER SUCCESS');
+      console.log('User', credential.user);
+      console.log('ID token', idToken);
+      console.log('Refresh token', credential.user.refreshToken);
+      console.log('Email verification sent to', credential.user.email);
+      console.groupEnd();
+
+      setSuccess('Please verify your email before logging in');
+      setFormData({ email: '', password: '', displayName: '' });
+
+      await signOut(auth);
     } catch (err) {
       console.error('Registration error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -57,5 +73,5 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
     }
   };
 
-  return { formData, handleChange, handleSubmit, loading, error };
+  return { formData, handleChange, handleSubmit, loading, error, success };
 };

@@ -1,12 +1,21 @@
 import { useLoginForm } from './useLoginForm';
 
 const LoginForm = () => {
-  const { formData, handleChange, handleSubmit, handleGitHubLogin, loading, error } = useLoginForm();
+  const {
+    formData,
+    handleChange,
+    handleSubmit,
+    handleGitHubLogin,
+    loading,
+    error,
+    success,
+  } = useLoginForm();
 
   return (
     <form onSubmit={handleSubmit}>
       <h2>Login</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
+      {success && <p style={{ color: 'green' }}>{success}</p>}
       <div>
         <label htmlFor="email">Email:</label>
         <input

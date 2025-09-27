@@ -16,6 +16,7 @@ Backend service for the wellness platform. Provides Firebase Auth integration, h
    - `FIREBASE_SERVICE_ACCOUNT_KEY` (base64 encoded JSON)
    - `WEB_API_KEY`
    - `ANONYMIZATION_SALT`
+   - `FRONTEND_URL` (e.g. `http://localhost:5173` for local Vite dev server)
 2. Install dependencies:
    ```bash
    npm install

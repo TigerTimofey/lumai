@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { signInWithPopup, GithubAuthProvider } from 'firebase/auth';
+import {
+  GithubAuthProvider,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  sendEmailVerification
+} from 'firebase/auth';
 import { auth } from '../config/firebase';
 
 interface LoginFormData {
@@ -14,6 +20,7 @@ interface UseLoginFormReturn {
   handleGitHubLogin: () => Promise<void>;
   loading: boolean;
   error: string | null;
+  success: string | null;
 }
 
 export const useLoginForm = (): UseLoginFormReturn => {
@@ -23,6 +30,7 @@ export const useLoginForm = (): UseLoginFormReturn => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -33,8 +41,25 @@ export const useLoginForm = (): UseLoginFormReturn => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccess(null);
 
     try {
+      const credential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+
+      if (!credential.user.emailVerified) {
+        await sendEmailVerification(credential.user);
+        await signOut(auth);
+        throw new Error('Please verify your email before logging in. We have resent the verification email.');
+      }
+
+      const idToken = await credential.user.getIdToken();
+
+      console.group('CLIENT LOGIN SUCCESS');
+      console.log('User', credential.user);
+      console.log('ID token', idToken);
+      console.log('Refresh token', credential.user.refreshToken);
+      console.groupEnd();
+
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
@@ -48,8 +73,11 @@ export const useLoginForm = (): UseLoginFormReturn => {
         throw new Error(data.message || 'Login failed');
       }
 
-      console.log('Login successful:', data);
-      // TODO: Handle success, e.g., store token, redirect
+      console.group('BACKEND LOGIN SUCCESS');
+      console.log('Backend payload', data);
+      console.groupEnd();
+
+      setSuccess('Вход выполнен. Детали смотрите в консоли.');
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -61,6 +89,7 @@ export const useLoginForm = (): UseLoginFormReturn => {
   const handleGitHubLogin = async () => {
     setLoading(true);
     setError(null);
+    setSuccess(null);
 
     const provider = new GithubAuthProvider();
     try {
@@ -85,8 +114,11 @@ export const useLoginForm = (): UseLoginFormReturn => {
         throw new Error(data.message || 'OAuth login failed');
       }
 
-      console.log('Backend response:', data);
-      // TODO: Handle success
+      console.group('GITHUB LOGIN SUCCESS');
+      console.log('Firebase user', result.user);
+      console.log('Backend payload', data);
+      console.groupEnd();
+      setSuccess('Вход через GitHub выполнен. Логи отправлены в консоль.');
     } catch (err) {
       console.error('GitHub login error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -95,5 +127,5 @@ export const useLoginForm = (): UseLoginFormReturn => {
     }
   };
 
-  return { formData, handleChange, handleSubmit, handleGitHubLogin, loading, error };
+  return { formData, handleChange, handleSubmit, handleGitHubLogin, loading, error, success };
 };
