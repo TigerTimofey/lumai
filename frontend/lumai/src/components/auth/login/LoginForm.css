@@ -1,0 +1,118 @@
+.auth-form {
+  display: grid;
+  gap: 18px;
+}
+
+.auth-field {
+  display: grid;
+  gap: 8px;
+}
+
+.auth-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text-primary);
+}
+
+.auth-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  font-size: 1rem;
+  background: var(--color-input-bg);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--color-focus-border);
+  box-shadow: 0 0 0 4px var(--color-focus-shadow);
+  background: var(--color-white);
+}
+
+.auth-primary {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  margin-top: 10px;
+  border: none;
+  background: var(--gradient-primary);
+  color: var(--color-gray-50);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-primary:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-button-hover);
+}
+
+.auth-divider {
+  position: relative;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 8px 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 30%;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.auth-divider::before {
+  left: 0;
+}
+
+.auth-divider::after {
+  right: 0;
+}
+
+.auth-oauth {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-oauth button {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-oauth-bg);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.15s ease;
+}
+
+.auth-oauth button:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-primary);
+}
+
+.auth-status {
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--color-success);
+  background: var(--color-success-bg);
+}
+
+.auth-status.error {
+  color: var(--color-error);
+  background: var(--color-error-bg);
+}

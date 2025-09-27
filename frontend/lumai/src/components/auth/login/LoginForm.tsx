@@ -1,15 +1,8 @@
 import { useLoginForm } from './useLoginForm';
+import './LoginForm.css';
 
 const LoginForm = () => {
-  const {
-    formData,
-    handleChange,
-    handleSubmit,
-    handleGitHubLogin,
-    loading,
-    error,
-    success,
-  } = useLoginForm();
+  const { formData, handleChange, handleSubmit, handleGitHubLogin, loading, error, success } = useLoginForm();
 
   return (
     <form className="auth-form" onSubmit={handleSubmit}>
@@ -36,7 +29,7 @@ const LoginForm = () => {
 
       <div className="auth-field">
         <label className="auth-label" htmlFor="password">
-          Пароль
+          Password
         </label>
         <input
           className="auth-input"
@@ -56,12 +49,12 @@ const LoginForm = () => {
         {loading ? 'Signing in…' : 'Sign in'}
       </button>
 
-      <div className="auth-divider">или</div>
+      <div className="auth-divider">or continue with</div>
 
       <div className="auth-oauth">
         <button type="button" onClick={handleGitHubLogin} disabled={loading}>
-          {loading ? 'Connecting GitHub…' : 'Continue with GitHub'}
-      </button>
+          {loading ? 'Connecting GitHub…' : 'GitHub'}
+        </button>
       </div>
     </form>
   );
