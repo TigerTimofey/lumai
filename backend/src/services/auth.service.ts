@@ -115,7 +115,7 @@ export const loginWithEmailPassword = async (
 
     const user = await getUserById(data.localId);
     if (user?.mfa?.enabled) {
-      ensureMfa(mfaCode, user.mfa.secret);
+      ensureMfa(mfaCode, user.mfa.secret ?? undefined);
     }
 
     return {
@@ -160,7 +160,7 @@ export const loginWithOAuth = async (
 
     const user = await getUserById(data.localId);
     if (user?.mfa?.enabled) {
-      ensureMfa(mfaCode, user.mfa.secret);
+      ensureMfa(mfaCode, user.mfa.secret ?? undefined);
     }
 
     await updateUserDocument(data.localId, {
@@ -262,7 +262,7 @@ export const activateMfa = async (uid: string, code: string) => {
     throw badRequest("MFA not initialized");
   }
 
-  ensureMfa(code, user.mfa.secret);
+  ensureMfa(code, user.mfa.secret ?? undefined);
 
   await setUserMfa(uid, {
     enabled: true,
