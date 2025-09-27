@@ -1,18 +1,19 @@
 # Numbers Don't Lie Backend
 
-Backend service for the wellness platform. Provides Firebase Auth integration, health profile management, privacy/consent handling, data export scaffolding, and anonymized metrics preparation for AI workflows.
+Backend service for the wellness platform. Provides Firebase Auth integration, health profile management, privacy/consent handling, MFA-ready authentication, and anonymized metrics preparation for AI workflows.
 
 ## Prerequisites
 - Node.js 20+
-- Firebase project with Firestore & Cloud Storage enabled
-- Service account with permissions for Auth, Firestore, and Storage
-- Enabled authentication providers: Email/Password, Google, Apple
+- Firebase project with Firestore enabled
+- Service account with permissions for Auth and Firestore
+- Enabled authentication providers: Email/Password, Google, GitHub (configure OAuth credentials in Firebase console)
+
+> ℹ️ Cloud Storage integration for profile exports is deferred. Export endpoints currently return a 503 status until storage is configured in a later roadmap stage.
 
 ## Setup
 1. Create `.env` from `.env.example` and populate values:
    - `FIREBASE_PROJECT_ID`
    - `FIREBASE_SERVICE_ACCOUNT_KEY` (base64 encoded JSON)
-   - `FIREBASE_STORAGE_BUCKET` (optional, defaults to `<projectId>.appspot.com`)
    - `WEB_API_KEY`
    - `ANONYMIZATION_SALT`
 2. Install dependencies:
@@ -31,10 +32,20 @@ Backend service for the wellness platform. Provides Firebase Auth integration, h
 - `npm run lint` – run ESLint
 - `npm test` – run Vitest test suite (placeholder)
 
-## API Overview
-- `POST /api/auth/register` – register user in Firebase Auth and bootstrap profile structures
-- `POST /api/auth/login` – Firebase email/password sign-in
+## Auth API Overview
+- `POST /api/auth/register` – register user, auto-generate email verification link, seed profile docs
+- `POST /api/auth/login` – email/password sign-in (supports optional MFA code)
+- `POST /api/auth/oauth` – OAuth sign-in for `google.com` or `github.com` (expects provider tokens + optional MFA code)
 - `POST /api/auth/refresh` – exchange refresh token for new ID token
+- `POST /api/auth/password-reset` – generate password reset link
+- `POST /api/auth/send-verification` – generate email verification link
+- `POST /api/auth/mfa/enroll` – issue TOTP secret (protected route)
+- `POST /api/auth/mfa/activate` – confirm TOTP code and enable MFA (protected route)
+- `POST /api/auth/mfa/disable` – disable MFA and clear secret (protected route)
+
+Protected routes require `Authorization: Bearer <Firebase ID token>` header.
+
+## Profile & AI API Overview
 - `GET /api/profile` – fetch current health profile snapshot
 - `PUT /api/profile` – create a new profile version & update summary (normalized kg/cm)
 - `GET /api/profile/history` – list profile versions (paginated)
@@ -45,12 +56,9 @@ Backend service for the wellness platform. Provides Firebase Auth integration, h
 - `POST /api/ai/prepare` – generate anonymized metrics snapshot (requires AI consent)
 - `GET /api/ai/processed` – list processed metrics snapshots
 - `GET /api/ai/insights` – list AI insight logs
-- `POST /api/export` – export profile data to Cloud Storage and return signed URL
-
-Protected endpoints require `Authorization: Bearer <Firebase ID token>` header.
+- `POST /api/export` – returns 503 (export disabled until Storage integration)
 
 ## Pending Work / Notes
-- OAuth flows (Google/Apple) are handled client-side; backend middleware verifies resulting ID tokens.
-- Run `firebase login` & `firebase deploy` workflows after frontend integration (future stage).
-- Ensure Firebase Storage bucket exists and allow service account to write `exports/` directory.
+- Enable Firebase Storage and revisit export functionality in a future phase.
+- Provide actual email delivery (SMTP or transactional service) for verification/reset links.
 - Add automated tests once business logic stabilizes.

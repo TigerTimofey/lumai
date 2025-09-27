@@ -3,11 +3,12 @@
 ## Tech Stack
 - **Runtime:** Node.js 20.x (TypeScript)
 - **Framework:** Express.js (modular routers/services)
-- **Auth & Identity:** Firebase Authentication (email/password + Google & Apple OAuth)
+- **Auth & Identity:** Firebase Authentication (email/password, Google, GitHub + optional TOTP MFA)
 - **Database:** Cloud Firestore (Native mode)
 - **Validation:** Zod (schema validation & normalization helpers)
 - **Logging:** pino + pino-http (structured logs)
-- **HTTP Clients:** axios (Identity Toolkit & Secure Token APIs)
+- **HTTP Clients:** axios (Identity Toolkit, Secure Token APIs)
+- **MFA:** TOTP secrets generated with `speakeasy`
 
 > 📌 Cloud Storage integration is intentionally deferred. Export-related modules remain stubbed until a storage solution is provisioned in later roadmap stages.
 
@@ -25,19 +26,19 @@ backend/
 │  │  └─ error-handler.ts        # Unified error responses
 │  ├─ routes/
 │  │  ├─ index.ts                # API router composition
-│  │  ├─ auth.routes.ts          # Registration/login/refresh endpoints
+│  │  ├─ auth.routes.ts          # Registration/login/OAuth/MFA/password-reset flows
 │  │  ├─ profile.routes.ts       # Profile CRUD, history, versions
 │  │  ├─ privacy.routes.ts       # Privacy preferences & consents
 │  │  ├─ ai.routes.ts            # AI prep + insight listings
 │  │  └─ export.routes.ts        # Export endpoint (returns 503 until enabled)
 │  ├─ services/
-│  │  ├─ auth.service.ts         # Firebase Auth + token workflows
+│  │  ├─ auth.service.ts         # Firebase Auth + token workflows + TOTP MFA
 │  │  ├─ profile.service.ts      # Normalization, versioning, CRUD orchestration
 │  │  ├─ consent.service.ts      # Consent/notification management
 │  │  ├─ ai.service.ts           # Anonymized payload preparation & logging
 │  │  └─ export.service.ts       # Export stub (deferred storage integration)
 │  ├─ repositories/
-│  │  ├─ user.repo.ts            # Firestore adapters for users
+│  │  ├─ user.repo.ts            # Firestore adapters for users + MFA metadata
 │  │  ├─ profile.repo.ts         # Health profile documents & versions
 │  │  ├─ consent.repo.ts         # Consent records + audit trail
 │  │  ├─ processed-metrics.repo.ts # Processed metrics snapshots
@@ -45,7 +46,8 @@ backend/
 │  ├─ domain/
 │  │  ├─ enums.ts                # Enumerations & vocabularies
 │  │  ├─ types.ts                # Firestore domain types
-│  │  └─ validation.ts           # Zod schemas + normalization
+│  │  ├─ validation.ts           # Health profile schemas + normalization
+│  │  └─ auth.validation.ts      # Auth/Zod schemas (register/login/OAuth/MFA)
 │  ├─ utils/
 │  │  ├─ api-error.ts            # API error helpers
 │  │  └─ logger.ts               # pino logger instance
@@ -63,72 +65,26 @@ backend/
 | --- | --- |
 | `FIREBASE_PROJECT_ID` | Firebase project identifier |
 | `FIREBASE_SERVICE_ACCOUNT_KEY` | Base64-encoded service account JSON (Auth/Firestore) |
-| `WEB_API_KEY` | Firebase Web API key (used for Identity Toolkit password sign-in & refresh) |
+| `WEB_API_KEY` | Firebase Web API key (used for Identity Toolkit sign-in/refresh) |
 | `ANONYMIZATION_SALT` | Secret salt for hashing user identifiers in processed AI payloads |
 | `PORT` | Express HTTP port (defaults to 4000) |
 
-> ⚠️ Create a Firebase service account with roles: **Firebase Admin** and **Cloud Datastore User**. Cloud Storage permissions can be granted later when export functionality is enabled.
+> ⚠️ Create a Firebase service account with roles: **Firebase Admin** and **Cloud Datastore User**. Cloud Storage permissions can be granted later when export functionality is re-enabled.
 
-## Firestore Data Model
-
-### `users/{uid}`
-- `email`, `emailVerified`
-- `createdAt`, `updatedAt`
-- `profileVersionId` – pointer to latest profile version
-- `privacy` – snapshot of privacy defaults (visibility + notification prefs)
-
-### `health_profiles/{userId}`
-- Root doc `current`, `targets`, `stats`
-- Subcollection `versions/{versionId}` stores immutable normalized snapshots (`kg`/`cm`) with source + timestamps
-
-### `consents/{userId}`
-- `agreements` map keyed by consent type (`data_processing`, `ai_insights`, `marketing`)
-- `sharingPreferences`, `notifications`
-- `auditTrail` array capturing consent changes (type, previous/new status, actor, timestamp)
-
-### `processed_metrics/{userId}/snapshots/{snapshotId}`
-- `userMetrics` – AI-ready payload structure
-- `privacyHash` – salted hash for anonymization
-- `sourceProfileVersion` – reference to `health_profiles` version
-- `createdAt`, optional `expiresAt`
-
-### `ai_insight_logs/{userId}/insights/{insightId}`
-- Stores prompt context, model name, response payload, status, timestamps
-
-## Data Normalization Highlights
-- Weight + target weight normalized to **kg** (two decimal precision)
-- Height normalized to **cm** (supports metric + ft/in input)
-- Enumerations constrain lifestyle/activity/goal vocab to align with AI prompts
-- Numeric string coercion ensures friendly handling of form inputs
-- BMI recalculated server-side using normalized metrics
+## Firestore Data Model (Auth additions)
+- `users/{uid}` now stores `mfa` metadata: `{ enabled, secret?, otpauthUrl?, enrolledAt? }`
+- MFA secrets are stored base32 encoded; disable flow clears secrets via `FieldValue.delete()`
 
 ## Authentication Workflow
-1. **Registration** → Firebase Admin creates user, backend seeds `users` + `consents`
-2. **Login** → Identity Toolkit `signInWithPassword` returns ID/refresh tokens
-3. **OAuth (Google/Apple)** → Handled client-side; backend middleware validates issued ID tokens for protected APIs
+1. **Registration** → Firebase Admin creates user, backend seeds `users` + `consents`, returns verification link + tokens
+2. **Login (email/password)** → Identity Toolkit `signInWithPassword` + optional TOTP validation when MFA enabled
+3. **OAuth (Google/GitHub)** → Identity Toolkit `signInWithIdp` endpoint; backend updates email verification flag and enforces MFA if enabled
 4. **Refresh** → `/api/auth/refresh` wraps Secure Token API to exchange refresh tokens
-5. **Authorization** → `auth-context` middleware verifies ID tokens and loads user context for downstream services
-
-## Export Flow (Deferred)
-- `/api/export` currently responds with HTTP 503 to indicate the feature is disabled
-- Once a storage solution is provisioned, the service will aggregate profile versions, processed metrics, and AI logs, then persist exports for download
-
-## AI Anonymization Flow
-- `/api/ai/prepare` checks `ai_insights` consent
-- Fetches latest profile version, maps into AI payload contract
-- Applies salted SHA-256 hash (`ANONYMIZATION_SALT:userId`) to remove direct identifiers
-- Stores payload in `processed_metrics` + logs preparation event in `ai_insight_logs`
-- Future stages: invoke AI models, manage responses, and version prompts
-
-## Firebase Console Checklist
-1. Enable Firestore (Native)
-2. Enable Auth providers: Email/Password, Google, Apple
-3. Generate Web API key (Project settings → General → Web API Key)
-4. Create service account key with admin privileges; store securely (base64 in env)
-5. Configure email templates / SMTP for password reset (recommended)
-6. Grant Cloud Storage permissions later when export functionality is re-enabled
+5. **Email flows** → `/api/auth/send-verification` & `/api/auth/password-reset` create ready-to-send links (delivery handled client-side/SMTP later)
+6. **MFA** → `/api/auth/mfa/enroll` issues TOTP secret; `/api/auth/mfa/activate` verifies code and enables; `/api/auth/mfa/disable` clears secret
 
 ## Outstanding Tasks
-- Implement Cloud Storage-backed export pipeline when ready
-- Add automated tests (unit + integration stubs)
-- Harden security rules to mirror API authz once frontend flows are defined
+- Implement actual email delivery + UI for verification/reset links
+- Surface MFA status on frontend and support backup codes if required
+- Implement Storage-backed export pipeline when storage is available
+- Add automated tests and tighten rate-limiting / abuse prevention on auth endpoints

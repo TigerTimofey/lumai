@@ -17,6 +17,12 @@ export interface UserDocument {
       marketing: boolean;
     };
   };
+  mfa?: {
+    enabled: boolean;
+    secret?: string | null;
+    otpauthUrl?: string | null;
+    enrolledAt?: Timestamp;
+  };
 }
 
 export interface HealthProfileVersionDocument {
