@@ -1,5 +1,5 @@
 import type { Timestamp } from "firebase-admin/firestore";
-import type { HealthProfile } from "./validation";
+import type { HealthProfile } from "./validation.js";
 
 export interface UserDocument {
   email: string;
