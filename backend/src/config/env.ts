@@ -14,7 +14,8 @@ const envSchema = z.object({
     .string()
     .optional()
     .transform((value) => (value ? Number(value) : 4000))
-    .pipe(z.number().int().positive())
+    .pipe(z.number().int().positive()),
+  FRONTEND_URL: z.string().url()
 });
 
 type EnvConfig = z.infer<typeof envSchema>;

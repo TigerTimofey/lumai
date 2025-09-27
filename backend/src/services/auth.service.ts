@@ -148,7 +148,7 @@ export const loginWithOAuth = async (
 
     const requestPayload = {
       postBody: params.toString(),
-      requestUri: "http://localhost",
+      requestUri: env.FRONTEND_URL,
       returnIdpCredential: true,
       returnSecureToken: true
     };
