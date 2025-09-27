@@ -49,7 +49,7 @@ export const useLoginForm = (): UseLoginFormReturn => {
       if (!credential.user.emailVerified) {
         await sendEmailVerification(credential.user);
         await signOut(auth);
-        throw new Error('Please verify your email before logging in. We have resent the verification email.');
+        throw new Error('Email is not verified yet. We just re-sent the confirmation link.');
       }
 
       const idToken = await credential.user.getIdToken();
@@ -60,10 +60,10 @@ export const useLoginForm = (): UseLoginFormReturn => {
       console.log('Refresh token', credential.user.refreshToken);
       console.groupEnd();
 
-      setSuccess('Email login successful.');
+      setSuccess('Signed in via Firebase. Inspect the browser console for token details.');
     } catch (err) {
       console.error('Login error:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'We couldn’t sign you in. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -101,10 +101,10 @@ export const useLoginForm = (): UseLoginFormReturn => {
       console.log('Firebase user', result.user);
       console.log('Backend payload', data);
       console.groupEnd();
-      setSuccess('GitHub login successful.');
+      setSuccess('Signed in with GitHub. Logs are available in the console.');
     } catch (err) {
       console.error('GitHub login error:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'We couldn’t complete GitHub sign-in. Please try again.');
     } finally {
       setLoading(false);
     }

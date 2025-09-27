@@ -12,40 +12,57 @@ const LoginForm = () => {
   } = useLoginForm();
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Login</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {success && <p style={{ color: 'green' }}>{success}</p>}
-      <div>
-        <label htmlFor="email">Email:</label>
+    <form className="auth-form" onSubmit={handleSubmit}>
+      {error && <div className="auth-status error">{error}</div>}
+      {success && <div className="auth-status">{success}</div>}
+
+      <div className="auth-field">
+        <label className="auth-label" htmlFor="email">
+          Email
+        </label>
         <input
+          className="auth-input"
           type="email"
           id="email"
           name="email"
           value={formData.email}
           onChange={handleChange}
+          placeholder="you@example.com"
+          autoComplete="email"
           required
           disabled={loading}
         />
       </div>
-      <div>
-        <label htmlFor="password">Password:</label>
+
+      <div className="auth-field">
+        <label className="auth-label" htmlFor="password">
+          Пароль
+        </label>
         <input
+          className="auth-input"
           type="password"
           id="password"
           name="password"
           value={formData.password}
           onChange={handleChange}
+          placeholder="Enter your password"
+          autoComplete="current-password"
           required
           disabled={loading}
         />
       </div>
-      <button type="submit" disabled={loading}>
-        {loading ? 'Logging in...' : 'Login'}
+
+      <button className="auth-primary" type="submit" disabled={loading}>
+        {loading ? 'Signing in…' : 'Sign in'}
       </button>
-      <button type="button" onClick={handleGitHubLogin} disabled={loading}>
-        {loading ? 'Logging in...' : 'Login with GitHub'}
+
+      <div className="auth-divider">или</div>
+
+      <div className="auth-oauth">
+        <button type="button" onClick={handleGitHubLogin} disabled={loading}>
+          {loading ? 'Connecting GitHub…' : 'Continue with GitHub'}
       </button>
+      </div>
     </form>
   );
 };
