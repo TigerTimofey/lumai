@@ -1,7 +1,8 @@
 import cors from "cors";
 import express from "express";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const pinoHttp = require("pino-http");
+import pinoHttp from "pino-http";
+const pinoHttpMiddleware = (pinoHttp as any).default ? (pinoHttp as any).default : pinoHttp;
 import { errorHandler } from "./middleware/error-handler.js";
 import router from "./routes/index.js";
 import { logger } from "./utils/logger.js";
@@ -9,8 +10,7 @@ import { logger } from "./utils/logger.js";
 const app = express();
 
 app.use(cors());
-app.use(express.json({ limit: "1mb" }));
-app.use(pinoHttp({ logger }));
+app.use(pinoHttpMiddleware({ logger }));
 
 app.use("/api", router);
 
