@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import RegisterForm from './RegisterForm';
-import LoginForm from './LoginForm';
+import RegisterForm from './registration/RegisterForm';
+import LoginForm from './login/LoginForm';
 
 const AuthPage = () => {
   const [isRegister, setIsRegister] = useState(true);

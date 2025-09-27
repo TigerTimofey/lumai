@@ -5,7 +5,7 @@ import {
   signOut,
   updateProfile
 } from 'firebase/auth';
-import { auth } from '../config/firebase';
+import { auth } from '../../../config/firebase';
 
 interface RegisterFormData {
   email: string;

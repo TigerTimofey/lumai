@@ -6,7 +6,7 @@ import {
   signOut,
   sendEmailVerification
 } from 'firebase/auth';
-import { auth } from '../config/firebase';
+import { auth } from '../../../config/firebase';
 
 interface LoginFormData {
   email: string;
