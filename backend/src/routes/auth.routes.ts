@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { loginWithEmailPassword, refreshIdToken, registerUser } from "../services/auth.service";
-import { badRequest } from "../utils/api-error";
+import { loginWithEmailPassword, refreshIdToken, registerUser } from "../services/auth.service.js";
+import { badRequest } from "../utils/api-error.js";
 
 const router = Router();
 

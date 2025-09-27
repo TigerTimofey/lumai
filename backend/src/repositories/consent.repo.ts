@@ -1,6 +1,6 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
-import { firestore } from "../config/firebase";
-import type { ConsentsDocument } from "../domain/types";
+import { firestore } from "../config/firebase.js";
+import type { ConsentsDocument } from "../domain/types.js";
 
 const COLLECTION = "consents";
 

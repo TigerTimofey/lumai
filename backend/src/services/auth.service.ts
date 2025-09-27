@@ -1,10 +1,10 @@
 import axios from "axios";
-import { firebaseAuth } from "../config/firebase";
-import env from "../config/env";
-import { createUserDocument, getUserById } from "../repositories/user.repo";
-import { setConsents } from "../repositories/consent.repo";
-import { privacyPreferencesSchema } from "../domain/validation";
-import { badRequest, internalError } from "../utils/api-error";
+import { firebaseAuth } from "../config/firebase.js";
+import env from "../config/env.js";
+import { createUserDocument, getUserById } from "../repositories/user.repo.js";
+import { setConsents } from "../repositories/consent.repo.js";
+import { privacyPreferencesSchema } from "../domain/validation.js";
+import { badRequest, internalError } from "../utils/api-error.js";
 
 const IDENTITY_BASE = "https://identitytoolkit.googleapis.com/v1";
 const SECURE_TOKEN_BASE = "https://securetoken.googleapis.com/v1";

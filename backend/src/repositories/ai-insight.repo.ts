@@ -1,5 +1,5 @@
 import { Timestamp } from "firebase-admin/firestore";
-import { firestore } from "../config/firebase";
+import { firestore } from "../config/firebase.js";
 
 const ROOT_COLLECTION = "ai_insight_logs";
 

@@ -1,9 +1,9 @@
 import { Timestamp } from "firebase-admin/firestore";
-import { firestore } from "../config/firebase";
+import { firestore } from "../config/firebase.js";
 import type {
   HealthProfileDocument,
   HealthProfileVersionDocument
-} from "../domain/types";
+} from "../domain/types.js";
 
 const ROOT_COLLECTION = "health_profiles";
 

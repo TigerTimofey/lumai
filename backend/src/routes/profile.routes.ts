@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { authContext } from "../middleware/auth-context";
+import { authContext } from "../middleware/auth-context.js";
 import {
   getProfileSummary,
   getProfileVersion,
   listProfileHistory,
   upsertHealthProfile
-} from "../services/profile.service";
-import { unauthorized } from "../utils/api-error";
+} from "../services/profile.service.js";
+import { unauthorized } from "../utils/api-error.js";
 
 const router = Router();
 

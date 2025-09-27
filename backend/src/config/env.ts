@@ -5,7 +5,6 @@ dotenv.config();
 
 const envSchema = z.object({
   FIREBASE_PROJECT_ID: z.string().min(1, "FIREBASE_PROJECT_ID is required"),
-  FIREBASE_STORAGE_BUCKET: z.string().optional(),
   FIREBASE_SERVICE_ACCOUNT_KEY: z
     .string()
     .min(1, "FIREBASE_SERVICE_ACCOUNT_KEY is required"),

@@ -1,9 +1,9 @@
 import { Router } from "express";
-import aiRoutes from "./ai.routes";
-import authRoutes from "./auth.routes";
-import exportRoutes from "./export.routes";
-import privacyRoutes from "./privacy.routes";
-import profileRoutes from "./profile.routes";
+import aiRoutes from "./ai.routes.js";
+import authRoutes from "./auth.routes.js";
+import exportRoutes from "./export.routes.js";
+import privacyRoutes from "./privacy.routes.js";
+import profileRoutes from "./profile.routes.js";
 
 const router = Router();
 

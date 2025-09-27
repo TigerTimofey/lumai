@@ -1,9 +1,10 @@
 import cors from "cors";
 import express from "express";
-import pinoHttp from "pino-http";
-import { errorHandler } from "./middleware/error-handler";
-import router from "./routes/index";
-import { logger } from "./utils/logger";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const pinoHttp = require("pino-http");
+import { errorHandler } from "./middleware/error-handler.js";
+import router from "./routes/index.js";
+import { logger } from "./utils/logger.js";
 
 const app = express();
 

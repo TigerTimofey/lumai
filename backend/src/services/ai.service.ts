@@ -1,17 +1,17 @@
 import { createHash } from "crypto";
-import env from "../config/env";
-import { CONSENT_TYPES } from "../domain/enums";
-import { getLatestProfileVersion } from "../repositories/profile.repo";
-import { createProcessedMetrics } from "../repositories/processed-metrics.repo";
-import { getConsents } from "../repositories/consent.repo";
-import { logAiInsight } from "../repositories/ai-insight.repo";
-import { forbidden, notFound } from "../utils/api-error";
+import env from "../config/env.js";
+import { CONSENT_TYPES } from "../domain/enums.js";
+import { getLatestProfileVersion } from "../repositories/profile.repo.js";
+import { createProcessedMetrics } from "../repositories/processed-metrics.repo.js";
+import { getConsents } from "../repositories/consent.repo.js";
+import { logAiInsight } from "../repositories/ai-insight.repo.js";
+import { forbidden, notFound } from "../utils/api-error.js";
 
 const AI_CONSENT = "ai_insights" satisfies (typeof CONSENT_TYPES)[number];
 
 export const prepareAiMetrics = async (userId: string) => {
   const consents = await getConsents(userId);
-  const consentStatus = consents?.agreements?.[AI_CONSENT]?.status ?? "pending";
+  const consentStatus = consents?.agreements?.[AI_CONSENT]?.status ?? "pending.js";
 
   if (consentStatus !== "granted") {
     throw forbidden("User has not granted AI insights consent");

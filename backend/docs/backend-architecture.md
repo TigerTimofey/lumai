@@ -5,10 +5,11 @@
 - **Framework:** Express.js (modular routers/services)
 - **Auth & Identity:** Firebase Authentication (email/password + Google & Apple OAuth)
 - **Database:** Cloud Firestore (Native mode)
-- **Storage:** Cloud Storage (profile exports & AI payload artifacts)
 - **Validation:** Zod (schema validation & normalization helpers)
 - **Logging:** pino + pino-http (structured logs)
 - **HTTP Clients:** axios (Identity Toolkit & Secure Token APIs)
+
+> 📌 Cloud Storage integration is intentionally deferred. Export-related modules remain stubbed until a storage solution is provisioned in later roadmap stages.
 
 ## Module Layout
 ```
@@ -28,13 +29,13 @@ backend/
 │  │  ├─ profile.routes.ts       # Profile CRUD, history, versions
 │  │  ├─ privacy.routes.ts       # Privacy preferences & consents
 │  │  ├─ ai.routes.ts            # AI prep + insight listings
-│  │  └─ export.routes.ts        # Profile export requests
+│  │  └─ export.routes.ts        # Export endpoint (returns 503 until enabled)
 │  ├─ services/
 │  │  ├─ auth.service.ts         # Firebase Auth + token workflows
 │  │  ├─ profile.service.ts      # Normalization, versioning, CRUD orchestration
 │  │  ├─ consent.service.ts      # Consent/notification management
 │  │  ├─ ai.service.ts           # Anonymized payload preparation & logging
-│  │  └─ export.service.ts       # Export assembly & signed URL generation
+│  │  └─ export.service.ts       # Export stub (deferred storage integration)
 │  ├─ repositories/
 │  │  ├─ user.repo.ts            # Firestore adapters for users
 │  │  ├─ profile.repo.ts         # Health profile documents & versions
@@ -61,13 +62,12 @@ backend/
 | Variable | Description |
 | --- | --- |
 | `FIREBASE_PROJECT_ID` | Firebase project identifier |
-| `FIREBASE_STORAGE_BUCKET` | Optional custom storage bucket (defaults to `<projectId>.appspot.com`) |
-| `FIREBASE_SERVICE_ACCOUNT_KEY` | Base64-encoded service account JSON (Auth/Firestore/Storage) |
+| `FIREBASE_SERVICE_ACCOUNT_KEY` | Base64-encoded service account JSON (Auth/Firestore) |
 | `WEB_API_KEY` | Firebase Web API key (used for Identity Toolkit password sign-in & refresh) |
 | `ANONYMIZATION_SALT` | Secret salt for hashing user identifiers in processed AI payloads |
 | `PORT` | Express HTTP port (defaults to 4000) |
 
-> ⚠️ Create a Firebase service account with roles: **Firebase Admin**, **Cloud Datastore User**, **Cloud Storage Admin**. Encode the JSON as base64 before placing it in `FIREBASE_SERVICE_ACCOUNT_KEY`.
+> ⚠️ Create a Firebase service account with roles: **Firebase Admin** and **Cloud Datastore User**. Cloud Storage permissions can be granted later when export functionality is enabled.
 
 ## Firestore Data Model
 
@@ -95,9 +95,6 @@ backend/
 ### `ai_insight_logs/{userId}/insights/{insightId}`
 - Stores prompt context, model name, response payload, status, timestamps
 
-### `profile_exports/{userId}/exports/{exportId}` *(via Cloud Storage metadata)*
-- Export metadata persisted as file metadata (path, status). Firestore collection optional if listing required later.
-
 ## Data Normalization Highlights
 - Weight + target weight normalized to **kg** (two decimal precision)
 - Height normalized to **cm** (supports metric + ft/in input)
@@ -112,11 +109,9 @@ backend/
 4. **Refresh** → `/api/auth/refresh` wraps Secure Token API to exchange refresh tokens
 5. **Authorization** → `auth-context` middleware verifies ID tokens and loads user context for downstream services
 
-## Export Flow (Stage 1)
-- `/api/export` triggers `export.service`, aggregates user summary, profile versions (latest 50), processed metrics, and AI logs
-- Payload serialized to `exports/{userId}/{timestamp}.json` in Cloud Storage
-- Signed URL (15 min validity) returned to client
-- Future: move heavy lifting to Cloud Functions/Tasks and persist export registry in Firestore
+## Export Flow (Deferred)
+- `/api/export` currently responds with HTTP 503 to indicate the feature is disabled
+- Once a storage solution is provisioned, the service will aggregate profile versions, processed metrics, and AI logs, then persist exports for download
 
 ## AI Anonymization Flow
 - `/api/ai/prepare` checks `ai_insights` consent
@@ -126,14 +121,14 @@ backend/
 - Future stages: invoke AI models, manage responses, and version prompts
 
 ## Firebase Console Checklist
-1. Enable Firestore (Native) & Cloud Storage (set default bucket)
+1. Enable Firestore (Native)
 2. Enable Auth providers: Email/Password, Google, Apple
 3. Generate Web API key (Project settings → General → Web API Key)
 4. Create service account key with admin privileges; store securely (base64 in env)
 5. Configure email templates / SMTP for password reset (recommended)
-6. Optionally create Cloud Storage lifecycle rules for `exports/` + `processed_metrics` retention
+6. Grant Cloud Storage permissions later when export functionality is re-enabled
 
 ## Outstanding Tasks
+- Implement Cloud Storage-backed export pipeline when ready
 - Add automated tests (unit + integration stubs)
 - Harden security rules to mirror API authz once frontend flows are defined
-- Wire actual AI provider integration (OpenAI/Vertex, etc.) in later roadmap phases

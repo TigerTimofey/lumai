@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { authContext } from "../middleware/auth-context";
+import { authContext } from "../middleware/auth-context.js";
 import {
   getConsentSettings,
   recordConsent,
   updatePrivacyPreferences
-} from "../services/consent.service";
-import { badRequest, unauthorized } from "../utils/api-error";
+} from "../services/consent.service.js";
+import { badRequest, unauthorized } from "../utils/api-error.js";
 
 const router = Router();
 

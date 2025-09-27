@@ -1,7 +1,7 @@
 import type { RequestHandler } from "express";
-import { firebaseAuth } from "../config/firebase";
-import { getUserById } from "../repositories/user.repo";
-import { unauthorized } from "../utils/api-error";
+import { firebaseAuth } from "../config/firebase.js";
+import { getUserById } from "../repositories/user.repo.js";
+import { unauthorized } from "../utils/api-error.js";
 
 export const authContext: RequestHandler = async (req, _res, next) => {
   const authHeader = req.headers.authorization;

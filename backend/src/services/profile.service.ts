@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { Timestamp } from "firebase-admin/firestore";
-import { normalizeHealthProfile, type HealthProfileInput } from "../domain/validation";
+import { normalizeHealthProfile, type HealthProfileInput } from "../domain/validation.js";
 import {
   createProfileVersion,
   getLatestProfileVersion,
@@ -8,9 +8,9 @@ import {
   getProfileVersionById,
   listProfileVersions,
   upsertProfileSummary
-} from "../repositories/profile.repo";
-import { updateUserDocument } from "../repositories/user.repo";
-import { badRequest, notFound } from "../utils/api-error";
+} from "../repositories/profile.repo.js";
+import { updateUserDocument } from "../repositories/user.repo.js";
+import { badRequest, notFound } from "../utils/api-error.js";
 
 export const getProfileSummary = async (userId: string) => {
   const profile = await getProfile(userId);

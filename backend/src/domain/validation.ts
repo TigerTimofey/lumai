@@ -13,7 +13,7 @@ import {
   OCCUPATION_TYPES,
   PRIVACY_VISIBILITY,
   SESSION_DURATIONS
-} from "./enums";
+} from "./enums.js";
 
 const numericString = z.string().regex(/^\d+(\.\d+)?$/, "Invalid numeric format");
 
@@ -155,14 +155,11 @@ export const privacyPreferencesSchema = z.object({
   profileVisibility: z.enum(PRIVACY_VISIBILITY).default("private"),
   shareWithResearch: z.boolean().default(false),
   shareWithCoaches: z.boolean().default(false),
-  emailNotifications: z
-    .object({
-      insights: z.boolean().default(true),
-      reminders: z.boolean().default(true),
-      marketing: z.boolean().default(false)
-    })
-    .partial()
-    .default({ insights: true, reminders: true, marketing: false })
+  emailNotifications: z.object({
+    insights: z.boolean().default(true),
+    reminders: z.boolean().default(true),
+    marketing: z.boolean().default(false)
+  })
 });
 
 export const consentSchema = z.object({

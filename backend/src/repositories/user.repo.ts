@@ -1,6 +1,6 @@
 import { Timestamp } from "firebase-admin/firestore";
-import { firestore } from "../config/firebase";
-import type { UserDocument } from "../domain/types";
+import { firestore } from "../config/firebase.js";
+import type { UserDocument } from "../domain/types.js";
 
 const COLLECTION = "users";
 

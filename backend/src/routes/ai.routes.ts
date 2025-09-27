@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { authContext } from "../middleware/auth-context";
-import { prepareAiMetrics } from "../services/ai.service";
-import { listAiInsights } from "../repositories/ai-insight.repo";
-import { listProcessedMetrics } from "../repositories/processed-metrics.repo";
-import { unauthorized } from "../utils/api-error";
+import { authContext } from "../middleware/auth-context.js";
+import { prepareAiMetrics } from "../services/ai.service.js";
+import { listAiInsights } from "../repositories/ai-insight.repo.js";
+import { listProcessedMetrics } from "../repositories/processed-metrics.repo.js";
+import { unauthorized } from "../utils/api-error.js";
 
 const router = Router();
 

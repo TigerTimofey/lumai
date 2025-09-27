@@ -1,8 +1,8 @@
-import { CONSENT_TYPES } from "../domain/enums";
-import { getConsents, setConsents, updateConsentStatus } from "../repositories/consent.repo";
-import { updateUserDocument } from "../repositories/user.repo";
-import { privacyPreferencesSchema } from "../domain/validation";
-import { badRequest, notFound } from "../utils/api-error";
+import { CONSENT_TYPES } from "../domain/enums.js";
+import { getConsents, setConsents, updateConsentStatus } from "../repositories/consent.repo.js";
+import { updateUserDocument } from "../repositories/user.repo.js";
+import { privacyPreferencesSchema } from "../domain/validation.js";
+import { badRequest, notFound } from "../utils/api-error.js";
 
 export const getConsentSettings = async (userId: string) => {
   const consents = await getConsents(userId);
