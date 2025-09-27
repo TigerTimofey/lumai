@@ -275,10 +275,10 @@ export const sendVerificationEmail = async (email: string) => {
     return { link };
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
-      throw badRequest(error.response?.data?.error?.message ?? "Failed to create link");
+      throw badRequest(error.response?.data?.error?.message ?? "Не удалось создать ссылку");
     }
 
-    throw internalError("Failed to create verification link", error);
+    throw internalError("Не удалось создать ссылку верификации", error);
   }
 };
 
@@ -289,10 +289,10 @@ export const sendPasswordResetEmail = async (email: string) => {
     return { link };
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
-      throw badRequest(error.response?.data?.error?.message ?? "Failed to create link");
+      throw badRequest(error.response?.data?.error?.message ?? "Не удалось создать ссылку");
     }
 
-    throw internalError("Failed to create password reset link", error);
+    throw internalError("Не удалось создать ссылку сброса пароля", error);
   }
 };
 
@@ -317,10 +317,10 @@ export const enrollMfa = async (uid: string, label?: string) => {
 export const activateMfa = async (uid: string, code: string) => {
   const user = await getUserById(uid);
   if (!user?.mfa?.secret) {
-    throw badRequest("MFA not initialized");
+    throw badRequest("MFA не инициализировано");
   }
 
-  ensureMfa(code, user.mfa.secret ?? undefined);
+  ensureMfa(code, user.mfa.secret);
 
   await setUserMfa(uid, {
     enabled: true,

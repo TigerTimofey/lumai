@@ -60,24 +60,7 @@ export const useLoginForm = (): UseLoginFormReturn => {
       console.log('Refresh token', credential.user.refreshToken);
       console.groupEnd();
 
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
-
-      console.group('BACKEND LOGIN SUCCESS');
-      console.log('Backend payload', data);
-      console.groupEnd();
-
-      setSuccess('Вход выполнен. Детали смотрите в консоли.');
+      setSuccess('Email login successful.');
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -118,7 +101,7 @@ export const useLoginForm = (): UseLoginFormReturn => {
       console.log('Firebase user', result.user);
       console.log('Backend payload', data);
       console.groupEnd();
-      setSuccess('Вход через GitHub выполнен. Логи отправлены в консоль.');
+      setSuccess('GitHub login successful.');
     } catch (err) {
       console.error('GitHub login error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
