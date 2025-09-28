@@ -5,7 +5,9 @@ import {
   signOut,
   updateProfile,
 } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { auth } from '../../../config/firebase';
+import { db } from '../../../config/firebase';
 
 interface RegisterFormData {
   email: string;
@@ -53,24 +55,78 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
         await updateProfile(credential.user, { displayName: formData.displayName });
       }
 
+      // Create initial user data in Firestore
+      await setDoc(doc(db, 'users', credential.user.uid), {
+        // Basic user information
+        email: credential.user.email,
+        displayName: formData.displayName || null,
+        emailVerified: credential.user.emailVerified,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        
+        // Profile completion status
+        profileCompleted: false,
+        
+        // REQUIRED PARAMETERS (must be filled for profile completion)
+        requiredProfile: {
+          age: null,
+          gender: null,
+          height: null,
+          weight: null,
+          activityLevel: null,
+          fitnessGoal: null
+        },
+        
+        // ADDITIONAL PARAMETERS (optional enhancements)
+        additionalProfile: {
+          occupationType: null,
+          dietaryPreferences: null,
+          dietaryRestrictions: null,
+          desiredActivityLevel: null,
+          trainingDaysPerWeek: null,
+          exerciseTypes: null,
+          sessionDuration: null,
+          fitnessLevel: null,
+          preferredEnvironment: null,
+          preferredTimeOfDay: null,
+          endurance: null,
+          strengthMetrics: {
+            pushUps: null,
+            squats: null
+          }
+        },
+        
+        // USER CONSENT & PRIVACY
+        consent: {
+          privacySettings: {
+            dataUsage: false,
+            profileVisibility: 'private',
+            shareWithCoaches: false,
+            shareWithResearch: false
+          },
+          emailNotifications: {
+            workoutReminders: true,
+            progressUpdates: true,
+            newsletter: false
+          }
+        }
+      });
+
       await sendEmailVerification(credential.user);
 
-      const idToken = await credential.user.getIdToken();
-
-      console.group('CLIENT REGISTER SUCCESS');
-      console.log('User', credential.user);
-      console.log('ID token', idToken);
-      console.log('Refresh token', credential.user.refreshToken);
-      console.log('Email verification sent to', credential.user.email);
+      console.group('USER REGISTERED WITH INITIAL DATA');
+      console.log('User ID:', credential.user.uid);
+      console.log('Email:', credential.user.email);
+      console.log('Display Name:', formData.displayName);
       console.groupEnd();
 
-      setSuccess('Please check your email and confirm your email address.');
+      setSuccess('Account created successfully! Please check your email to verify your account.');
       setFormData({ email: '', password: '', displayName: '' });
 
       await signOut(auth);
     } catch (err) {
       console.error('Registration error:', err);
-      setError(err instanceof Error ? err.message : 'We couldn’t create the account. Please try again.');
+      setError(err instanceof Error ? err.message : 'We couldn\'t create the account. Please try again.');
     } finally {
       setEmailLoading(false);
     }

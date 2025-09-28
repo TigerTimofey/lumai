@@ -6,7 +6,9 @@ import {
   signOut,
   sendEmailVerification
 } from 'firebase/auth';
+import { doc, updateDoc } from 'firebase/firestore';
 import { auth } from '../../../config/firebase';
+import { db } from '../../../config/firebase';
 import type { User } from 'firebase/auth';
 
 interface UseLoginFormOptions {
@@ -42,6 +44,14 @@ export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn 
 
   const loading = emailLoading || githubLoading;
 
+  const updateUserEmailVerification = async (user: User) => {
+    const userDocRef = doc(db, 'users', user.uid);
+    await updateDoc(userDocRef, {
+      emailVerified: user.emailVerified,
+      updatedAt: new Date()
+    });
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -70,6 +80,9 @@ export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn 
       console.log('Refresh token', credential.user.refreshToken);
       console.groupEnd();
 
+      // Update email verification status
+      await updateUserEmailVerification(credential.user);
+
       setSuccess('Signed in via Firebase. Inspect the browser console for token details.');
       options?.onAuthenticated?.(credential.user);
     } catch (err) {
@@ -94,6 +107,9 @@ export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn 
       console.log('Firebase user', result.user);
       console.log('ID token', idToken);
       console.groupEnd();
+
+      // Update email verification status
+      await updateUserEmailVerification(result.user);
 
       setSuccess('Signed in with GitHub via Firebase. Inspect the console for token details.');
       options?.onAuthenticated?.(result.user);
