@@ -10,7 +10,7 @@ interface AuthPageProps {
 }
 
 const AuthPage = ({ onAuthenticated }: AuthPageProps) => {
-  const [mode, setMode] = useState<'register' | 'login'>('register');
+  const [mode, setMode] = useState<'register' | 'login'>('login');
 
   const isRegister = mode === 'register';
 
@@ -48,20 +48,20 @@ const AuthPage = ({ onAuthenticated }: AuthPageProps) => {
             <button
               type="button"
               role="tab"
-              className={`auth-tab ${isRegister ? 'active' : ''}`}
-              aria-selected={isRegister}
-              onClick={() => setMode('register')}
-            >
-              Sign up
-            </button>
-            <button
-              type="button"
-              role="tab"
               className={`auth-tab ${!isRegister ? 'active' : ''}`}
               aria-selected={!isRegister}
               onClick={() => setMode('login')}
             >
               Sign in
+            </button>
+            <button
+              type="button"
+              role="tab"
+              className={`auth-tab ${isRegister ? 'active' : ''}`}
+              aria-selected={isRegister}
+              onClick={() => setMode('register')}
+            >
+              Sign up
             </button>
           </div>
 
@@ -74,7 +74,7 @@ const AuthPage = ({ onAuthenticated }: AuthPageProps) => {
             </p>
           </div>
 
-          {isRegister ? <RegisterForm /> : <LoginForm onAuthenticated={onAuthenticated} />}
+          {isRegister ? <RegisterForm onSwitchToLogin={() => setMode('login')} /> : <LoginForm onAuthenticated={onAuthenticated} />}
         </section>
       </div>
     </div>

@@ -8,7 +8,12 @@ function App() {
   const [authedUser, setAuthedUser] = useState<User | null>(null);
 
   const handleAuthenticated = (user: User) => {
-    if (user.emailVerified) {
+    const isTrustedProvider = [user.providerId, ...user.providerData.map(p => p?.providerId)]
+      .filter(Boolean)
+      .includes('github.com');
+    const canAccess = user.emailVerified || isTrustedProvider;
+
+    if (canAccess) {
       console.group('AUTHENTICATED USER CONTEXT');
       console.log('UID', user.uid);
       console.log('Display name', user.displayName);
@@ -29,7 +34,15 @@ function App() {
     }
   }, [authedUser]);
 
-  if (authedUser?.emailVerified) {
+  const isDashboardAccessible = Boolean(
+    authedUser &&
+      (authedUser.emailVerified ||
+        [authedUser.providerId, ...authedUser.providerData.map(p => p?.providerId)]
+          .filter(Boolean)
+          .includes('github.com'))
+  );
+
+  if (isDashboardAccessible && authedUser) {
     return <Dashboard user={authedUser} />;
   }
 

@@ -69,6 +69,24 @@
   background: var(--color-error-bg);
 }
 
+.auth-link {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin: 16px 0 0 0;
+}
+
+.auth-link button {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: inherit;
+  font-weight: 600;
+  padding: 0;
+}
+
 .auth-divider {
   position: relative;
   text-align: center;

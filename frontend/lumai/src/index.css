@@ -5,7 +5,6 @@
   line-height: 1.5;
   font-weight: 400;
   color: var(--color-gray-900);
-  background-color: var(--color-gray-50);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -22,7 +21,7 @@ body {
   justify-content: center;
   align-items: center;
   padding: 48px 16px;
-  background: var(--gradient-bg);
+  /* background: var(--gradient-bg); */
 }
 
 #root {

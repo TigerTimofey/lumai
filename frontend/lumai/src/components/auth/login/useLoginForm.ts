@@ -96,9 +96,7 @@ export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn 
       console.groupEnd();
 
       setSuccess('Signed in with GitHub via Firebase. Inspect the console for token details.');
-      if (result.user.emailVerified) {
-        options?.onAuthenticated?.(result.user);
-      }
+      options?.onAuthenticated?.(result.user);
     } catch (err) {
       console.error('GitHub login error:', err);
       setError(err instanceof Error ? err.message : 'We couldn’t complete GitHub sign-in. Please try again.');

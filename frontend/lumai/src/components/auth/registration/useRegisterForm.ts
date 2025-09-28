@@ -4,8 +4,6 @@ import {
   sendEmailVerification,
   signOut,
   updateProfile,
-  GithubAuthProvider,
-  signInWithPopup
 } from 'firebase/auth';
 import { auth } from '../../../config/firebase';
 
@@ -20,6 +18,7 @@ interface UseRegisterFormReturn {
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   loading: boolean;
+  emailLoading: boolean;
   error: string | null;
   success: string | null;
 }
@@ -65,7 +64,7 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
       console.log('Email verification sent to', credential.user.email);
       console.groupEnd();
 
-      setSuccess('Check your inbox and confirm the email address before signing in. See console for token details.');
+      setSuccess('Please check your email and confirm your email address.');
       setFormData({ email: '', password: '', displayName: '' });
 
       await signOut(auth);
@@ -77,5 +76,5 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
     }
   };
 
-  return { formData, handleChange, handleSubmit, loading, error, success };
+  return { formData, handleChange, handleSubmit, loading, emailLoading, error, success };
 };
