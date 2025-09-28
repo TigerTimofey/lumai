@@ -95,48 +95,7 @@ export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn 
       console.log('ID token', idToken);
       console.groupEnd();
 
-      const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      if (backendUrl) {
-        try {
-          const response = await fetch(`${backendUrl}/api/auth/oauth`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              providerId: 'github.com',
-              idToken,
-            }),
-          });
-
-          if (!response.ok) {
-            const data = await response.json().catch(() => null);
-            throw new Error(data?.message ?? 'Backend OAuth exchange failed');
-          }
-
-          const data = await response.json();
-          console.group('BACKEND OAUTH EXCHANGE');
-          console.log('Payload', data);
-          console.groupEnd();
-
-          setSuccess('Signed in with GitHub. Tokens are available in the console.');
-          if (result.user.emailVerified) {
-            options?.onAuthenticated?.(result.user);
-          }
-          return;
-        } catch (backendError) {
-          console.warn('Backend OAuth exchange unsuccessful:', backendError);
-          setSuccess(
-            'Signed in with GitHub via Firebase. Backend exchange unavailable; tokens logged in console.'
-          );
-          if (result.user.emailVerified) {
-            options?.onAuthenticated?.(result.user);
-          }
-          return;
-        }
-      }
-
-      setSuccess('Signed in with GitHub via Firebase. Backend URL not configured; see console for tokens.');
+      setSuccess('Signed in with GitHub via Firebase. Inspect the console for token details.');
       if (result.user.emailVerified) {
         options?.onAuthenticated?.(result.user);
       }
