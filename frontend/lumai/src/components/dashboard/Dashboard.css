@@ -1,0 +1,13 @@
+.dashboard {
+  padding: 64px 24px;
+  text-align: center;
+}
+
+.dashboard-title {
+  font-size: 2rem;
+  margin-bottom: 16px;
+}
+
+.dashboard-welcome {
+  color: var(--color-gray-600);
+}

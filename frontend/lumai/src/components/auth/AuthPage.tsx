@@ -1,9 +1,15 @@
 import { useState } from 'react';
+import type { User } from 'firebase/auth';
+
 import LoginForm from './login/LoginForm';
 import RegisterForm from './registration/RegisterForm';
 import './AuthPage.css';
 
-const AuthPage = () => {
+interface AuthPageProps {
+  onAuthenticated?: (user: User) => void;
+}
+
+const AuthPage = ({ onAuthenticated }: AuthPageProps) => {
   const [mode, setMode] = useState<'register' | 'login'>('register');
 
   const isRegister = mode === 'register';
@@ -46,7 +52,7 @@ const AuthPage = () => {
               aria-selected={isRegister}
               onClick={() => setMode('register')}
             >
-              Create account
+              Sign up
             </button>
             <button
               type="button"
@@ -68,7 +74,7 @@ const AuthPage = () => {
             </p>
           </div>
 
-          {isRegister ? <RegisterForm /> : <LoginForm />}
+          {isRegister ? <RegisterForm /> : <LoginForm onAuthenticated={onAuthenticated} />}
         </section>
       </div>
     </div>

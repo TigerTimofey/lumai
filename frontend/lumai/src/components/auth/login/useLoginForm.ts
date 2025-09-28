@@ -7,6 +7,11 @@ import {
   sendEmailVerification
 } from 'firebase/auth';
 import { auth } from '../../../config/firebase';
+import type { User } from 'firebase/auth';
+
+interface UseLoginFormOptions {
+  onAuthenticated?: (user: User) => void;
+}
 
 interface LoginFormData {
   email: string;
@@ -19,18 +24,23 @@ interface UseLoginFormReturn {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   handleGitHubLogin: () => Promise<void>;
   loading: boolean;
+  emailLoading: boolean;
+  githubLoading: boolean;
   error: string | null;
   success: string | null;
 }
 
-export const useLoginForm = (): UseLoginFormReturn => {
+export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn => {
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
   });
-  const [loading, setLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [githubLoading, setGithubLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const loading = emailLoading || githubLoading;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -39,7 +49,7 @@ export const useLoginForm = (): UseLoginFormReturn => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setEmailLoading(true);
     setError(null);
     setSuccess(null);
 
@@ -61,16 +71,17 @@ export const useLoginForm = (): UseLoginFormReturn => {
       console.groupEnd();
 
       setSuccess('Signed in via Firebase. Inspect the browser console for token details.');
+      options?.onAuthenticated?.(credential.user);
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'We couldn’t sign you in. Please try again.');
     } finally {
-      setLoading(false);
+      setEmailLoading(false);
     }
   };
 
   const handleGitHubLogin = async () => {
-    setLoading(true);
+    setGithubLoading(true);
     setError(null);
     setSuccess(null);
 
@@ -109,24 +120,33 @@ export const useLoginForm = (): UseLoginFormReturn => {
           console.groupEnd();
 
           setSuccess('Signed in with GitHub. Tokens are available in the console.');
+          if (result.user.emailVerified) {
+            options?.onAuthenticated?.(result.user);
+          }
           return;
         } catch (backendError) {
           console.warn('Backend OAuth exchange unsuccessful:', backendError);
           setSuccess(
             'Signed in with GitHub via Firebase. Backend exchange unavailable; tokens logged in console.'
           );
+          if (result.user.emailVerified) {
+            options?.onAuthenticated?.(result.user);
+          }
           return;
         }
       }
 
       setSuccess('Signed in with GitHub via Firebase. Backend URL not configured; see console for tokens.');
+      if (result.user.emailVerified) {
+        options?.onAuthenticated?.(result.user);
+      }
     } catch (err) {
       console.error('GitHub login error:', err);
       setError(err instanceof Error ? err.message : 'We couldn’t complete GitHub sign-in. Please try again.');
     } finally {
-      setLoading(false);
+      setGithubLoading(false);
     }
   };
 
-  return { formData, handleChange, handleSubmit, handleGitHubLogin, loading, error, success };
+  return { formData, handleChange, handleSubmit, handleGitHubLogin, loading, emailLoading, githubLoading, error, success };
 };

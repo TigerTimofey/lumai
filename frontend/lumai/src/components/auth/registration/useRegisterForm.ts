@@ -21,6 +21,8 @@ interface UseRegisterFormReturn {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   handleGitHubLogin: () => Promise<void>;
   loading: boolean;
+  emailLoading: boolean;
+  githubLoading: boolean;
   error: string | null;
   success: string | null;
 }
@@ -31,9 +33,12 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
     password: '',
     displayName: '',
   });
-  const [loading, setLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [githubLoading, setGithubLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const loading = emailLoading || githubLoading;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -42,7 +47,7 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setEmailLoading(true);
     setError(null);
     setSuccess(null);
 
@@ -72,12 +77,12 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
       console.error('Registration error:', err);
       setError(err instanceof Error ? err.message : 'We couldn’t create the account. Please try again.');
     } finally {
-      setLoading(false);
+      setEmailLoading(false);
     }
   };
 
   const handleGitHubLogin = async () => {
-    setLoading(true);
+    setGithubLoading(true);
     setError(null);
     setSuccess(null);
 
@@ -131,9 +136,9 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
       console.error('GitHub login error:', err);
       setError(err instanceof Error ? err.message : 'We couldn’t complete GitHub sign-in. Please try again.');
     } finally {
-      setLoading(false);
+      setGithubLoading(false);
     }
   };
 
-  return { formData, handleChange, handleSubmit, handleGitHubLogin, loading, error, success };
+  return { formData, handleChange, handleSubmit, handleGitHubLogin, loading, emailLoading, githubLoading, error, success };
 };

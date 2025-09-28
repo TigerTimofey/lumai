@@ -2,7 +2,7 @@ import { useRegisterForm } from './useRegisterForm';
 import './RegisterForm.css';
 
 const RegisterForm = () => {
-  const { formData, handleChange, handleSubmit, handleGitHubLogin, loading, error, success } = useRegisterForm();
+  const { formData, handleChange, handleSubmit, handleGitHubLogin, loading, emailLoading, githubLoading, error, success } = useRegisterForm();
 
   return (
     <form className="auth-form" onSubmit={handleSubmit}>
@@ -62,15 +62,15 @@ const RegisterForm = () => {
         />
       </div> */}
 
-      <button className="auth-primary" type="submit" disabled={loading}>
-        {loading ? 'Creating account…' : 'Create account'}
+            <button className="auth-primary" type="submit" disabled={emailLoading}>
+        {emailLoading ? 'Signing up…' : 'Sign up'}
       </button>
 
       <div className="auth-divider">or continue with</div>
 
       <div className="auth-oauth">
-        <button type="button" onClick={handleGitHubLogin} disabled={loading}>
-          {loading ? 'Connecting GitHub…' : 'GitHub'}
+        <button type="button" onClick={handleGitHubLogin} disabled={githubLoading}>
+          {githubLoading ? 'Connecting GitHub…' : 'GitHub'}
         </button>
       </div>
     </form>

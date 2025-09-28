@@ -1,8 +1,16 @@
+import type { User } from 'firebase/auth';
+
 import { useLoginForm } from './useLoginForm';
 import './LoginForm.css';
 
-const LoginForm = () => {
-  const { formData, handleChange, handleSubmit, handleGitHubLogin, loading, error, success } = useLoginForm();
+interface LoginFormProps {
+  onAuthenticated?: (user: User) => void;
+}
+
+const LoginForm = ({ onAuthenticated }: LoginFormProps) => {
+  const { formData, handleChange, handleSubmit, handleGitHubLogin, loading, emailLoading, githubLoading, error, success } = useLoginForm({
+    onAuthenticated,
+  });
 
   return (
     <form className="auth-form" onSubmit={handleSubmit}>
@@ -45,15 +53,15 @@ const LoginForm = () => {
         />
       </div>
 
-      <button className="auth-primary" type="submit" disabled={loading}>
-        {loading ? 'Signing in…' : 'Sign in'}
+      <button className="auth-primary" type="submit" disabled={emailLoading}>
+        {emailLoading ? 'Signing in…' : 'Sign in'}
       </button>
 
       <div className="auth-divider">or continue with</div>
 
       <div className="auth-oauth">
-        <button type="button" onClick={handleGitHubLogin} disabled={loading}>
-          {loading ? 'Connecting GitHub…' : 'GitHub'}
+        <button type="button" onClick={handleGitHubLogin} disabled={githubLoading}>
+          {githubLoading ? 'Connecting GitHub…' : 'GitHub'}
         </button>
       </div>
     </form>
