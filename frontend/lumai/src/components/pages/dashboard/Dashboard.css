@@ -98,24 +98,6 @@
   color: var(--color-gray-500);
 }
 
-.dashboard-cta {
-  padding: 14px 24px;
-  border-radius: 18px;
-  border: none;
-  background: var(--gradient-primary);
-  color: var(--color-white);
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: not-allowed;
-  box-shadow: var(--shadow-button-hover);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.dashboard-cta:enabled:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 20px 50px -35px rgba(67, 56, 202, 0.8);
-}
-
 .dashboard-hero {
   position: relative;
   z-index: 1;
@@ -205,6 +187,17 @@
 
 @media (max-width: 720px) {
 
+  .dashboard-canvas {
+    margin-left: 0;
+    padding: 24px;
+  }
+
+  /* On mobile, the sidebar is off-canvas; never push content */
+  .sidenav + .dashboard-canvas,
+  .sidenav.sidenav-collapsed + .dashboard-canvas {
+    margin-left: 0;
+  }
+
   .dashboard-main {
     padding: 32px 28px;
   }
@@ -213,8 +206,4 @@
     font-size: 2rem;
   }
 }
-@media screen and (min-width: 300px) {
-    .dashboard-main {
-      padding: 40px
-    }
-}
+/* Optional: remove small-screen override that forced extra padding */

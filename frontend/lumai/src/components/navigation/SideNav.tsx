@@ -54,6 +54,7 @@ const SideNav: React.FC<SideNavProps> = ({ activeKey, onNavigate, collapsed = fa
     if (typeof window === 'undefined') return collapsed;
     return collapsed || window.innerWidth <= MOBILE_BP;
   });
+  const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth <= MOBILE_BP);
@@ -63,8 +64,22 @@ const SideNav: React.FC<SideNavProps> = ({ activeKey, onNavigate, collapsed = fa
   }, []);
 
   useEffect(() => {
-    if (isMobile) setIsCollapsed(true);
+    if (isMobile) {
+      setIsCollapsed(true);
+      setMobileOpen(false);
+    }
   }, [isMobile]);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (!isMobile) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = mobileOpen ? 'hidden' : original;
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [isMobile, mobileOpen]);
   const currentActive = activeKey ?? deriveActiveKeyFromLocation();
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, key: NavKey, path: string) => {
@@ -83,26 +98,57 @@ const SideNav: React.FC<SideNavProps> = ({ activeKey, onNavigate, collapsed = fa
 
     if (onNavigate) {
       onNavigate(key, path);
-      if (isMobile) setIsCollapsed(true);
+      if (isMobile) {
+        setIsCollapsed(true);
+        setMobileOpen(false);
+      }
       return;
     }
     // Default navigation: push history and emit popstate so app can react if needed
     window.history.pushState({}, '', path);
     window.dispatchEvent(new PopStateEvent('popstate'));
-    if (isMobile) setIsCollapsed(true);
+    if (isMobile) {
+      setIsCollapsed(true);
+      setMobileOpen(false);
+    }
   };
 
   return (
-    <nav className={`sidenav ${isCollapsed ? 'sidenav-collapsed' : ''}`} aria-label="Primary">
+    <>
+      {isMobile && !mobileOpen && (
+        <button
+          type="button"
+          className="sidenav-fab"
+          aria-label="Open menu"
+          aria-controls="primary-sidenav"
+          aria-expanded={mobileOpen}
+          onClick={() => setMobileOpen(true)}
+        >
+          <img src={rightIcon} alt="" aria-hidden="true" />
+        </button>
+      )}
+      {isMobile && mobileOpen && (
+        <button
+          type="button"
+          className="sidenav-overlay"
+          aria-label="Close menu"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+      <nav
+        id="primary-sidenav"
+        className={`sidenav ${ (isMobile ? !mobileOpen : isCollapsed) ? 'sidenav-collapsed' : '' } ${isMobile && mobileOpen ? 'is-open' : ''}`}
+        aria-label="Primary"
+      >
       <div className="sidenav-header">
         <span className="sidenav-brand">Lumai</span>
         <button
           type="button"
           className="sidenav-toggle"
           aria-label={isCollapsed ? 'Expand menu' : 'Collapse menu'}
-          onClick={() => setIsCollapsed((v) => !v)}
+          onClick={() => (isMobile ? setMobileOpen((v) => !v) : setIsCollapsed((v) => !v))}
         >
-          <img src={isCollapsed ? rightIcon : leftIcon} alt="" aria-hidden="true" />
+          <img src={isMobile ? (mobileOpen ? leftIcon : rightIcon) : (isCollapsed ? rightIcon : leftIcon)} alt="" aria-hidden="true" />
         </button>
       </div>
       <ul className="sidenav-list">
@@ -119,7 +165,8 @@ const SideNav: React.FC<SideNavProps> = ({ activeKey, onNavigate, collapsed = fa
           </li>
         ))}
       </ul>
-    </nav>
+      </nav>
+    </>
   );
 };
 

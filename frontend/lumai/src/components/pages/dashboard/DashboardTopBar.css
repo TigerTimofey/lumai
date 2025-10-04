@@ -1,0 +1,68 @@
+.dashboard-topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--color-gray-200);
+  background: var(--color-white);
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: not-allowed;
+}
+
+.icon-button img {
+  width: 20px;
+  height: 20px;
+  filter: brightness(0.3);
+}
+
+.topbar-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 8px;
+  padding-left: 12px;
+  border-left: 1px solid var(--color-gray-200);
+}
+
+.topbar-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-secondary);
+  color: var(--color-primary-dark);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar-username {
+  color: var(--color-gray-600);
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .dashboard-topbar {
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .topbar-actions {
+    justify-content: flex-end;
+  }
+}

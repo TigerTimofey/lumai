@@ -27,9 +27,6 @@ const Dashboard = ({ user }: DashboardProps) => {
                 <p className="dashboard-welcome">Welcome back, {displayName}.</p>
               </div>
 
-              <button type="button" className="dashboard-cta" disabled>
-                Upload File
-              </button>
             </header>
 
             <section className="dashboard-hero" aria-labelledby="dashboard-hero-heading">
