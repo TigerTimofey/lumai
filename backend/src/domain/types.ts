@@ -6,6 +6,7 @@ export interface UserDocument {
   emailVerified: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  lastActivityAt?: Timestamp;
   profileVersionId?: string | null;
   privacy: {
     profileVisibility: string;

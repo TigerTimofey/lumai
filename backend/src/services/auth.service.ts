@@ -9,7 +9,6 @@ import {
   setUserMfa,
   updateUserDocument
 } from "../repositories/user.repo.js";
-import { setConsents } from "../repositories/consent.repo.js";
 import { privacyPreferencesSchema } from "../domain/validation.js";
 import { badRequest, forbidden, internalError } from "../utils/api-error.js";
 
@@ -72,16 +71,6 @@ const ensureUserBootstrap = async (
     }
   });
 
-  await setConsents(uid, {
-    agreements: {},
-    sharingPreferences: {
-      shareWithCoaches: defaultPrivacy.shareWithCoaches,
-      shareWithResearch: defaultPrivacy.shareWithResearch
-    },
-    notifications: defaultPrivacy.emailNotifications,
-    auditTrail: []
-  });
-
   return getUserById(uid);
 };
 
@@ -111,16 +100,6 @@ export const registerUser = async ({ email, password, displayName }: RegisterInp
       mfa: {
         enabled: false
       }
-    });
-
-    await setConsents(userRecord.uid, {
-      agreements: {},
-      sharingPreferences: {
-        shareWithCoaches: defaultPrivacy.shareWithCoaches,
-        shareWithResearch: defaultPrivacy.shareWithResearch
-      },
-      notifications: defaultPrivacy.emailNotifications,
-      auditTrail: []
     });
 
     const verificationLink = await auth.generateEmailVerificationLink(email);
@@ -206,14 +185,17 @@ export const loginWithOAuth = async (
       requestPayload
     );
 
-    const emailVerified = Boolean(data.emailVerified ?? data.verifiedEmail ?? true);
-    if (!emailVerified) {
-      throw forbidden("Email not verified for this provider account.");
-    }
+    const emailVerified = Boolean(data.emailVerified ?? data.verifiedEmail ?? false);
 
-    const bootstrapEmail = data.email ?? (await getUserById(data.localId))?.email ?? "";
+    // Try to resolve an email for the profile; if unavailable, proceed with empty string
+    let bootstrapEmail = data.email ?? (await getUserById(data.localId))?.email ?? "";
     if (!bootstrapEmail) {
-      throw internalError("Unable to resolve OAuth user email");
+      try {
+        const userRecord = await firebaseAuth().getUser(data.localId);
+        bootstrapEmail = userRecord.email ?? "";
+      } catch {
+        // ignore, proceed without email
+      }
     }
 
     const user = await ensureUserBootstrap(data.localId, bootstrapEmail, emailVerified);

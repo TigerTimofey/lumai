@@ -114,6 +114,12 @@
   border-color: var(--color-primary);
 }
 
+.auth-oauth button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .auth-status {
   padding: 12px 16px;
   border-radius: 12px;

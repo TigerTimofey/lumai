@@ -63,3 +63,15 @@ Protected routes require `Authorization: Bearer <Firebase ID token>` header.
 - Enable Firebase Storage and revisit export functionality in a future phase.
 - Provide actual email delivery (SMTP or transactional service) for verification/reset links.
 - Add automated tests once business logic stabilizes.
+
+## Manual Verification Checklist
+- Email verification link issued on register: POST /api/auth/register and inspect `verificationLink`.
+- Password reset link issued: POST /api/auth/password-reset with { email }.
+- OAuth sign-in works for `google.com` and `github.com`: POST /api/auth/oauth with provider tokens.
+- 2FA lifecycle:
+   1) Enroll secret: POST /api/auth/mfa/enroll with ID token.
+   2) Activate: POST /api/auth/mfa/activate with one-time code.
+   3) Login requires valid MFA code when enabled.
+   4) Disable via POST /api/auth/mfa/disable.
+- Refresh token exchange: POST /api/auth/refresh with valid refresh token returns new idToken.
+- Protected route requires valid/active token and (if configured) recent auth_time within SESSION_IDLE_MINUTES.

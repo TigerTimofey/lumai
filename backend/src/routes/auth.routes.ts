@@ -137,4 +137,17 @@ router.post("/mfa/disable", authContext, async (req, res, next) => {
   }
 });
 
+// Simple protected endpoint to verify token and return user context
+router.get("/whoami", authContext, async (req, res) => {
+  const token = req.authToken;
+  const user = req.authUser;
+  return res.json({
+    uid: token?.uid,
+    email: user?.email,
+    emailVerified: user?.emailVerified,
+    mfa: user?.mfa ?? { enabled: false },
+    lastActivityAt: user?.lastActivityAt ?? null
+  });
+});
+
 export default router;

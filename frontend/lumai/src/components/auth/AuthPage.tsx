@@ -11,6 +11,7 @@ interface AuthPageProps {
 
 const AuthPage = ({ onAuthenticated }: AuthPageProps) => {
   const [mode, setMode] = useState<'register' | 'login'>('login');
+  const [loginResetActive, setLoginResetActive] = useState(false);
 
   const isRegister = mode === 'register';
 
@@ -48,9 +49,12 @@ const AuthPage = ({ onAuthenticated }: AuthPageProps) => {
             <button
               type="button"
               role="tab"
-              className={`auth-tab ${!isRegister ? 'active' : ''}`}
-              aria-selected={!isRegister}
-              onClick={() => setMode('login')}
+              className={`auth-tab ${!isRegister && !loginResetActive ? 'active' : ''}`}
+              aria-selected={!isRegister && !loginResetActive}
+              onClick={() => {
+                setLoginResetActive(false);
+                setMode('login');
+              }}
             >
               Sign in
             </button>
@@ -59,7 +63,10 @@ const AuthPage = ({ onAuthenticated }: AuthPageProps) => {
               role="tab"
               className={`auth-tab ${isRegister ? 'active' : ''}`}
               aria-selected={isRegister}
-              onClick={() => setMode('register')}
+              onClick={() => {
+                setLoginResetActive(false);
+                setMode('register');
+              }}
             >
               Sign up
             </button>
@@ -68,18 +75,30 @@ const AuthPage = ({ onAuthenticated }: AuthPageProps) => {
           <div className="auth-content">
             <div key={mode} className="auth-pane">
               <div>
-                <h2>{isRegister ? 'Welcome to Lumai' : 'Great to see you again'}</h2>
+                <h2>
+                  {isRegister
+                    ? 'Welcome to Lumai'
+                    : loginResetActive
+                      ? 'Reset your password'
+                      : 'Great to see you again'}
+                </h2>
                 <p className="auth-card-subtitle">
                   {isRegister
                     ? 'Set up your profile, confirm your email, and start receiving tailored guidance in minutes.'
-                    : 'Use your account credentials or sign in with GitHub to continue where you left off.'}
+                    : loginResetActive
+                      ? 'Enter your account email and we’ll send you a secure password reset link.'
+                      : 'Use your account credentials or sign in with GitHub or Google to continue where you left off.'}
                 </p>
               </div>
 
               {isRegister ? (
                 <RegisterForm onSwitchToLogin={() => setMode('login')} />
               ) : (
-                <LoginForm onAuthenticated={onAuthenticated} />
+                <LoginForm
+                  onAuthenticated={onAuthenticated}
+                  onResetModeChange={setLoginResetActive}
+                  resetActive={loginResetActive}
+                />
               )}
             </div>
           </div>
