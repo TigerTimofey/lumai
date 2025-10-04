@@ -1,30 +1,29 @@
 .dashboard-shell {
   display: flex;
   min-height: 100vh;
-  background: radial-gradient(circle at -10% 20%, rgba(99, 102, 241, 0.25), transparent 55%),
-    radial-gradient(circle at 85% 0%, rgba(56, 189, 248, 0.2), transparent 45%),
-    var(--gradient-bg);
 }
 
 .dashboard-canvas {
   flex: 1;
   margin-left: 170px;
-  padding: 48px 48px 56px 88px;
   display: flex;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.65), rgba(248, 250, 252, 0.9));
+  transition: margin-left 0.2s ease;
+}
+
+.sidenav.sidenav-collapsed + .dashboard-canvas {
+  margin-left: 50px;
 }
 
 .dashboard-main {
   width: 100%;
-  max-width: 1320px;
   background: var(--color-white);
-  border-radius: 48px 0 0 48px;
+  border-radius: 5px;
   box-shadow: 0 65px 140px -90px rgba(15, 23, 42, 0.6);
   padding: 52px 56px 64px;
-  display: flex;
-  flex-direction: column;
-  gap: 36px;
+  display: grid;
+  grid-template-columns: 1fr minmax(260px, 360px);
+  gap: 36px 28px;
   min-height: calc(100vh - 112px);
   position: relative;
   overflow: hidden;
@@ -46,6 +45,36 @@
   gap: 24px;
   position: relative;
   z-index: 1;
+}
+
+.dashboard-left {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.dashboard-right {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-widget {
+  background: var(--color-gray-50);
+  border: 1px solid var(--color-gray-200);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.dashboard-widget-title {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: var(--color-gray-600);
+}
+
+.dashboard-widget-body {
+  color: var(--color-gray-500);
+  font-size: 0.95rem;
 }
 
 .dashboard-subtitle {
@@ -155,13 +184,12 @@
 }
 
 @media (max-width: 1024px) {
-  .dashboard-canvas {
-    padding: 32px;
-  }
+
 
   .dashboard-main {
     border-radius: 40px;
     padding: 40px;
+    grid-template-columns: 1fr;
   }
 
   .dashboard-hero {
@@ -176,10 +204,6 @@
 }
 
 @media (max-width: 720px) {
-  .dashboard-canvas {
-    margin-left: 50px;
-    padding: 24px;
-  }
 
   .dashboard-main {
     padding: 32px 28px;
@@ -188,4 +212,9 @@
   .dashboard-title {
     font-size: 2rem;
   }
+}
+@media screen and (min-width: 300px) {
+    .dashboard-main {
+      padding: 40px
+    }
 }

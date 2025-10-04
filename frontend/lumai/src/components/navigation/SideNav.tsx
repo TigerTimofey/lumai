@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import './SideNav.css';
+import { signOut } from 'firebase/auth';
+import { auth } from '../../config/firebase';
 import dashboardIcon from '../../assets/icons/dashboard.svg';
 import profileIcon from '../../assets/icons/profile.svg';
 import analyticsIcon from '../../assets/icons/analytics.svg';
 import progressIcon from '../../assets/icons/progress.svg';
 import insightsIcon from '../../assets/icons/insights.svg';
 import settingsIcon from '../../assets/icons/settings.svg';
+import logoutIcon from '../../assets/icons/logout.svg';
 import leftIcon from '../../assets/icons/left.svg';
 import rightIcon from '../../assets/icons/right.svg';
 
-export type NavKey = 'dashboard' | 'profile' | 'analytics' | 'progress' | 'ai-insights' | 'settings';
+export type NavKey = 'dashboard' | 'profile' | 'analytics' | 'progress' | 'ai-insights' | 'settings' | 'logout';
 
 export interface SideNavProps {
   activeKey?: NavKey;
@@ -23,7 +26,8 @@ const NAV_ITEMS: { key: NavKey; label: string; path: string }[] = [
   { key: 'analytics', label: 'Analytics', path: '/analytics' },
   { key: 'progress', label: 'Progress', path: '/progress' },
   { key: 'ai-insights', label: 'AI Insights', path: '/ai-insights' },
-  { key: 'settings', label: 'Settings', path: '/settings' }
+  { key: 'settings', label: 'Settings', path: '/settings' },
+  { key: 'logout', label: 'Logout', path: '#logout' }
 ];
 
 const ICONS: Record<NavKey, string> = {
@@ -32,7 +36,8 @@ const ICONS: Record<NavKey, string> = {
   'analytics': analyticsIcon,
   'progress': progressIcon,
   'ai-insights': insightsIcon,
-  'settings': settingsIcon
+  'settings': settingsIcon,
+  'logout': logoutIcon 
 };
 
 function deriveActiveKeyFromLocation(): NavKey | undefined {
@@ -64,6 +69,18 @@ const SideNav: React.FC<SideNavProps> = ({ activeKey, onNavigate, collapsed = fa
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, key: NavKey, path: string) => {
     e.preventDefault();
+
+    // Handle logout explicitly
+    if (key === 'logout') {
+      signOut(auth)
+        .catch(() => void 0)
+        .finally(() => {
+          // Force a full reload to reset any in-memory state
+          window.location.assign('/');
+        });
+      return;
+    }
+
     if (onNavigate) {
       onNavigate(key, path);
       if (isMobile) setIsCollapsed(true);

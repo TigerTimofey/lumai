@@ -18,9 +18,10 @@ body {
   align-items: center;
   /* padding: 48px 16px; */
   /* background: var(--gradient-bg); */
+    background: radial-gradient(circle at -10% 20%, rgba(167, 168, 236, 0.25), transparent 55%),
+    var(--gradient-bg);
 }
 
 #root {
   width: 100%;
-  max-width: 1200px;
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
 
 import AuthPage from './components/auth/AuthPage';
-import Dashboard from './components/dashboard/Dashboard';
+import Dashboard from './components/pages/dashboard/Dashboard';
 
 function App() {
   const [authedUser, setAuthedUser] = useState<User | null>(null);

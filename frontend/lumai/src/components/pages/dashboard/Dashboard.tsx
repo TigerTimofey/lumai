@@ -19,37 +19,66 @@ const Dashboard = ({ user }: DashboardProps) => {
       <SideNav activeKey="dashboard" />
       <div className="dashboard-canvas">
         <main className="dashboard-main" role="main">
-          <header className="dashboard-header">
-            <div>
-              <p className="dashboard-subtitle">Overview · {formattedDate}</p>
-              <h1 className="dashboard-title">Dashboard</h1>
-              <p className="dashboard-welcome">Welcome back, {displayName}.</p>
-            </div>
+          <div className="dashboard-left">
+            <header className="dashboard-header">
+              <div>
+                <p className="dashboard-subtitle">Overview · {formattedDate}</p>
+                <h1 className="dashboard-title">Dashboard</h1>
+                <p className="dashboard-welcome">Welcome back, {displayName}.</p>
+              </div>
 
-            <button type="button" className="dashboard-cta" disabled>
-              Upload File
-            </button>
-          </header>
-
-          <section className="dashboard-hero" aria-labelledby="dashboard-hero-heading">
-            <div className="dashboard-hero-text">
-              <h2 id="dashboard-hero-heading">Complete your health profile</h2>
-              <p>
-                Share a few more details about your habits and goals to unlock personalized insights powered by
-                Lumai AI.
-              </p>
-              <button type="button" className="dashboard-hero-action" disabled>
-                Finish profile setup
+              <button type="button" className="dashboard-cta" disabled>
+                Upload File
               </button>
-            </div>
-            <div className="dashboard-hero-art" aria-hidden="true" />
-          </section>
+            </header>
 
-          <section className="dashboard-placeholder" aria-live="polite">
-            <p className="dashboard-placeholder-text">
-              Your personalized wellness insights will appear here once you complete your profile.
-            </p>
-          </section>
+            <section className="dashboard-hero" aria-labelledby="dashboard-hero-heading">
+              <div className="dashboard-hero-text">
+                <h2 id="dashboard-hero-heading">Complete your health profile</h2>
+                <p>
+                  Share a few more details about your habits and goals to unlock personalized insights powered by
+                  Lumai AI.
+                </p>
+                <button type="button" className="dashboard-hero-action" disabled>
+                  Finish profile setup
+                </button>
+              </div>
+              <div className="dashboard-hero-art" aria-hidden="true" />
+            </section>
+
+            <section className="dashboard-placeholder" aria-live="polite">
+              <p className="dashboard-placeholder-text">
+                Your personalized wellness insights will appear here once you complete your profile.
+              </p>
+            </section>
+          </div>
+
+          <aside className="dashboard-right" aria-label="Secondary widgets">
+            <div className="dashboard-widget">
+              <h3 className="dashboard-widget-title">Calendar</h3>
+              <div className="dashboard-widget-body">
+                <p>Coming soon</p>
+              </div>
+            </div>
+            <div className="dashboard-widget">
+              <h3 className="dashboard-widget-title">Streak day</h3>
+              <div className="dashboard-widget-body">
+                <p>Coming soon</p>
+              </div>
+            </div>
+            <div className="dashboard-widget">
+              <h3 className="dashboard-widget-title">Today Tasks</h3>
+              <div className="dashboard-widget-body">
+                <p>Coming soon</p>
+              </div>
+            </div>
+                    <div className="dashboard-widget">
+              <h3 className="dashboard-widget-title">Tips</h3>
+              <div className="dashboard-widget-body">
+                <p>Profile filled?</p>
+              </div>
+              </div>
+          </aside>
         </main>
       </div>
     </div>
