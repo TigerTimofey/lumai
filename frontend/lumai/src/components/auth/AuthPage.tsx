@@ -65,16 +65,24 @@ const AuthPage = ({ onAuthenticated }: AuthPageProps) => {
             </button>
           </div>
 
-          <div>
-            <h2>{isRegister ? 'Welcome to Lumai' : 'Great to see you again'}</h2>
-            <p className="auth-card-subtitle">
-              {isRegister
-                ? 'Set up your profile, confirm your email, and start receiving tailored guidance in minutes.'
-                : 'Use your account credentials or sign in with GitHub to continue where you left off.'}
-            </p>
-          </div>
+          <div className="auth-content">
+            <div key={mode} className="auth-pane">
+              <div>
+                <h2>{isRegister ? 'Welcome to Lumai' : 'Great to see you again'}</h2>
+                <p className="auth-card-subtitle">
+                  {isRegister
+                    ? 'Set up your profile, confirm your email, and start receiving tailored guidance in minutes.'
+                    : 'Use your account credentials or sign in with GitHub to continue where you left off.'}
+                </p>
+              </div>
 
-          {isRegister ? <RegisterForm onSwitchToLogin={() => setMode('login')} /> : <LoginForm onAuthenticated={onAuthenticated} />}
+              {isRegister ? (
+                <RegisterForm onSwitchToLogin={() => setMode('login')} />
+              ) : (
+                <LoginForm onAuthenticated={onAuthenticated} />
+              )}
+            </div>
+          </div>
         </section>
       </div>
     </div>

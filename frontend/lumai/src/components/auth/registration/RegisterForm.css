@@ -16,6 +16,9 @@
 
 .auth-input {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  display: block;
   padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid var(--color-border);
@@ -41,7 +44,9 @@
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  background-size: 200% 200%;
+  background-position: 0% 50%;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-position 0.35s ease;
   margin-top: 10px;
 }
 
@@ -51,10 +56,15 @@
 }
 
 .auth-primary:not(:disabled):hover {
-  transform: translateY(-1px);
   box-shadow: var(--shadow-button-hover);
+  background-position: 100% 50%;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .auth-primary {
+    transition: none;
+  }
+}
 .auth-status {
   padding: 12px 16px;
   border-radius: 12px;
@@ -131,6 +141,5 @@
 }
 
 .auth-oauth button:hover {
-  transform: translateY(-1px);
   border-color: var(--color-primary);
 }
