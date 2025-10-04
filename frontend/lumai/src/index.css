@@ -5,14 +5,10 @@
   line-height: 1.5;
   font-weight: 400;
   color: var(--color-gray-900);
-  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-* {
-  box-sizing: border-box;
-}
 
 body {
   margin: 0;
@@ -20,7 +16,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 48px 16px;
+  /* padding: 48px 16px; */
   /* background: var(--gradient-bg); */
 }
 
