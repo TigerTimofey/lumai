@@ -1,4 +1,4 @@
-.dashboard-topbar {
+.user-setting-bar {
   grid-column: 1 / -1;
   display: flex;
   justify-content: flex-end;
@@ -58,7 +58,7 @@
 }
 
 @media (max-width: 720px) {
-  .dashboard-topbar {
+  .user-setting-bar {
     justify-content: space-between;
     gap: 12px;
   }

@@ -2,9 +2,9 @@ import React from 'react';
 import insightsIcon from '../../../assets/icons/insights.svg';
 import analyticsIcon from '../../../assets/icons/analytics.svg';
 import settingsIcon from '../../../assets/icons/settings.svg';
-import './DashboardTopBar.css';
+import './userSettingBar.css';
 
-interface DashboardTopBarProps {
+interface UserSettingBarProps {
   name: string;
 }
 
@@ -15,9 +15,9 @@ const getInitials = (name: string) => {
   return (first ?? '').concat(second ?? '').toUpperCase() || 'U';
 };
 
-const DashboardTopBar: React.FC<DashboardTopBarProps> = ({ name }) => {
+const UserSettingBar: React.FC<UserSettingBarProps> = ({ name }) => {
   return (
-    <div className="dashboard-topbar" role="banner">
+    <div className="user-setting-bar" role="banner">
       <div className="topbar-actions">
         <button type="button" className="icon-button" aria-label="Insights" disabled>
           <img src={insightsIcon} alt="" aria-hidden="true" />
@@ -37,4 +37,4 @@ const DashboardTopBar: React.FC<DashboardTopBarProps> = ({ name }) => {
   );
 };
 
-export default DashboardTopBar;
+export default UserSettingBar;

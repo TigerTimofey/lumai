@@ -11,6 +11,7 @@ import settingsIcon from '../../assets/icons/settings.svg';
 import logoutIcon from '../../assets/icons/logout.svg';
 import leftIcon from '../../assets/icons/left.svg';
 import rightIcon from '../../assets/icons/right.svg';
+import logoLumai from '../../assets/icons/logo.svg';
 
 export type NavKey = 'dashboard' | 'profile' | 'analytics' | 'progress' | 'ai-insights' | 'settings' | 'logout';
 
@@ -70,7 +71,6 @@ const SideNav: React.FC<SideNavProps> = ({ activeKey, onNavigate, collapsed = fa
     }
   }, [isMobile]);
 
-  // Lock body scroll when mobile menu is open
   useEffect(() => {
     if (typeof document === 'undefined') return;
     if (!isMobile) return;
@@ -85,12 +85,10 @@ const SideNav: React.FC<SideNavProps> = ({ activeKey, onNavigate, collapsed = fa
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, key: NavKey, path: string) => {
     e.preventDefault();
 
-    // Handle logout explicitly
     if (key === 'logout') {
       signOut(auth)
         .catch(() => void 0)
         .finally(() => {
-          // Force a full reload to reset any in-memory state
           window.location.assign('/');
         });
       return;
@@ -104,7 +102,6 @@ const SideNav: React.FC<SideNavProps> = ({ activeKey, onNavigate, collapsed = fa
       }
       return;
     }
-    // Default navigation: push history and emit popstate so app can react if needed
     window.history.pushState({}, '', path);
     window.dispatchEvent(new PopStateEvent('popstate'));
     if (isMobile) {
@@ -141,7 +138,10 @@ const SideNav: React.FC<SideNavProps> = ({ activeKey, onNavigate, collapsed = fa
         aria-label="Primary"
       >
       <div className="sidenav-header">
-        <span className="sidenav-brand">Lumai</span>
+        <div className="sidenav-branding">
+          <img src={logoLumai} alt="Lumai" className="sidenav-logo" />
+          <span className="sidenav-brand">Lumai</span>
+        </div>
         <button
           type="button"
           className="sidenav-toggle"

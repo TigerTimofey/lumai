@@ -33,6 +33,35 @@
   column-gap: 8px;
 }
 
+.sidenav-branding {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sidenav-logo {
+  width: 24px;
+  height: 24px;
+  display: inline-block;
+}
+
+.sidenav-collapsed .sidenav-brand {
+  display: none;
+}
+
+.sidenav-collapsed .sidenav-branding {
+  justify-content: center;
+}
+
+.sidenav-collapsed .sidenav-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  grid-template-columns: none;
+}
+
 .sidenav-list {
   list-style: none;
   margin: 8px 0 0 0;
@@ -111,9 +140,12 @@
 /* Mobile floating button and overlay */
 @media (max-width: 720px) {
   .sidenav {
-    transform: translateX(-100%);
+    transform: translatey(-100%);
     transition: transform 0.25s ease;
-    width: 220px; /* slightly wider on mobile */
+    width: 220px; 
+    height: 150vh; 
+    max-height: none;
+
   }
 
   .sidenav.sidenav-collapsed {
@@ -123,6 +155,15 @@
   .sidenav.is-open {
     transform: translateX(0);
     z-index: 1001;
+    margin-bottom: 24px;
+  }
+
+
+  .sidenav .sidenav-toggle img {
+    transform: rotate(90deg);
+  }
+  .sidenav.is-open .sidenav-toggle img {
+    transform: rotate(-270deg);
   }
 
   .sidenav-fab {

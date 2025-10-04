@@ -2,6 +2,7 @@ import type { User } from 'firebase/auth';
 
 import SideNav from '../../navigation/SideNav';
 import './Dashboard.css';
+import UserSettingBar from './userSettingBar';
 
 interface DashboardProps {
   user: User;
@@ -19,6 +20,7 @@ const Dashboard = ({ user }: DashboardProps) => {
       <SideNav activeKey="dashboard" />
       <div className="dashboard-canvas">
         <main className="dashboard-main" role="main">
+          <UserSettingBar name={displayName} />
           <div className="dashboard-left">
             <header className="dashboard-header">
               <div>
