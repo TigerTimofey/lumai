@@ -20,3 +20,5 @@ export const notFound = (message = "Not Found") => new ApiError(404, message);
 
 export const internalError = (message = "Internal Server Error", details?: unknown) =>
   new ApiError(500, message, details);
+
+export const tooManyRequests = (message = "Too Many Requests") => new ApiError(429, message);

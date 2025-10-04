@@ -21,7 +21,7 @@ import {
   registerSchema,
   sendVerificationSchema
 } from "../domain/auth.validation.js";
-import { badRequest } from "../utils/api-error.js";
+import { ApiError, badRequest } from "../utils/api-error.js";
 
 const router = Router();
 
@@ -29,18 +29,29 @@ router.post("/register", async (req, res, next) => {
   try {
     const { email, password, displayName } = registerSchema.parse(req.body ?? {});
     const { userRecord, verificationLink } = await registerUser({ email, password, displayName });
-    const authResponse = await loginWithEmailPassword(email, password);
-
-    return res.status(201).json({
-      message: "Registration successful",
-      uid: userRecord.uid,
-      verificationLink,
-      tokens: {
+    // Try to auto-login, but don't fail registration if email isn't verified yet
+    let tokens: { idToken: string; refreshToken: string; expiresIn: string } | null = null;
+    try {
+      const authResponse = await loginWithEmailPassword(email, password);
+      tokens = {
         idToken: authResponse.idToken,
         refreshToken: authResponse.refreshToken,
         expiresIn: authResponse.expiresIn
+      };
+    } catch (err) {
+      // If it's a 403 (unverified email / MFA), proceed without tokens
+      if (!(err instanceof ApiError && err.status === 403)) {
+        throw err;
       }
-    });
+    }
+
+    const body: any = {
+      message: "Registration successful",
+      uid: userRecord.uid,
+      verificationLink
+    };
+    if (tokens) body.tokens = tokens;
+    return res.status(201).json(body);
   } catch (error) {
     return next(error);
   }

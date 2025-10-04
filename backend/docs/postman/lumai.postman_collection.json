@@ -1,0 +1,248 @@
+{
+  "info": {
+    "name": "Lumai Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth - Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","auth","register"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"displayName\": \"{{displayName}}\"\n}"
+        }
+      },
+      "response": [],
+      "event": [
+        { 
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
+              "const json = pm.response.json();",
+              "pm.environment.set('uid', json.uid);",
+                "if (json.tokens) { pm.environment.set('idToken', json.tokens.idToken || json.tokens.id_token || ''); }",
+                "if (json.tokens) { pm.environment.set('refreshToken', json.tokens.refreshToken || json.tokens.refresh_token || ''); }",
+              "if (json.verificationLink) { pm.environment.set('verificationLink', json.verificationLink); }",
+              "pm.test('Has verification link', function () { pm.expect(json.verificationLink).to.be.a('string'); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth - OAuth (provider token exchange)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/oauth",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","auth","oauth"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"providerId\": \"{{oauthProviderId}}\",\n  \"idToken\": \"{{oauthIdToken}}\",\n  \"accessToken\": \"{{oauthAccessToken}}\",\n  \"mfaCode\": \"{{mfaCode}}\"\n}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.environment.set('idToken', json.idToken || json.id_token || '');",
+              "pm.environment.set('refreshToken', json.refreshToken || json.refresh_token || '');",
+              "if (json.user && json.user.localId) { pm.environment.set('uid', json.user.localId); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth - Password reset (generate link)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/password-reset",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","auth","password-reset"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{email}}\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Auth - Send verification link",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/send-verification",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","auth","send-verification"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{email}}\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Auth - Login (email/password)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","auth","login"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Auth - Refresh",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/refresh",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","auth","refresh"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.environment.set('idToken', json.idToken || json.id_token || '');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth - WhoAmI (protected)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{idToken}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/whoami",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","auth","whoami"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "MFA - Enroll",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{idToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/mfa/enroll",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","auth","mfa","enroll"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"label\": \"Lumai 2FA (local)\"\n}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "if (json.base32) { pm.environment.set('mfaBase32', json.base32); }",
+              "if (json.otpauthUrl || json.otpauthURL) { pm.environment.set('mfaOtpAuthUrl', json.otpauthUrl || json.otpauthURL); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "MFA - Activate",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{idToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/mfa/activate",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","auth","mfa","activate"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"code\": \"{{mfaCode}}\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "MFA - Disable",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{idToken}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/mfa/disable",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","auth","mfa","disable"]
+        }
+      },
+      "response": []
+    }
+  ]
+}

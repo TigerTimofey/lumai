@@ -10,6 +10,9 @@ const envSchema = z.object({
     .min(1, "FIREBASE_SERVICE_ACCOUNT_KEY is required"),
   WEB_API_KEY: z.string().min(1, "WEB_API_KEY is required"),
   ANONYMIZATION_SALT: z.string().min(1).default("development"),
+  ALLOW_UNVERIFIED_LOGIN: z
+    .preprocess((v) => (typeof v === "string" ? v === "true" : false), z.boolean())
+    .default(false),
   SESSION_IDLE_MINUTES: z
     .string()
     .optional()

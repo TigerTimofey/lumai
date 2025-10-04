@@ -10,7 +10,7 @@ import {
   updateUserDocument
 } from "../repositories/user.repo.js";
 import { privacyPreferencesSchema } from "../domain/validation.js";
-import { badRequest, forbidden, internalError } from "../utils/api-error.js";
+import { ApiError, badRequest, forbidden, internalError, tooManyRequests } from "../utils/api-error.js";
 
 const IDENTITY_BASE = "https://identitytoolkit.googleapis.com/v1";
 const SECURE_TOKEN_BASE = "https://securetoken.googleapis.com/v1";
@@ -132,14 +132,17 @@ export const loginWithEmailPassword = async (
       }
     );
 
-    if (!data.emailVerified) {
+    // Authoritative verification check via Admin SDK (avoids stale flags from IdP response)
+    const adminUser = await firebaseAuth().getUser(data.localId);
+    const isVerified = adminUser.emailVerified || Boolean(data.emailVerified);
+    if (!isVerified && !env.ALLOW_UNVERIFIED_LOGIN) {
       throw forbidden("Email not verified. Please confirm your account before logging in.");
     }
 
     const user = await ensureUserBootstrap(
       data.localId,
-      data.email ?? email,
-      Boolean(data.emailVerified)
+      adminUser.email ?? data.email ?? email,
+      adminUser.emailVerified
     );
     if (user?.mfa?.enabled) {
       ensureMfa(mfaCode, user.mfa.secret ?? undefined);
@@ -157,7 +160,10 @@ export const loginWithEmailPassword = async (
       const message = error.response?.data?.error?.message ?? "Login failed";
       throw badRequest(message);
     }
-
+    // Preserve explicit ApiError statuses (e.g., 403 Forbidden when email not verified or MFA issues)
+    if (error instanceof ApiError) {
+      throw error;
+    }
     throw internalError("Login failed", error);
   }
 };
@@ -185,18 +191,17 @@ export const loginWithOAuth = async (
       requestPayload
     );
 
-    const emailVerified = Boolean(data.emailVerified ?? data.verifiedEmail ?? false);
+    // Prefer Admin SDK when available for verified flag
+    let adminRecord: import("firebase-admin/auth").UserRecord | undefined;
+    try {
+      adminRecord = await firebaseAuth().getUser(data.localId);
+    } catch {
+      // ignore if not found yet
+    }
+    const emailVerified = adminRecord?.emailVerified ?? Boolean(data.emailVerified ?? data.verifiedEmail ?? false);
 
     // Try to resolve an email for the profile; if unavailable, proceed with empty string
-    let bootstrapEmail = data.email ?? (await getUserById(data.localId))?.email ?? "";
-    if (!bootstrapEmail) {
-      try {
-        const userRecord = await firebaseAuth().getUser(data.localId);
-        bootstrapEmail = userRecord.email ?? "";
-      } catch {
-        // ignore, proceed without email
-      }
-    }
+    let bootstrapEmail = data.email ?? (await getUserById(data.localId))?.email ?? adminRecord?.email ?? "";
 
     const user = await ensureUserBootstrap(data.localId, bootstrapEmail, emailVerified);
     if (user?.mfa?.enabled) {
@@ -219,7 +224,9 @@ export const loginWithOAuth = async (
       const message = error.response?.data?.error?.message ?? "OAuth login failed";
       throw badRequest(message);
     }
-
+    if (error instanceof ApiError) {
+      throw error;
+    }
     throw internalError("OAuth login failed", error);
   }
 };
@@ -257,7 +264,11 @@ export const sendVerificationEmail = async (email: string) => {
     return { link };
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
-      throw badRequest(error.response?.data?.error?.message ?? "Не удалось создать ссылку");
+      const rawMessage = error.response?.data?.error?.message;
+      if (rawMessage === "TOO_MANY_ATTEMPTS_TRY_LATER") {
+        throw tooManyRequests("Слишком много попыток. Попробуйте позже.");
+      }
+      throw badRequest(rawMessage ?? "Не удалось создать ссылку");
     }
 
     throw internalError("Не удалось создать ссылку верификации", error);
@@ -271,7 +282,11 @@ export const sendPasswordResetEmail = async (email: string) => {
     return { link };
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
-      throw badRequest(error.response?.data?.error?.message ?? "Не удалось создать ссылку");
+      const rawMessage = error.response?.data?.error?.message;
+      if (rawMessage === "TOO_MANY_ATTEMPTS_TRY_LATER") {
+        throw tooManyRequests("Слишком много попыток. Попробуйте позже.");
+      }
+      throw badRequest(rawMessage ?? "Не удалось создать ссылку");
     }
 
     throw internalError("Не удалось создать ссылку сброса пароля", error);
