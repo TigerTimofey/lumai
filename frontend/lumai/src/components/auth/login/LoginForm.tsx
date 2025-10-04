@@ -2,6 +2,8 @@ import React from 'react';
 import type { User } from 'firebase/auth';
 import { useLoginForm } from './useLoginForm';
 import AuthStatus from '../../shared/AuthStatus';
+import githubIcon from '../../../assets/icons/github.svg'
+import googleIcon from '../../../assets/icons/google.svg'
 import './LoginForm.css';
 
 interface LoginFormProps {
@@ -106,22 +108,26 @@ const LoginForm = ({ onAuthenticated, onResetModeChange, resetActive }: LoginFor
       <div className="auth-divider">or continue with</div>
 
       <div className="auth-oauth">
-        <button type="button" onClick={handleGitHubLogin} disabled={githubLoading || isResetMode}>
-          {githubLoading ? 'Connecting GitHub…' : 'GitHub'}
+        <button type="button" onClick={handleGitHubLogin} disabled={githubLoading || isResetMode} aria-label="Sign in with GitHub">
+          {githubLoading ? 'Connecting GitHub…' : (
+            <img src={githubIcon} alt="GitHub" />
+          )}
         </button>
-        <button type="button" onClick={handleGoogleLogin} disabled={googleLoading || isResetMode}>
-          {googleLoading ? 'Connecting Google…' : 'Google'}
+        <button type="button" onClick={handleGoogleLogin} disabled={googleLoading || isResetMode} aria-label="Sign in with Google">
+          {googleLoading ? 'Connecting Google…' : (
+            <img src={googleIcon} alt="Google" />
+          )}
         </button>
-        {!isResetMode && (
-          <button
-            type="button"
-            onClick={() => setIsResetMode(true)}
-            disabled={loading}
-          >
-            Forgot password?
-          </button>
-        )}
       </div>
+
+      {!isResetMode && (
+        <p className="auth-link" style={{ marginTop: 8 }}>
+          Forgot your password?{' '}
+          <button type="button" onClick={() => setIsResetMode(true)} disabled={loading}>
+            Reset it
+          </button>
+        </p>
+      )}
     </form>
   );
 };

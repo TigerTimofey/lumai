@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
+import { onAuthStateChanged, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { auth } from './config/firebase';
 
 import AuthPage from './components/auth/AuthPage';
 import Dashboard from './components/pages/dashboard/Dashboard';
 
 function App() {
   const [authedUser, setAuthedUser] = useState<User | null>(null);
+  const [initializing, setInitializing] = useState(true);
 
   const handleAuthenticated = (user: User) => {
     const isTrustedProvider = [user.providerId, ...user.providerData.map(p => p?.providerId)]
@@ -28,11 +31,39 @@ function App() {
     }
   };
 
+  // Persist session locally and restore user on refresh without logging out
   useEffect(() => {
-    if (!authedUser && window.location.pathname !== '/') {
-      window.history.replaceState({}, '', '/');
-    }
-  }, [authedUser]);
+    void setPersistence(auth, browserLocalPersistence).catch(() => {});
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const isTrustedProvider = [user.providerId, ...user.providerData.map(p => p?.providerId)]
+          .filter(Boolean)
+          .includes('github.com');
+        const canAccess = user.emailVerified || isTrustedProvider;
+
+        if (canAccess) {
+          setAuthedUser(user);
+          if (window.location.pathname !== '/dashboard') {
+            window.history.replaceState({}, '', '/dashboard');
+          }
+        } else {
+          setAuthedUser(null);
+          if (window.location.pathname !== '/') {
+            window.history.replaceState({}, '', '/');
+          }
+        }
+      } else {
+        setAuthedUser(null);
+        if (window.location.pathname !== '/') {
+          window.history.replaceState({}, '', '/');
+        }
+      }
+      setInitializing(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const isDashboardAccessible = Boolean(
     authedUser &&
@@ -42,8 +73,24 @@ function App() {
           .includes('github.com'))
   );
 
-  if (isDashboardAccessible && authedUser) {
+  if (!initializing && isDashboardAccessible && authedUser) {
     return <Dashboard user={authedUser} />;
+  }
+
+  // While Firebase restores session, show a minimal splash to avoid login-page flicker
+  if (initializing) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        width: '100%',
+        color: 'var(--color-primary)'
+      }}>
+          <span style={{ fontWeight: 700, letterSpacing: '-0.02em' }}>Lumai checking credentials...</span>
+      </div>
+    );
   }
 
   return <AuthPage onAuthenticated={handleAuthenticated} />;
