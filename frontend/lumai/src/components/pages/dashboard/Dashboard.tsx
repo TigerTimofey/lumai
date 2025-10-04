@@ -3,7 +3,8 @@ import type { User } from 'firebase/auth';
 import SideNav from '../../navigation/SideNav';
 import './Dashboard.css';
 import UserSettingBar from './userSettingBar';
-import SecurityPanel from './SecurityPanel';
+import TwoFactorWidget from './security/TwoFactorWidget';
+import SessionWidget from './security/SessionWidget';
 
 interface DashboardProps {
   user: User;
@@ -78,7 +79,8 @@ const Dashboard = ({ user }: DashboardProps) => {
                 <p>Profile filled?</p>
               </div>
               </div>
-            <SecurityPanel />
+            <TwoFactorWidget />
+            <SessionWidget />
           </aside>
         </main>
       </div>

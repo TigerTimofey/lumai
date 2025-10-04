@@ -130,10 +130,13 @@
   padding: 12px 20px;
   border-radius: 16px;
   border: none;
-  background: rgba(67, 56, 202, 0.12);
+  background:var(--color-lightly-blue);
   color: var(--color-primary-dark);
   font-weight: 600;
-  cursor: not-allowed;
+  cursor: pointer;
+}
+.dashboard-hero-action:hover {
+  background: var(--color-lightly-blue-hover);
 }
 
 .dashboard-hero-art {

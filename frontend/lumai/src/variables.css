@@ -5,6 +5,8 @@
   --color-primary-light: #2563eb;
   --color-secondary: #eef2ff;
   --color-accent: #ede9fe;
+  --color-lightly-blue: #463acb1f;
+  --color-lightly-blue-hover: #463acb72;
 
   /* Neutral Colors */
   --color-white: #ffffff;
@@ -20,6 +22,7 @@
   --color-success-bg: rgba(219, 234, 254, 0.65);
   --color-error: #b91c1c;
   --color-error-bg: rgba(254, 226, 226, 0.75);
+  --color-enabled: green;
 
   /* UI Colors */
   --color-text-primary: #1f2937;
