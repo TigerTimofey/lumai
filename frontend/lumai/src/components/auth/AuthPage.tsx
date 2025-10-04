@@ -46,6 +46,10 @@ const AuthPage = ({ onAuthenticated }: AuthPageProps) => {
 
         <section className="auth-card">
           <div className="auth-tabs" role="tablist">
+            <div
+              className={`auth-toggle-thumb ${isRegister ? 'right' : 'left'}`}
+              aria-hidden
+            />
             <button
               type="button"
               role="tab"

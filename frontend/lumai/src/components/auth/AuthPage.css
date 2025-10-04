@@ -112,16 +112,17 @@
 }
 
 .auth-tabs {
-  display: flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   background: var(--color-tabs-bg);
   border-radius: 999px;
   padding: 4px;
+  overflow: hidden;
 }
 
 .auth-tab {
-  flex: 1;
   border: none;
-  border-radius: 999px;
   background: transparent;
   padding: 10px 18px;
   font-weight: 600;
@@ -129,13 +130,26 @@
   color: var(--color-primary);
   cursor: pointer;
   transition: all 0.2s ease;
+  z-index: 1;
 }
 
 .auth-tab.active {
-  background: var(--color-primary);
   color: var(--color-gray-50);
-  box-shadow: 0 8px 20px -12px var(--color-primary);
 }
+
+.auth-toggle-thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 50%;
+  background: var(--color-primary);
+  border-radius: 999px;
+  box-shadow: 0 8px 20px -12px var(--color-primary);
+  transition: transform 0.25s ease;
+}
+
+.auth-toggle-thumb.left { transform: translateX(0%); }
+.auth-toggle-thumb.right { transform: translateX(100%); }
 
 .auth-tab:disabled {
   opacity: 0.6;
