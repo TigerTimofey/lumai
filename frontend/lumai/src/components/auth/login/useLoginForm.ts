@@ -35,6 +35,9 @@ interface UseLoginFormReturn {
   googleLoading: boolean;
   error: string | null;
   success: string | null;
+  mfaRequired: boolean;
+  mfaCode: string;
+  handleMfaChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn => {
@@ -47,6 +50,8 @@ export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaCode, setMfaCode] = useState('');
 
   const loading = emailLoading || githubLoading || googleLoading;
 
@@ -127,6 +132,16 @@ export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn 
     setSuccess(null);
 
     try {
+      // Call backend login to enforce email verification and optional MFA
+      const res = await apiFetch<{ uid: string; idToken: string; refreshToken: string; user?: unknown }>(
+        '/auth/login',
+        {
+          method: 'POST',
+          body: JSON.stringify({ email: formData.email, password: formData.password, mfaCode: mfaCode || undefined })
+        }
+      );
+
+      // After server-side checks pass, sign in the Firebase client to establish session in the app
       const credential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
 
       if (!credential.user.emailVerified) {
@@ -136,20 +151,29 @@ export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn 
       }
 
       const idToken = await credential.user.getIdToken();
-
-      console.group('CLIENT LOGIN SUCCESS');
-      console.log('User', credential.user);
-      console.log('ID token', idToken);
-      console.log('Refresh token', credential.user.refreshToken);
+      console.group('LOGIN SUCCESS');
+      console.log('Backend tokens', { idToken: res.idToken, refreshToken: res.refreshToken });
+      console.log('Firebase user', credential.user);
+      console.log('Firebase ID token', idToken);
       console.groupEnd();
 
-  // No client-side Firestore updates
-
-      setSuccess('Signed in via Firebase. Inspect the browser console for token details.');
+      setMfaRequired(false);
+      setMfaCode('');
+      setSuccess('Signed in. 2FA checks passed.');
       options?.onAuthenticated?.(credential.user);
     } catch (err) {
       console.error('Login error:', err);
-      setError(err instanceof Error ? err.message : 'We couldn’t sign you in. Please try again.');
+      const msg = err instanceof Error ? err.message : 'We couldn’t sign you in. Please try again.';
+      // If backend indicates MFA is required, surface the input
+      if (/One-time 2FA code required/i.test(msg) || /2FA code/i.test(msg)) {
+        setMfaRequired(true);
+        setError('Enter the 6-digit 2FA code to continue.');
+      } else if (/Invalid one-time code/i.test(msg)) {
+        setMfaRequired(true);
+        setError('Invalid 2FA code. Please try again.');
+      } else {
+        setError(msg);
+      }
     } finally {
       setEmailLoading(false);
     }
@@ -260,5 +284,7 @@ export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn 
     }
   };
 
-  return { formData, handleChange, handleSubmit, handleGitHubLogin, handleGoogleLogin, handlePasswordReset, loading, emailLoading, githubLoading, googleLoading, error, success };
+  const handleMfaChange = (e: React.ChangeEvent<HTMLInputElement>) => setMfaCode(e.target.value);
+
+  return { formData, handleChange, handleSubmit, handleGitHubLogin, handleGoogleLogin, handlePasswordReset, loading, emailLoading, githubLoading, googleLoading, error, success, mfaRequired, mfaCode, handleMfaChange };
 };

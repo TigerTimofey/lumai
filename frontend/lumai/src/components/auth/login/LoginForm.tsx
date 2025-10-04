@@ -13,7 +13,7 @@ interface LoginFormProps {
 }
 
 const LoginForm = ({ onAuthenticated, onResetModeChange, resetActive }: LoginFormProps) => {
-  const { formData, handleChange, handleSubmit, handleGitHubLogin, handleGoogleLogin, handlePasswordReset, loading, emailLoading, githubLoading, googleLoading, error, success } = useLoginForm({
+  const { formData, handleChange, handleSubmit, handleGitHubLogin, handleGoogleLogin, handlePasswordReset, loading, emailLoading, githubLoading, googleLoading, error, success, mfaRequired, mfaCode, handleMfaChange } = useLoginForm({
     onAuthenticated,
   });
 
@@ -95,6 +95,27 @@ const LoginForm = ({ onAuthenticated, onResetModeChange, resetActive }: LoginFor
             onChange={handleChange}
             placeholder="Enter your password"
             autoComplete="current-password"
+            required
+            disabled={loading}
+          />
+        </div>
+      )}
+
+      {mfaRequired && !isResetMode && (
+        <div className="auth-field">
+          <label className="auth-label" htmlFor="mfaCode">
+            2FA code
+          </label>
+          <input
+            className="auth-input"
+            type="text"
+            id="mfaCode"
+            name="mfaCode"
+            value={mfaCode}
+            onChange={handleMfaChange}
+            placeholder="Enter 6-digit code"
+            inputMode="numeric"
+            pattern="[0-9]*"
             required
             disabled={loading}
           />
