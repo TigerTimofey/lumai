@@ -1,4 +1,6 @@
+import React from 'react';
 import { useRegisterForm } from './useRegisterForm';
+import AuthStatus from '../../shared/AuthStatus';
 import './RegisterForm.css';
 
 interface RegisterFormProps {
@@ -7,11 +9,26 @@ interface RegisterFormProps {
 
 const RegisterForm = ({ onSwitchToLogin }: RegisterFormProps) => {
   const { formData, handleChange, handleSubmit, loading, emailLoading, error, success } = useRegisterForm();
+  const [localError, setLocalError] = React.useState<string | null>(null);
+  const [localSuccess, setLocalSuccess] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setLocalError(error);
+  }, [error]);
+  React.useEffect(() => {
+    setLocalSuccess(success);
+  }, [success]);
 
   return (
     <form className="auth-form" onSubmit={handleSubmit}>
-      {error && <div className="auth-status error">{error}</div>}
-      {success && <div className="auth-status">{success}</div>}
+      <AuthStatus
+        message={localError || localSuccess}
+        type={localError ? 'error' : localSuccess ? 'success' : 'info'}
+        onClose={() => {
+          setLocalError(null);
+          setLocalSuccess(null);
+        }}
+      />
 
       <div className="auth-field">
         <label className="auth-label" htmlFor="email">

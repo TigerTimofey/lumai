@@ -1,6 +1,7 @@
+import React from 'react';
 import type { User } from 'firebase/auth';
-
 import { useLoginForm } from './useLoginForm';
+import AuthStatus from '../../shared/AuthStatus';
 import './LoginForm.css';
 
 interface LoginFormProps {
@@ -12,10 +13,26 @@ const LoginForm = ({ onAuthenticated }: LoginFormProps) => {
     onAuthenticated,
   });
 
+  const [localError, setLocalError] = React.useState<string | null>(null);
+  const [localSuccess, setLocalSuccess] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setLocalError(error);
+  }, [error]);
+  React.useEffect(() => {
+    setLocalSuccess(success);
+  }, [success]);
+
   return (
     <form className="auth-form" onSubmit={handleSubmit}>
-      {error && <div className="auth-status error">{error}</div>}
-      {success && <div className="auth-status">{success}</div>}
+      <AuthStatus
+        message={localError || localSuccess}
+        type={localError ? 'error' : localSuccess ? 'success' : 'info'}
+        onClose={() => {
+          setLocalError(null);
+          setLocalSuccess(null);
+        }}
+      />
 
       <div className="auth-field">
         <label className="auth-label" htmlFor="email">
