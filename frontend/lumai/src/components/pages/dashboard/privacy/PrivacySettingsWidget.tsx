@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../../../../utils/api';
 import ToggleSwitch from '../../../shared/toggle/ToggleSwitch';
+import iconPrivate from '../../../../assets/icons/private.svg';
+import iconConnections from '../../../../assets/icons/connections.svg';
+import iconPublic from '../../../../assets/icons/public.svg';
 import './privacy.css';
 
 type ProfileVisibility = 'private' | 'connections' | 'public';
@@ -102,8 +105,7 @@ const PrivacySettingsWidget: React.FC<{ onVisibilityResolved?: (v: ProfileVisibi
     }
   };
 
-  const changeVisibility = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const next = e.target.value as ProfileVisibility;
+  const setVisibilityValue = async (next: ProfileVisibility) => {
     const prev = profileVisibility;
     setProfileVisibility(next);
     try {
@@ -145,12 +147,43 @@ const PrivacySettingsWidget: React.FC<{ onVisibilityResolved?: (v: ProfileVisibi
         ) : (
           <>
             <div className="settings-row">
-              <label htmlFor="profile-visibility" className="settings-label">Profile visibility</label>
-              <select id="profile-visibility" value={profileVisibility} onChange={changeVisibility}>
-                <option value="private">Private</option>
-                <option value="connections">Connections</option>
-                <option value="public">Public</option>
-              </select>
+              <span className="settings-label">Profile visibility</span>
+              {(() => {
+                const segIndex = profileVisibility === 'private' ? 0 : profileVisibility === 'connections' ? 1 : 2;
+                const segStyle = { '--seg-index': segIndex } as React.CSSProperties;
+                return (
+                  <div className="privacy-segment" style={segStyle}>
+                    <div className="privacy-thumb" aria-hidden />
+                    <button
+                      type="button"
+                      className="privacy-option"
+                      aria-selected={profileVisibility === 'private'}
+                      onClick={() => void setVisibilityValue('private')}
+                    >
+                      <img src={iconPrivate} alt="" aria-hidden style={{ width: 18, height: 18, marginRight: 8 }} />
+                      <span className="privacy-option-text">Private</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="privacy-option"
+                      aria-selected={profileVisibility === 'connections'}
+                      onClick={() => void setVisibilityValue('connections')}
+                    >
+                      <img src={iconConnections} alt="" aria-hidden style={{ width: 18, height: 18, marginRight: 8 }} />
+                      <span className="privacy-option-text">Connections</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="privacy-option"
+                      aria-selected={profileVisibility === 'public'}
+                      onClick={() => void setVisibilityValue('public')}
+                    >
+                      <img src={iconPublic} alt="" aria-hidden style={{ width: 18, height: 18, marginRight: 8 }} />
+                      <span className="privacy-option-text">Public</span>
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
             <div className="settings-row">
               <span className="settings-label">Share with coaches</span>
