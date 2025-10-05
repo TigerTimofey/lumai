@@ -1,0 +1,10 @@
+.security-message {
+  font-size: 13px;
+  color: var(--color-gray-600);
+}
+
+.security-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}

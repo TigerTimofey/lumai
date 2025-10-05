@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../../../../utils/api';
+import './security.css';
 
 const TwoFactorWidget: React.FC = () => {
   const [qrcode, setQrcode] = useState<string | null>(null);
@@ -88,7 +89,7 @@ const TwoFactorWidget: React.FC = () => {
   return (
     <div className="dashboard-widget">
       <h3 className="dashboard-widget-title">Security</h3>
-      <div className="dashboard-widget-body" style={{ display: 'grid', gap: 12 }}>
+  <div className="dashboard-widget-body" style={{ display: 'grid', gap: 12 }}>
         <p style={{ margin: 0, fontSize: '0.9rem' }}>
           MFA status:{' '}
           {mfaEnabled == null ? (
@@ -99,7 +100,7 @@ const TwoFactorWidget: React.FC = () => {
             <span style={{ color: 'var(--color-error)', fontWeight: 600 }}>Disabled</span>
           )}
         </p>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+  <div className="security-actions" style={{ flexWrap: 'wrap' }}>
           <button type="button" className="dashboard-hero-action" onClick={loadWhoAmI}>
             Refresh MFA
           </button>
@@ -116,7 +117,7 @@ const TwoFactorWidget: React.FC = () => {
         </div>
         {qrcode && !mfaEnabled && (
           <div style={{ display: 'grid', gap: 8 }}>
-            <p style={{ margin: 0, fontSize: '0.9rem' }}>Scan this QR in your authenticator app:</p>
+            <p className="security-message" style={{ margin: 0 }}>Scan this QR in your authenticator app:</p>
             <img
               alt="MFA QR"
               style={{ width: 160, height: 160 }}
@@ -134,7 +135,7 @@ const TwoFactorWidget: React.FC = () => {
               inputMode="numeric"
               pattern="[0-9]*"
             />
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="security-actions">
               <button type="button" className="dashboard-hero-action" onClick={activate}>
                 {activating ? 'Enabling…' : 'Enable 2FA'}
               </button>
@@ -142,7 +143,7 @@ const TwoFactorWidget: React.FC = () => {
           </div>
         )}
         {/* Session refresh moved to SessionWidget */}
-        {message && <p style={{ margin: 0, color: 'var(--color-gray-600)' }}>{message}</p>}
+        {message && <p className="security-message" style={{ margin: 0 }}>{message}</p>}
       </div>
     </div>
   );

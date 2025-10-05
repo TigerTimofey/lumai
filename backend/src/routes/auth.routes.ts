@@ -156,6 +156,7 @@ router.get("/whoami", authContext, async (req, res) => {
     uid: token?.uid,
     email: user?.email,
     emailVerified: user?.emailVerified,
+    privacy: user?.privacy,
     mfa: user?.mfa ?? { enabled: false },
     lastActivityAt: user?.lastActivityAt ?? null
   });

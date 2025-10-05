@@ -18,7 +18,7 @@ const AuthStatus: React.FC<AuthStatusProps> = ({ message, type = 'info', onClose
       const timer = setTimeout(() => {
         setVisible(false);
         if (onClose) onClose();
-      }, 3531200);
+      }, 3500);
       return () => clearTimeout(timer);
     }
   }, [message, onClose]);

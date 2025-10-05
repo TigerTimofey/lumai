@@ -2,9 +2,11 @@ import type { User } from 'firebase/auth';
 
 import SideNav from '../../navigation/SideNav';
 import './Dashboard.css';
-import UserSettingBar from './userSettingBar';
+import UserSettingBar from './user-settings/userSettingBar';
 import TwoFactorWidget from './security/TwoFactorWidget';
 import SessionWidget from './security/SessionWidget';
+import PrivacySettingsWidget from './privacy/PrivacySettingsWidget';
+import EmailNotificationsWidget from './privacy/EmailNotificationsWidget';
 
 interface DashboardProps {
   user: User;
@@ -55,6 +57,8 @@ const Dashboard = ({ user }: DashboardProps) => {
           </div>
 
           <aside className="dashboard-right" aria-label="Secondary widgets">
+            <PrivacySettingsWidget />
+            <EmailNotificationsWidget />
             <div className="dashboard-widget">
               <h3 className="dashboard-widget-title">Calendar</h3>
               <div className="dashboard-widget-body">

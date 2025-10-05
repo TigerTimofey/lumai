@@ -1,4 +1,5 @@
 import { CONSENT_TYPES } from "../domain/enums.js";
+import { FieldValue } from "firebase-admin/firestore";
 import { getConsents, setConsents, updateConsentStatus } from "../repositories/consent.repo.js";
 import { updateUserDocument } from "../repositories/user.repo.js";
 import { privacyPreferencesSchema } from "../domain/validation.js";
@@ -35,11 +36,20 @@ export const updatePrivacyPreferences = async (
 
   await setConsents(userId, merged);
   await updateUserDocument(userId, {
+    // Primary mirror used by frontend
     privacy: {
       profileVisibility: parsed.profileVisibility,
       shareWithCoaches: parsed.shareWithCoaches,
       shareWithResearch: parsed.shareWithResearch,
       emailNotifications: parsed.emailNotifications
+    },
+    // Remove legacy/duplicate field to avoid duplicates in users/{uid}
+    consent: FieldValue.delete() as any,
+    privacySettings: {
+      dataUsage: merged.agreements?.data_processing?.status === 'granted',
+      profileVisibility: parsed.profileVisibility,
+      shareWithCoaches: parsed.shareWithCoaches,
+      shareWithResearch: parsed.shareWithResearch
     }
   });
 
@@ -61,5 +71,17 @@ export const recordConsent = async (
   }
 
   await updateConsentStatus(userId, consentType, status, changedBy);
-  return getConsents(userId);
+  const updated = await getConsents(userId);
+  // If data_processing changed, mirror to users/{uid}.privacySettings.dataUsage
+  if (consentType === 'data_processing') {
+    const granted = status === 'granted';
+    // Non-destructive: only update dataUsage; other fields retain previous values via merge
+    await updateUserDocument(userId, {
+      consent: FieldValue.delete() as any,
+      privacySettings: {
+        dataUsage: granted
+      } as any
+    });
+  }
+  return updated;
 };

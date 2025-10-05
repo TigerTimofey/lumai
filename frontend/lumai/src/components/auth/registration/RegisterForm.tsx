@@ -1,6 +1,6 @@
 import React from 'react';
 import { useRegisterForm } from './useRegisterForm';
-import AuthStatus from '../../shared/AuthStatus';
+import AuthStatus from '../../shared/auth-status/AuthStatus';
 import './RegisterForm.css';
 
 interface RegisterFormProps {

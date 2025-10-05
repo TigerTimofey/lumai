@@ -1,7 +1,7 @@
 import React from 'react';
-import insightsIcon from '../../../assets/icons/insights.svg';
-import analyticsIcon from '../../../assets/icons/analytics.svg';
-import settingsIcon from '../../../assets/icons/settings.svg';
+import insightsIcon from '../../../../assets/icons/insights.svg';
+import analyticsIcon from '../../../../assets/icons/analytics.svg';
+import settingsIcon from '../../../../assets/icons/settings.svg';
 import './userSettingBar.css';
 
 interface UserSettingBarProps {

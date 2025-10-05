@@ -18,6 +18,14 @@ export interface UserDocument {
       marketing: boolean;
     };
   };
+  // Mirrors of legacy/existing fields on users collection
+  consent?: Record<string, unknown>;
+  privacySettings?: {
+    dataUsage: boolean;
+    profileVisibility: string;
+    shareWithCoaches: boolean;
+    shareWithResearch: boolean;
+  };
   mfa?: {
     enabled: boolean;
     secret?: string | null;

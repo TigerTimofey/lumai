@@ -1,7 +1,7 @@
 import React from 'react';
 import type { User } from 'firebase/auth';
 import { useLoginForm } from './useLoginForm';
-import AuthStatus from '../../shared/AuthStatus';
+import AuthStatus from '../../shared/auth-status/AuthStatus';
 import githubIcon from '../../../assets/icons/github.svg'
 import googleIcon from '../../../assets/icons/google.svg'
 import './LoginForm.css';

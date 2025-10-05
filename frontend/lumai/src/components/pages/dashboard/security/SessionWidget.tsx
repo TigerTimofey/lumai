@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../../../../utils/api';
 import { auth } from '../../../../config/firebase';
+import './security.css';
 
 const SessionWidget: React.FC = () => {
   const [message, setMessage] = useState<string | null>(null);
@@ -40,7 +41,7 @@ const SessionWidget: React.FC = () => {
         <button type="button" className="dashboard-hero-action" onClick={doRefresh}>
           Refresh ID token
         </button>
-        {message && <p style={{ margin: 0, color: 'var(--color-gray-600)' }}>{message}</p>}
+        {message && <p className="security-message" style={{ margin: 0 }}>{message}</p>}
       </div>
     </div>
   );
