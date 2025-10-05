@@ -6,6 +6,7 @@ import './userSettingBar.css';
 
 interface UserSettingBarProps {
   name: string;
+  photoURL?: string | null;
 }
 
 const getInitials = (name: string) => {
@@ -15,7 +16,7 @@ const getInitials = (name: string) => {
   return (first ?? '').concat(second ?? '').toUpperCase() || 'U';
 };
 
-const UserSettingBar: React.FC<UserSettingBarProps> = ({ name }) => {
+const UserSettingBar: React.FC<UserSettingBarProps> = ({ name, photoURL }) => {
   return (
     <div className="user-setting-bar" role="banner">
       <div className="topbar-actions">
@@ -29,7 +30,11 @@ const UserSettingBar: React.FC<UserSettingBarProps> = ({ name }) => {
           <img src={settingsIcon} alt="" aria-hidden="true" />
         </button>
         <div className="topbar-user" aria-label={`Signed in as ${name}`}>
-          <div className="topbar-avatar" aria-hidden="true">{getInitials(name)}</div>
+          {photoURL ? (
+            <img className="topbar-avatar topbar-avatar-img" src={photoURL} alt="" aria-hidden="true" />
+          ) : (
+            <div className="topbar-avatar" aria-hidden="true">{getInitials(name)}</div>
+          )}
           <span className="topbar-username">{name}</span>
         </div>
       </div>

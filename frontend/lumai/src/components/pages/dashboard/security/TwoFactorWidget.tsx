@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { apiFetch } from '../../../../utils/api';
 import './security.css';
 
 const TwoFactorWidget: React.FC = () => {
   const [qrcode, setQrcode] = useState<string | null>(null);
   const [code, setCode] = useState('');
-  const [message, setMessage] = useState<string | null>(null);
+  const [, setMessage] = useState<string | null>(null);
   const [mfaEnabled, setMfaEnabled] = useState<boolean | null>(null);
   const [enrolling, setEnrolling] = useState(false);
   const [activating, setActivating] = useState(false);
@@ -18,12 +18,28 @@ const TwoFactorWidget: React.FC = () => {
     lastActivityAt?: unknown;
   } | null;
 
-  const loadWhoAmI = async () => {
+  const clearTimerRef = useRef<number | null>(null);
+  const statusTimerRef = useRef<number | null>(null);
+  const [statusFlash, setStatusFlash] = useState<string | null>(null);
+
+
+  const loadWhoAmI = async (opts?: { transient?: boolean }) => {
     try {
       const data = await apiFetch<WhoAmI>(`/auth/whoami`);
       const enabled = Boolean(data?.mfa?.enabled);
       setMfaEnabled(enabled);
-      setMessage(`MFA status refreshed: ${enabled ? 'Enabled' : 'Disabled'}.`);
+      const msg = `MFA status refreshed: ${enabled ? 'Enabled' : 'Disabled'}`;
+      if (opts?.transient) {
+        // Flash inline status for 1 second instead of using bottom message area
+        setStatusFlash(msg);
+        if (statusTimerRef.current) window.clearTimeout(statusTimerRef.current);
+        statusTimerRef.current = window.setTimeout(() => {
+          setStatusFlash(null);
+          statusTimerRef.current = null;
+        }, 1000);
+      } else {
+        setMessage(msg);
+      }
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Failed to refresh status');
     }
@@ -31,6 +47,12 @@ const TwoFactorWidget: React.FC = () => {
 
   useEffect(() => {
     void loadWhoAmI();
+    const clearId = clearTimerRef.current;
+    const statusId = statusTimerRef.current;
+    return () => {
+      if (clearId) window.clearTimeout(clearId);
+      if (statusId) window.clearTimeout(statusId);
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const enroll = async () => {
@@ -90,18 +112,24 @@ const TwoFactorWidget: React.FC = () => {
     <div className="dashboard-widget">
       <h3 className="dashboard-widget-title">Security</h3>
   <div className="dashboard-widget-body" style={{ display: 'grid', gap: 12 }}>
-        <p style={{ margin: 0, fontSize: '0.9rem' }}>
-          MFA status:{' '}
-          {mfaEnabled == null ? (
-            '—'
-          ) : mfaEnabled ? (
-            <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>Enabled</span>
+        <div className="security-status-area">
+          {statusFlash ? (
+            <p className="security-status">{statusFlash}</p>
           ) : (
-            <span style={{ color: 'var(--color-error)', fontWeight: 600 }}>Disabled</span>
+            <p className="security-status">
+              MFA status:{' '}
+              {mfaEnabled == null ? (
+                '—'
+              ) : mfaEnabled ? (
+                <span className="security-status-enabled">Enabled</span>
+              ) : (
+                <span className="security-status-disabled">Disabled</span>
+              )}
+            </p>
           )}
-        </p>
+        </div>
   <div className="security-actions" style={{ flexWrap: 'wrap' }}>
-          <button type="button" className="dashboard-hero-action" onClick={loadWhoAmI}>
+          <button type="button" className="dashboard-hero-action" onClick={() => void loadWhoAmI({ transient: true })}>
             Refresh MFA
           </button>
           {!mfaEnabled && (
@@ -143,7 +171,7 @@ const TwoFactorWidget: React.FC = () => {
           </div>
         )}
         {/* Session refresh moved to SessionWidget */}
-        {message && <p className="security-message" style={{ margin: 0 }}>{message}</p>}
+
       </div>
     </div>
   );

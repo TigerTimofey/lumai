@@ -24,7 +24,7 @@ const Dashboard = ({ user }: DashboardProps) => {
       <SideNav activeKey="dashboard" />
       <div className="dashboard-canvas">
         <main className="dashboard-main" role="main">
-          <UserSettingBar name={displayName} />
+          <UserSettingBar name={displayName} photoURL={user.photoURL ?? null} />
           <div className="dashboard-left">
             <header className="dashboard-header">
               <div>
@@ -59,6 +59,8 @@ const Dashboard = ({ user }: DashboardProps) => {
           <aside className="dashboard-right" aria-label="Secondary widgets">
             <PrivacySettingsWidget />
             <EmailNotificationsWidget />
+            <TwoFactorWidget />
+            <SessionWidget />
             <div className="dashboard-widget">
               <h3 className="dashboard-widget-title">Calendar</h3>
               <div className="dashboard-widget-body">
@@ -83,8 +85,6 @@ const Dashboard = ({ user }: DashboardProps) => {
                 <p>Profile filled?</p>
               </div>
               </div>
-            <TwoFactorWidget />
-            <SessionWidget />
           </aside>
         </main>
       </div>

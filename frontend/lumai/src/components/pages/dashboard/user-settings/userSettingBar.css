@@ -52,6 +52,11 @@
   justify-content: center;
 }
 
+.topbar-avatar-img {
+  object-fit: cover;
+  display: inline-block;
+}
+
 .topbar-username {
   color: var(--color-gray-600);
   font-weight: 600;

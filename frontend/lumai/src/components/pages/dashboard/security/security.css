@@ -1,10 +1,35 @@
 .security-message {
   font-size: 13px;
   color: var(--color-gray-600);
+  margin: 0; /* avoid adding height when message toggles */
+  line-height: 18px;
 }
 
 .security-actions {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.security-message-area {
+  min-height: 36px; /* reserve space for up to ~2 lines to avoid container jump */
+  display: flex;
+  align-items: center;
+}
+
+/* Inline status area (top of widget) */
+.security-status-area {
+  min-height: 18px; /* reserve one line */
+}
+.security-status {
+  margin: 0;
+  font-size: 0.9rem;
+}
+.security-status-enabled {
+  color: var(--color-success);
+  font-weight: 600;
+}
+.security-status-disabled {
+  color: var(--color-error);
+  font-weight: 600;
 }
