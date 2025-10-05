@@ -4,6 +4,17 @@
   justify-content: flex-end;
   align-items: center;
   gap: 12px;
+  position: fixed;
+  top: 16px;
+  right: 56px;
+  z-index: 999;
+  transition: transform 220ms ease, opacity 200ms ease;
+}
+
+.user-setting-bar.is-hidden {
+  transform: translateY(-120%);
+  opacity: 0.02;
+  pointer-events: none;
 }
 
 .topbar-actions {
@@ -57,15 +68,11 @@
   display: inline-block;
 }
 
-.topbar-username {
-  color: var(--color-gray-600);
-  font-weight: 600;
-}
-
 @media (max-width: 720px) {
   .user-setting-bar {
     justify-content: space-between;
     gap: 12px;
+    right: 28px; /* match smaller main padding on mobile */
   }
   .topbar-actions {
     justify-content: flex-end;

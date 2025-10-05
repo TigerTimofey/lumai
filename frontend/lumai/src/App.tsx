@@ -5,10 +5,12 @@ import { auth } from './config/firebase';
 
 import AuthPage from './components/auth/AuthPage';
 import Dashboard from './components/pages/dashboard/Dashboard';
+import Profile from './components/pages/profile/Profile';
 
 function App() {
   const [authedUser, setAuthedUser] = useState<User | null>(null);
   const [initializing, setInitializing] = useState(true);
+  const [path, setPath] = useState<string>(() => (typeof window !== 'undefined' ? window.location.pathname : '/dashboard'));
 
   const handleAuthenticated = (user: User) => {
     const isTrustedProvider = [user.providerId, ...user.providerData.map(p => p?.providerId)]
@@ -26,7 +28,9 @@ function App() {
       console.log('Provider data', user.providerData);
       console.log('Metadata', user.metadata);
       console.groupEnd();
+      // default landing after sign-in
       window.history.pushState({}, '', '/dashboard');
+      setPath('/dashboard');
       setAuthedUser(user);
     }
   };
@@ -44,25 +48,36 @@ function App() {
 
         if (canAccess) {
           setAuthedUser(user);
-          if (window.location.pathname !== '/dashboard') {
+          // If landing on root, send to dashboard; otherwise preserve current path
+          if (window.location.pathname === '/') {
             window.history.replaceState({}, '', '/dashboard');
+            setPath('/dashboard');
+          } else {
+            setPath(window.location.pathname);
           }
         } else {
           setAuthedUser(null);
           if (window.location.pathname !== '/') {
             window.history.replaceState({}, '', '/');
+            setPath('/');
           }
         }
       } else {
         setAuthedUser(null);
         if (window.location.pathname !== '/') {
           window.history.replaceState({}, '', '/');
+          setPath('/');
         }
       }
       setInitializing(false);
     });
 
-    return () => unsubscribe();
+    const onPop = () => setPath(window.location.pathname);
+    window.addEventListener('popstate', onPop);
+    return () => {
+      window.removeEventListener('popstate', onPop);
+      unsubscribe();
+    };
   }, []);
 
   const isDashboardAccessible = Boolean(
@@ -74,6 +89,7 @@ function App() {
   );
 
   if (!initializing && isDashboardAccessible && authedUser) {
+    if (path.startsWith('/profile')) return <Profile user={authedUser} />;
     return <Dashboard user={authedUser} />;
   }
 

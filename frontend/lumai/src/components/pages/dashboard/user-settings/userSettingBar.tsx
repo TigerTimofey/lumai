@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import insightsIcon from '../../../../assets/icons/profile.svg';
 import analyticsIcon from '../../../../assets/icons/analytics.svg';
 import settingsIcon from '../../../../assets/icons/settings.svg';
@@ -17,8 +17,29 @@ const getInitials = (name: string) => {
 };
 
 const UserSettingBar: React.FC<UserSettingBarProps> = ({ name, photoURL }) => {
+  const [atTop, setAtTop] = useState<boolean>(true);
+
+  useEffect(() => {
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const y = window.scrollY || document.documentElement.scrollTop || 0;
+      setAtTop(y <= 4);
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+    // Set initial state on mount
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll as EventListener);
+  }, []);
+
   return (
-    <div className="user-setting-bar" role="banner">
+    <div className={"user-setting-bar" + (atTop ? '' : ' is-hidden')} role="banner" aria-hidden={atTop ? undefined : true}>
       <div className="topbar-actions">
         <button type="button" className="icon-button" aria-label="Insights" disabled>
           <img src={insightsIcon} alt="" aria-hidden="true" />
@@ -35,7 +56,6 @@ const UserSettingBar: React.FC<UserSettingBarProps> = ({ name, photoURL }) => {
           ) : (
             <div className="topbar-avatar" aria-hidden="true">{getInitials(name)}</div>
           )}
-          <span className="topbar-username">{name}</span>
         </div>
       </div>
     </div>

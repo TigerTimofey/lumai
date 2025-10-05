@@ -9,6 +9,7 @@
   display: flex;
   justify-content: center;
   transition: margin-left 0.2s ease;
+  overflow-y: auto;
 }
 
 .sidenav.sidenav-collapsed + .dashboard-canvas {
@@ -20,13 +21,12 @@
   background: var(--color-white);
   border-radius: 5px;
   box-shadow: 0 65px 140px -90px rgba(15, 23, 42, 0.6);
-  padding: 52px 56px 64px;
+  padding: 62px 56px 64px;
   display: grid;
   grid-template-columns: 1fr minmax(260px, 360px);
   gap: 36px 28px;
   min-height: calc(100vh - 112px);
   position: relative;
-  overflow: hidden;
 }
 
 .dashboard-main::before {
@@ -34,8 +34,6 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(110deg, rgba(79, 70, 229, 0.03), transparent 40%),
-    linear-gradient(240deg, rgba(59, 130, 246, 0.05), transparent 45%);
 }
 
 .dashboard-header {
@@ -193,7 +191,7 @@
 
   .dashboard-canvas {
     margin-left: 0;
-    padding: 24px;
+    padding: 64px 24px 24px 24px;
   }
 
   /* On mobile, the sidebar is off-canvas; never push content */
