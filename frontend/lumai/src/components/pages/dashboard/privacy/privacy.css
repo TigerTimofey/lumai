@@ -22,6 +22,29 @@
   color: var(--color-gray-500);
 }
 
+/* Inline styles moved from TSX */
+.privacy-visibility-container {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+}
+
+.settings-label-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.settings-label-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  background-color: var(--color-gray-600);
+  -webkit-mask: url('../../../../assets/icons/lookBottom.svg') no-repeat center / contain;
+  mask: url('../../../../assets/icons/lookBottom.svg') no-repeat center / contain;
+  transform: rotate(90deg);
+}
+
 /* Controls styling to align with toggle height/feel */
 .settings-select {
   min-width: 160px;
@@ -63,9 +86,14 @@
   background: #018786; 
   border-radius: 999px;
   box-shadow: 0 8px 20px -12px #018786;
-  transform: translateX(calc(var(--seg-index, 0) * 100%));
+  transform: translateX(0%);
   transition: transform 0.25s ease;
 }
+
+/* Segmented positions via classes instead of CSS var */
+.privacy-segment.seg-0 .privacy-thumb { transform: translateX(0%); }
+.privacy-segment.seg-1 .privacy-thumb { transform: translateX(100%); }
+.privacy-segment.seg-2 .privacy-thumb { transform: translateX(200%); }
 
 .privacy-option {
   border: none;
@@ -83,8 +111,20 @@
   justify-content: center;
 }
 
+.privacy-option-icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+}
+
 @media (max-width: 600px) {
   .privacy-option-text {
     display: none;
   }
+}
+
+.settings-error {
+  color: crimson;
+  margin-top: 8px;
+  font-size: 13px;
 }

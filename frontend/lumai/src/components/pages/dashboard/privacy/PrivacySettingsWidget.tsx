@@ -147,43 +147,52 @@ const PrivacySettingsWidget: React.FC<{ onVisibilityResolved?: (v: ProfileVisibi
         ) : (
           <>
             <div className="settings-row">
-              <span className="settings-label">Profile visibility</span>
-              {(() => {
-                const segIndex = profileVisibility === 'private' ? 0 : profileVisibility === 'connections' ? 1 : 2;
-                const segStyle = { '--seg-index': segIndex } as React.CSSProperties;
-                return (
-                  <div className="privacy-segment" style={segStyle}>
-                    <div className="privacy-thumb" aria-hidden />
-                    <button
-                      type="button"
-                      className="privacy-option"
-                      aria-selected={profileVisibility === 'private'}
-                      onClick={() => void setVisibilityValue('private')}
-                    >
-                      <img src={iconPrivate} alt="" aria-hidden style={{ width: 18, height: 18, marginRight: 8 }} />
-                      <span className="privacy-option-text">Private</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="privacy-option"
-                      aria-selected={profileVisibility === 'connections'}
-                      onClick={() => void setVisibilityValue('connections')}
-                    >
-                      <img src={iconConnections} alt="" aria-hidden style={{ width: 18, height: 18, marginRight: 8 }} />
-                      <span className="privacy-option-text">Connections</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="privacy-option"
-                      aria-selected={profileVisibility === 'public'}
-                      onClick={() => void setVisibilityValue('public')}
-                    >
-                      <img src={iconPublic} alt="" aria-hidden style={{ width: 18, height: 18, marginRight: 8 }} />
-                      <span className="privacy-option-text">Public</span>
-                    </button>
-                  </div>
-                );
-              })()}
+              <div className="privacy-visibility-container">
+                <span className="settings-label settings-label-inline">
+                  Profile visibility
+                  <span aria-hidden className="settings-label-icon" />
+                </span>
+                {(() => {
+                  const segClass =
+                    profileVisibility === 'private'
+                      ? 'seg-0'
+                      : profileVisibility === 'connections'
+                      ? 'seg-1'
+                      : 'seg-2';
+                  return (
+                    <div className={`privacy-segment ${segClass}`}>
+                      <div className="privacy-thumb" aria-hidden />
+                      <button
+                        type="button"
+                        className="privacy-option"
+                        aria-selected={profileVisibility === 'private'}
+                        onClick={() => void setVisibilityValue('private')}
+                      >
+                        <img src={iconPrivate} alt="" aria-hidden className="privacy-option-icon" />
+                        <span className="privacy-option-text">Private</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="privacy-option"
+                        aria-selected={profileVisibility === 'connections'}
+                        onClick={() => void setVisibilityValue('connections')}
+                      >
+                        <img src={iconConnections} alt="" aria-hidden className="privacy-option-icon" />
+                        <span className="privacy-option-text">Connects</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="privacy-option"
+                        aria-selected={profileVisibility === 'public'}
+                        onClick={() => void setVisibilityValue('public')}
+                      >
+                        <img src={iconPublic} alt="" aria-hidden className="privacy-option-icon" />
+                        <span className="privacy-option-text">Public</span>
+                      </button>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
             <div className="settings-row">
               <span className="settings-label">Share with coaches</span>
@@ -199,7 +208,7 @@ const PrivacySettingsWidget: React.FC<{ onVisibilityResolved?: (v: ProfileVisibi
             </div>
           </>
         )}
-        {error && <p role="alert" style={{ color: 'crimson', marginTop: 8, fontSize: 13 }}>{error}</p>}
+        {error && <p role="alert" className="settings-error">{error}</p>}
       </div>
     </div>
   );
