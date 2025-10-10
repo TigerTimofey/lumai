@@ -1,82 +1,69 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import type { User } from 'firebase/auth';
 import SideNav from '../../navigation/SideNav';
 import UserSettingBar from '../dashboard/user-settings/userSettingBar';
 import { apiFetch } from '../../../utils/api';
-import '../dashboard/Dashboard.css';
-
-type RequiredProfile = {
-  activityLevel: string | null;
-  age: number | null;
-  fitnessGoal: string | null;
-  gender: string | null;
-  height: number | null;
-  weight: number | null;
-};
-
-type ProfileSummary = {
-  createdAt?: string | number | Date | null;
-  displayName?: string | null;
-  email?: string | null;
-  emailVerified?: boolean | null;
-  requiredProfile?: Partial<RequiredProfile> | null;
-};
+import type { ProfileSummary } from './profileOptions/types';
+import ProfileEditor from './ProfileEditor';
+import ProfileCard from './ProfileCard';
+import './ProfileEditor.css';
 
 interface ProfileProps {
   user: User;
 }
 
+function getProfileFallback(user: User): ProfileSummary {
+  return {
+    createdAt: user.metadata?.creationTime ?? null,
+    displayName: user.displayName ?? null,
+    email: user.email ?? null,
+    emailVerified: user.emailVerified ?? null,
+    requiredProfile: {},
+  };
+}
+
 const Profile: React.FC<ProfileProps> = ({ user }) => {
   const displayName = user.displayName ?? user.email ?? 'friend';
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [profile, setProfile] = useState<ProfileSummary | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [profile, setProfile] = useState<ProfileSummary | null>(null);
+    const [mode, setMode] = useState<'required' | 'bonus'>('required');
+                <ProfileEditor uid={user.uid} mode={mode} setMode={setMode} />
 
   useEffect(() => {
     let active = true;
     setLoading(true);
     setError(null);
-    apiFetch<ProfileSummary>('/profile')
-      .then((data) => {
+
+    const fetchProfile = async () => {
+      try {
+        const data = await apiFetch<ProfileSummary>('/profile');
         if (!active) return;
         setProfile(data ?? null);
-      })
-      .catch((e) => {
+      } catch (e) {
         if (!active) return;
-        const msg = e instanceof Error ? e.message : String(e);
-        // Treat "Profile not found" or 404 responses as empty profile and fall back to Firebase user
+        let msg = e instanceof Error ? e.message : String(e);
         try {
           const parsed = JSON.parse(msg);
-          if (parsed && typeof parsed === 'object' && (parsed.message?.toLowerCase?.().includes('not found') || parsed.message?.toLowerCase?.().includes('profile not found'))) {
-            setProfile({
-              createdAt: user.metadata?.creationTime ?? null,
-              displayName: user.displayName ?? null,
-              email: user.email ?? null,
-              emailVerified: user.emailVerified ?? null,
-              requiredProfile: {}
-            });
-            return;
-          }
+          msg = parsed?.message ?? msg;
         } catch {
-          // not JSON; fall through
+          // ignore JSON parse errors
         }
-        if (msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('profile not found')) {
-          setProfile({
-            createdAt: user.metadata?.creationTime ?? null,
-            displayName: user.displayName ?? null,
-            email: user.email ?? null,
-            emailVerified: user.emailVerified ?? null,
-            requiredProfile: {}
-          });
-          return;
+        if (msg.toLowerCase().includes('not found')) {
+          setProfile(getProfileFallback(user));
+        } else {
+          setError(msg || 'Failed to load profile');
         }
-        setError(msg || 'Failed to load profile');
-      })
-      .finally(() => active && setLoading(false));
-    return () => { active = false; };
-  }, [user.displayName, user.email, user.emailVerified, user.metadata?.creationTime]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
 
-  const createdAtText = (() => {
+    fetchProfile();
+    return () => { active = false; };
+  }, [user.displayName, user.email, user.emailVerified, user.metadata?.creationTime, user]);
+
+  const createdAtText = useMemo(() => {
     const created = profile?.createdAt ?? user.metadata?.creationTime ?? null;
     if (!created) return '—';
     try {
@@ -86,64 +73,40 @@ const Profile: React.FC<ProfileProps> = ({ user }) => {
     } catch {
       return String(created);
     }
-  })();
-
-  const r = profile?.requiredProfile ?? {};
+  }, [profile?.createdAt, user.metadata?.creationTime]);
 
   return (
-    <div className="dashboard-shell">
+    <div className="profile-editor-shell">
       <SideNav activeKey="profile" />
-      <div className="dashboard-canvas">
-        <main className="dashboard-main" role="main">
+      <div className="profile-editor-canvas">
+        <main className="profile-editor-main" role="main">
           <UserSettingBar name={displayName} photoURL={user.photoURL ?? null} />
-          <div className="dashboard-left">
-            <header className="dashboard-header">
+          <div className="profile-editor-left">
+            <header className="profile-editor-header">
               <div>
-                <p className="dashboard-subtitle">Your account</p>
-                <h1 className="dashboard-title">Profile</h1>
-                <p className="dashboard-welcome">Manage your personal and health details.</p>
+                <p className="profile-editor-message">Your account</p>
+                <h1 className="profile-editor-main-title">Profile</h1>
+                <p className="profile-editor-welcome">Manage your personal and health details.</p>
               </div>
             </header>
-
-            <section className="dashboard-widget">
-              <h3 className="dashboard-widget-title">Profile card</h3>
-              <div className="dashboard-widget-body" style={{ display: 'grid', gap: 8 }}>
-                {loading ? (
-                  <p>Loading…</p>
-                ) : error ? (
-                  <p className="security-message">{error}</p>
-                ) : (
-                  <>
-                    <div style={{ display: 'grid', gap: 4 }}>
-                      <div><strong>Created:</strong> {createdAtText}</div>
-                      <div><strong>Name:</strong> {profile?.displayName ?? user.displayName ?? '—'}</div>
-                      <div><strong>Email:</strong> {profile?.email ?? user.email ?? '—'}</div>
-                      <div><strong>Email verified:</strong> {(profile?.emailVerified ?? user.emailVerified) ? 'Yes' : 'No'}</div>
-                    </div>
-                    <hr style={{ border: 0, borderTop: '1px solid var(--color-gray-200)' }} />
-                    <div style={{ display: 'grid', gap: 4 }}>
-                      <div><strong>Required profile</strong></div>
-                      <div><span style={{ color: 'var(--color-gray-600)' }}>Activity level:</span> {r.activityLevel ?? '—'}</div>
-                      <div><span style={{ color: 'var(--color-gray-600)' }}>Age:</span> {r.age ?? '—'}</div>
-                      <div><span style={{ color: 'var(--color-gray-600)' }}>Fitness goal:</span> {r.fitnessGoal ?? '—'}</div>
-                      <div><span style={{ color: 'var(--color-gray-600)' }}>Gender:</span> {r.gender ?? '—'}</div>
-                      <div><span style={{ color: 'var(--color-gray-600)' }}>Height:</span> {r.height ?? '—'}</div>
-                      <div><span style={{ color: 'var(--color-gray-600)' }}>Weight:</span> {r.weight ?? '—'}</div>
-                    </div>
-                  </>
-                )}
+            <div className="profile-editor-split">
+              <div className="profile-editor-split-half">
+                {/* Control mode in parent to sync with ProfileCard */}
+                <ProfileEditor uid={user.uid} mode={mode} setMode={setMode} />
               </div>
-            </section>
-          </div>
-
-          <aside className="dashboard-right" aria-label="Secondary widgets">
-            <div className="dashboard-widget">
-              <h3 className="dashboard-widget-title">Tips</h3>
-              <div className="dashboard-widget-body">
-                <p>Update your required profile to get tailored plans.</p>
+              <div className="profile-editor-split-half">
+                <ProfileCard
+                  loading={loading}
+                  error={error}
+                  profile={profile}
+                  user={user}
+                  createdAtText={createdAtText}
+                  mode={mode}
+                />
+                {error && <div className="profile-error">{error}</div>}
               </div>
             </div>
-          </aside>
+          </div>
         </main>
       </div>
     </div>
