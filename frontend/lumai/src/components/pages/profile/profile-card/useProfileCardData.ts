@@ -105,7 +105,7 @@ const mergeAdditionalProfile = (
   preferredEnvironment: firestoreAdditional?.preferredEnvironment ?? apiAdditional?.preferredEnvironment ?? null,
   preferredTimeOfDay: firestoreAdditional?.preferredTimeOfDay ?? apiAdditional?.preferredTimeOfDay ?? null,
   sessionDuration: firestoreAdditional?.sessionDuration ?? apiAdditional?.sessionDuration ?? null,
-  strengthMetrics: firestoreAdditional?.strengthMetrics ?? apiAdditional?.strengthMetrics ?? null
+  strengthMetrics: firestoreAdditional?.strengthMetrics ?? apiAdditional?.strengthMetrics ?? undefined
 });
 
 const buildHeaderFields = (

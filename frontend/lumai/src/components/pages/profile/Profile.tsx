@@ -37,7 +37,7 @@ const Profile: React.FC<ProfileProps> = ({ user }) => {
 
     const fetchProfile = async () => {
       try {
-        const data = await apiFetch<ProfileSummary>('/profile');
+        const data = await apiFetch<ProfileSummary>('/auth/whoami');
         if (!active) return;
         setProfile(data ?? null);
       } catch (e) {

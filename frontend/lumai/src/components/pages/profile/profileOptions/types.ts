@@ -28,10 +28,25 @@ export type AdditionalProfile = {
   };
 };
 
+export type FirestoreUserConsent = {
+  privacySettings: {
+    dataUsage: boolean;
+    profileVisibility: string;
+    shareWithCoaches: boolean;
+    shareWithResearch: boolean;
+  };
+  emailNotifications: {
+    workoutReminders: boolean;
+    progressUpdates: boolean;
+    newsletter: boolean;
+  };
+};
+
 export type FirestoreUser = {
   requiredProfile?: Partial<RequiredProfile> | null;
   additionalProfile?: Partial<AdditionalProfile> | null;
   profileCompleted?: boolean;
+  consent?: FirestoreUserConsent | null;
 };
 
 export type ProfileSummary = {

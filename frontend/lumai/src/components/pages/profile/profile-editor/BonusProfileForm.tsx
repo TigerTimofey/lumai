@@ -32,7 +32,7 @@ const BonusProfileForm: React.FC<BonusProfileFormProps> = ({ value, onChange }) 
     </label>
     <label className="form-field">
       <span className="form-label">Dietary preferences</span><br />
-      <select name="dietaryPreferences" value={value.dietaryPreferences?.[0] ?? ''} onChange={onChange} className="profile-editor-input">
+      <select name="dietaryPreferences" value={value.dietaryPreferences ?? ''} onChange={onChange} className="profile-editor-input">
         <option value="">Select preference…</option>
         {DIET_PREFS.map((option) => (
           <option key={option} value={option}>{fmtLabel(option)}</option>
@@ -41,7 +41,7 @@ const BonusProfileForm: React.FC<BonusProfileFormProps> = ({ value, onChange }) 
     </label>
     <label className="form-field">
       <span className="form-label">Dietary restrictions</span><br />
-      <select name="dietaryRestrictions" value={value.dietaryRestrictions?.[0] ?? ''} onChange={onChange} className="profile-editor-input">
+      <select name="dietaryRestrictions" value={value.dietaryRestrictions ?? ''} onChange={onChange} className="profile-editor-input">
         <option value="">Select restriction…</option>
         {DIET_RESTR.map((option) => (
           <option key={option} value={option}>{fmtLabel(option)}</option>
@@ -63,7 +63,7 @@ const BonusProfileForm: React.FC<BonusProfileFormProps> = ({ value, onChange }) 
     </label>
     <label className="form-field">
       <span className="form-label">Exercise types</span><br />
-      <select name="exerciseTypes" value={value.exerciseTypes?.[0] ?? ''} onChange={onChange} className="profile-editor-input">
+      <select name="exerciseTypes" value={value.exerciseTypes ?? ''} onChange={onChange} className="profile-editor-input">
         <option value="">Select exercise…</option>
         {EXERCISE_TYPES.map((option) => (
           <option key={option} value={option}>{fmtLabel(option)}</option>

@@ -9,9 +9,10 @@ import {
   sendPasswordResetEmail
 } from 'firebase/auth';
 import { auth, db } from '../../../config/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { apiFetch } from '../../../utils/api';
 import type { User } from 'firebase/auth';
+import type { FirestoreUser } from '../../pages/profile/profileOptions/types';
 
 interface UseLoginFormOptions {
   onAuthenticated?: (user: User) => void;
@@ -58,48 +59,59 @@ export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn 
   // Ensure GitHub/Google users have the same Firestore schema as email/password registration
   const upsertUserProfileSchema = async (user: User) => {
     const userRef = doc(db, 'users', user.uid);
-    const payload = {
-      // Basic user information
+    const snapshot = await getDoc(userRef);
+
+    const defaultsNeeded = !snapshot.exists();
+    const data = snapshot.data() as FirestoreUser | undefined;
+
+    const baseUpdates: Record<string, unknown> = {
       email: user.email ?? null,
       displayName: user.displayName || null,
       emailVerified: user.emailVerified,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      updatedAt: new Date()
+    };
 
-      // Profile completion status
-      profileCompleted: false,
+    if (defaultsNeeded) {
+      baseUpdates.createdAt = new Date();
+    }
 
-      // REQUIRED PARAMETERS (must be filled for profile completion)
-      requiredProfile: {
-        age: null as number | null,
-        gender: null as string | null,
-        height: null as number | null,
-        weight: null as number | null,
-        activityLevel: null as string | null,
-        fitnessGoal: null as string | null
-      },
+    if (defaultsNeeded || data?.requiredProfile == null) {
+      baseUpdates.requiredProfile = {
+        age: null,
+        gender: null,
+        height: null,
+        weight: null,
+        activityLevel: null,
+        fitnessGoal: null
+      } satisfies FirestoreUser['requiredProfile'];
+    }
 
-      // ADDITIONAL PARAMETERS (optional enhancements)
-      additionalProfile: {
-        occupationType: null as string | null,
-        dietaryPreferences: null as string | null,
-        dietaryRestrictions: null as string | null,
-        desiredActivityLevel: null as string | null,
-        trainingDaysPerWeek: null as number | null,
-        exerciseTypes: null as string | null,
-        sessionDuration: null as number | null,
-        fitnessLevel: null as string | null,
-        preferredEnvironment: null as string | null,
-        preferredTimeOfDay: null as string | null,
-        endurance: null as number | null,
+    if (defaultsNeeded || data?.additionalProfile == null) {
+      baseUpdates.additionalProfile = {
+        occupationType: null,
+        dietaryPreferences: null,
+        dietaryRestrictions: null,
+        desiredActivityLevel: null,
+        exerciseTypes: null,
+        sessionDuration: null,
+        fitnessLevel: null,
+        preferredEnvironment: null,
+        preferredTimeOfDay: null,
+        endurance: null,
         strengthMetrics: {
-          pushUps: null as number | null,
-          squats: null as number | null
+          pushUps: null,
+          squats: null,
+          trainingDaysPerWeek: null
         }
-      },
+      } satisfies FirestoreUser['additionalProfile'];
+    }
 
-      // USER CONSENT & PRIVACY
-      consent: {
+    if (defaultsNeeded || data?.profileCompleted == null) {
+      baseUpdates.profileCompleted = false;
+    }
+
+    if (defaultsNeeded || data?.consent == null) {
+      baseUpdates.consent = {
         privacySettings: {
           dataUsage: false,
           profileVisibility: 'private',
@@ -111,11 +123,14 @@ export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn 
           progressUpdates: true,
           newsletter: false
         }
-      }
-    };
+      };
+    }
 
-    // Merge so we don't clobber any server-created fields (like mfa/privacy) and to add these if missing
-    await setDoc(userRef, payload, { merge: true });
+    if (Object.keys(baseUpdates).length === 0) {
+      return;
+    }
+
+    await setDoc(userRef, baseUpdates, { merge: true });
   };
 
   // Note: User doc updates are handled server-side; no Firestore writes from the client here.
