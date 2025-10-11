@@ -13,7 +13,7 @@ interface LoginFormProps {
 }
 
 const LoginForm = ({ onAuthenticated, onResetModeChange, resetActive }: LoginFormProps) => {
-  const { formData, handleChange, handleSubmit, handleGitHubLogin, handleGoogleLogin, handlePasswordReset, loading, emailLoading, githubLoading, googleLoading, error, success, mfaRequired, mfaCode, handleMfaChange } = useLoginForm({
+  const { formData, handleChange, handleSubmit, handleGitHubLogin, handleGoogleLogin, handlePasswordReset, loading, emailLoading, githubLoading, googleLoading, error, success, mfaRequired, mfaCode, handleMfaChange, pendingOAuthProvider } = useLoginForm({
     onAuthenticated,
   });
 
@@ -63,25 +63,27 @@ const LoginForm = ({ onAuthenticated, onResetModeChange, resetActive }: LoginFor
         }}
       />
 
-      <div className="auth-field">
-        <label className="auth-label" htmlFor="email">
-          Email
-        </label>
-        <input
-          className="auth-input"
-          type="email"
-          id="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          placeholder="you@example.com"
-          autoComplete="email"
-          required
-          disabled={loading}
-        />
-      </div>
+      {(!pendingOAuthProvider || isResetMode) && (
+        <div className="auth-field">
+          <label className="auth-label" htmlFor="email">
+            Email
+          </label>
+          <input
+            className="auth-input"
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="you@example.com"
+            autoComplete="email"
+            required
+            disabled={loading}
+          />
+        </div>
+      )}
 
-      {!isResetMode && (
+      {!isResetMode && !pendingOAuthProvider && (
         <div className="auth-field">
           <label className="auth-label" htmlFor="password">
             Password
@@ -122,26 +124,52 @@ const LoginForm = ({ onAuthenticated, onResetModeChange, resetActive }: LoginFor
         </div>
       )}
 
-      <button className="auth-primary" type="submit" disabled={isResetMode ? resetLoading : emailLoading}>
-        {isResetMode ? (resetLoading ? 'Sending…' : 'Send reset link') : emailLoading ? 'Signing in…' : 'Sign in'}
+      <button
+        className="auth-primary"
+        type="submit"
+        disabled={isResetMode ? resetLoading : emailLoading || githubLoading || googleLoading}
+      >
+        {isResetMode
+          ? (resetLoading ? 'Sending…' : 'Send reset link')
+          : pendingOAuthProvider
+            ? (githubLoading || googleLoading ? 'Verifying…' : 'Verify code')
+            : emailLoading ? 'Signing in…' : 'Sign in'}
       </button>
 
       <div className="auth-divider">or continue with</div>
 
-      <div className="auth-oauth">
-        <button type="button" onClick={handleGitHubLogin} disabled={githubLoading || isResetMode} aria-label="Sign in with GitHub">
-          {githubLoading ? 'Connecting GitHub…' : (
-            <img src={githubIcon} alt="GitHub" />
-          )}
-        </button>
-        <button type="button" onClick={handleGoogleLogin} disabled={googleLoading || isResetMode} aria-label="Sign in with Google">
-          {googleLoading ? 'Connecting Google…' : (
-            <img src={googleIcon} alt="Google" />
-          )}
-        </button>
-      </div>
+      {!pendingOAuthProvider && (
+        <div className="auth-oauth">
+          <button
+            type="button"
+            onClick={handleGitHubLogin}
+            disabled={githubLoading || isResetMode}
+            aria-label="Sign in with GitHub"
+          >
+            {githubLoading ? 'Connecting GitHub…' : (
+              <img src={githubIcon} alt="GitHub" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={googleLoading || isResetMode}
+            aria-label="Sign in with Google"
+          >
+            {googleLoading ? 'Connecting Google…' : (
+              <img src={googleIcon} alt="Google" />
+            )}
+          </button>
+        </div>
+      )}
 
-      {!isResetMode && (
+      {pendingOAuthProvider && (
+        <p className="auth-hint" style={{ marginTop: 12 }}>
+          Enter your 6-digit code to finish signing in with {pendingOAuthProvider === 'google.com' ? 'Google' : 'GitHub'} and click “Verify code”.
+        </p>
+      )}
+
+      {!isResetMode && !pendingOAuthProvider && (
         <p className="auth-link" style={{ marginTop: 8 }}>
           Forgot your password?{' '}
           <button type="button" onClick={() => setIsResetMode(true)} disabled={loading}>
