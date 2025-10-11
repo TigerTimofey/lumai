@@ -40,4 +40,5 @@ export type ProfileSummary = {
   email?: string | null;
   emailVerified?: boolean | null;
   requiredProfile?: Partial<RequiredProfile> | null;
+  additionalProfile?: Partial<AdditionalProfile> | null;
 };

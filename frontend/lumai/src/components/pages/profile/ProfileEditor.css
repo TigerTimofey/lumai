@@ -150,6 +150,59 @@
   font-size: 0.95rem;
 }
 
+.profile-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.profile-card-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--color-gray-600);
+}
+
+.profile-card-label-text {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.profile-card-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1px solid var(--color-gray-200);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-gray-400);
+  background: var(--color-white);
+}
+
+.profile-card-check-complete {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(67, 56, 202, 0.08);
+}
+
+.profile-card-check-missing {
+  border-color: var(--color-gray-200);
+  color: var(--color-gray-400);
+}
+
+.profile-card-value {
+  font-size: 0.95rem;
+  color: var(--color-gray-600);
+  text-align: right;
+}
+
 .profile-editor-message {
         margin: 0 0 8px;
     font-size: 0.85rem;
