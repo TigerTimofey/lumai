@@ -1,16 +1,54 @@
 import { CONSENT_TYPES } from "../domain/enums.js";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getConsents, setConsents, updateConsentStatus } from "../repositories/consent.repo.js";
 import { updateUserDocument } from "../repositories/user.repo.js";
 import { privacyPreferencesSchema } from "../domain/validation.js";
-import { badRequest, notFound } from "../utils/api-error.js";
+import { badRequest } from "../utils/api-error.js";
+
+const createDefaultConsents = () => ({
+  agreements: {
+    data_processing: {
+      consentType: "data_processing",
+      status: "pending" as const,
+      updatedAt: Timestamp.now()
+    }
+  },
+  sharingPreferences: {
+    shareWithCoaches: false,
+    shareWithResearch: false
+  },
+  notifications: {
+    insights: true,
+    reminders: true,
+    marketing: false
+  },
+  auditTrail: []
+});
 
 export const getConsentSettings = async (userId: string) => {
   const consents = await getConsents(userId);
-  if (!consents) {
-    throw notFound("Consent record not found");
+  if (consents) {
+    return consents;
   }
-  return consents;
+
+  const defaults = createDefaultConsents();
+  await setConsents(userId, defaults);
+  await updateUserDocument(userId, {
+    privacy: {
+      profileVisibility: "private",
+      shareWithCoaches: false,
+      shareWithResearch: false,
+      emailNotifications: defaults.notifications
+    },
+    privacySettings: {
+      dataUsage: false,
+      profileVisibility: "private",
+      shareWithCoaches: false,
+      shareWithResearch: false
+    }
+  });
+
+  return defaults;
 };
 
 export const updatePrivacyPreferences = async (
