@@ -117,7 +117,7 @@
   grid-template-columns: 1fr 1fr;
   background: var(--color-tabs-bg);
   border-radius: 999px;
-  padding: 4px;
+  padding: 2px;
   overflow: hidden;
 }
 

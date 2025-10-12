@@ -36,6 +36,8 @@ const Dashboard = ({ user }: DashboardProps) => {
 
             </header>
 
+            <ProfileCompletionWidget uid={user.uid} />
+
             <section className="dashboard-hero" aria-labelledby="dashboard-hero-heading">
               <div className="dashboard-hero-text">
                 <h2 id="dashboard-hero-heading">Complete your health profile</h2>
@@ -58,7 +60,6 @@ const Dashboard = ({ user }: DashboardProps) => {
           </div>
 
           <aside className="dashboard-right" aria-label="Secondary widgets">
-            <ProfileCompletionWidget uid={user.uid} />
             <PrivacySettingsWidget />
             <EmailNotificationsWidget />
             <TwoFactorWidget />

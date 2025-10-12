@@ -124,35 +124,47 @@ const ProfileCompletionWidget: React.FC<ProfileCompletionWidgetProps> = ({ uid }
     return null;
   }
 
+  const bannerClassNames = [
+    'profile-completion-banner',
+    loading ? 'profile-completion-banner--loading' : '',
+    error ? 'profile-completion-banner--error' : ''
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div className="dashboard-widget profile-completion-widget" aria-live="polite">
-      <h3 className="dashboard-widget-title">Profile completeness</h3>
-      <div className="dashboard-widget-body">
+    <div className={bannerClassNames} aria-live="polite">
+      <div className="profile-completion-main">
         {loading ? (
-          <p>Checking your profile…</p>
+          <>
+            <p className="profile-completion-title">Checking your profile…</p>
+            <p className="profile-completion-subtitle">We’re loading your completion progress.</p>
+          </>
         ) : error ? (
-          <p role="alert" className="profile-completion-error">{error}</p>
+          <p className="profile-completion-message" role="alert">{error}</p>
         ) : (
           <>
-            <div className="profile-completion-summary">
-              <span className="profile-completion-ratio">{totalProvided}/{TOTAL_FIELDS}</span>
-              <span className="profile-completion-progress-text">{progress}% complete</span>
-            </div>
-            <div className="profile-completion-progress" role="progressbar" aria-valuemin={0} aria-valuemax={TOTAL_FIELDS} aria-valuenow={totalProvided}>
-              <div className="profile-completion-progress-bar" style={{ width: `${progress}%` }} />
-            </div>
-            <ul className="profile-completion-breakdown">
-              <li><strong>Required</strong> {requiredProvided}/{TOTAL_REQUIRED}</li>
-              <li><strong>Extra</strong> {extraProvided}/{TOTAL_EXTRA}</li>
-            </ul>
-            {!allComplete && (
-              <a href="/profile" className="dashboard-hero-action profile-completion-action">
-                Complete profile
-              </a>
-            )}
+            <p className="profile-completion-title">Complete profile</p>
+            <p className="profile-completion-subtitle"> {progress}% complete</p>
           </>
         )}
       </div>
+      {!loading && !error && (
+        <>
+          <div className="profile-completion-meta">
+            <span className="profile-completion-chip">{requiredProvided}/{TOTAL_REQUIRED} required</span>
+            <span className="profile-completion-chip">{extraProvided}/{TOTAL_EXTRA} extra</span>
+          </div>
+          {!allComplete && (
+            <a href="/profile" className="profile-completion-link">
+              Finish now →
+            </a>
+          )}
+        </>
+      )}
+      {error && (
+        <p className="profile-completion-message">Try again later or update your profile manually.</p>
+      )}
     </div>
   );
 };
