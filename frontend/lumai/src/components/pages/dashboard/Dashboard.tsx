@@ -7,6 +7,7 @@ import TwoFactorWidget from './security/TwoFactorWidget';
 import SessionWidget from './security/SessionWidget';
 import PrivacySettingsWidget from './privacy/PrivacySettingsWidget';
 import EmailNotificationsWidget from './privacy/EmailNotificationsWidget';
+import ProfileCompletionWidget from './profile/ProfileCompletionWidget';
 
 interface DashboardProps {
   user: User;
@@ -57,6 +58,7 @@ const Dashboard = ({ user }: DashboardProps) => {
           </div>
 
           <aside className="dashboard-right" aria-label="Secondary widgets">
+            <ProfileCompletionWidget uid={user.uid} />
             <PrivacySettingsWidget />
             <EmailNotificationsWidget />
             <TwoFactorWidget />

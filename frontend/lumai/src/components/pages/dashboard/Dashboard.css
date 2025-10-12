@@ -75,6 +75,74 @@
   font-size: 0.95rem;
 }
 
+.profile-completion-widget {
+  background: var(--color-white);
+  border: 1px solid rgba(79, 70, 229, 0.15);
+  box-shadow: 0 25px 80px -60px rgba(67, 56, 202, 0.45);
+}
+
+.profile-completion-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.profile-completion-ratio {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.profile-completion-progress-text {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-gray-400);
+}
+
+.profile-completion-progress {
+  position: relative;
+  margin: 14px 0 10px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-gray-200);
+  overflow: hidden;
+}
+
+.profile-completion-progress-bar {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  transition: width 0.25s ease-in-out;
+}
+
+.profile-completion-breakdown {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 18px;
+  display: grid;
+  gap: 4px;
+  color: var(--color-gray-500);
+  font-size: 0.9rem;
+}
+
+.profile-completion-breakdown strong {
+  color: var(--color-gray-600);
+  margin-right: 4px;
+}
+
+.profile-completion-action {
+  display: inline-flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.profile-completion-error {
+  color: var(--color-error);
+  margin: 0;
+}
+
 .dashboard-subtitle {
   margin: 0 0 8px;
   font-size: 0.85rem;
