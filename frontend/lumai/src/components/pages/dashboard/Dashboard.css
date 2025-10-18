@@ -141,11 +141,12 @@
 .profile-completion-link {
   position: relative;
   z-index: 1;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 6px 12px;
-    font-size: 0.8rem;
+  font-size: 0.8rem;
   border-radius: 16px;
   background: #018786;
   color: inherit;
@@ -153,7 +154,8 @@
   text-decoration: none;
   transition: background 0.2s ease;
   flex: 0 0 auto;
-  border: 2px solid white
+  border: 2px solid white;
+  margin: 0 auto;
 }
 
 .profile-completion-link:hover {
@@ -293,7 +295,31 @@
   }
 }
 
+
 @media (max-width: 720px) {
+  .profile-completion-banner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 12px;
+    border-radius: 16px;
+    font-size: 0.97rem;
+  }
+  .profile-completion-link {
+    width: 100%;
+    max-width: 220px;
+    justify-content: center;
+    margin: 0 auto;
+    display: flex;
+  }
+  .profile-completion-meta {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+  }
+
 
   .dashboard-canvas {
     margin-left: 0;
