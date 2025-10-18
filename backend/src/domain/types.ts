@@ -26,6 +26,9 @@ export interface UserDocument {
     shareWithCoaches: boolean;
     shareWithResearch: boolean;
   };
+  requiredProfile?: Record<string, unknown> | null;
+  additionalProfile?: Record<string, unknown> | null;
+  profileCompleted?: boolean;
   mfa?: {
     enabled: boolean;
     secret?: string | null;

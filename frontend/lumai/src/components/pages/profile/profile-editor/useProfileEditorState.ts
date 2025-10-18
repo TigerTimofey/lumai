@@ -3,6 +3,7 @@ import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 
 import { db } from '../../../../config/firebase';
 import type { AdditionalProfile, FirestoreUser, RequiredProfile } from '../profileOptions/types';
+import { apiFetch } from '../../../../utils/api';
 
 interface UseProfileEditorStateParams {
   uid: string;
@@ -181,6 +182,11 @@ export const useProfileEditorState = ({ uid }: UseProfileEditorStateParams): Pro
         },
         { merge: true }
       );
+      try {
+        await apiFetch('/analytics/process', { method: 'POST' });
+      } catch (processError) {
+        console.warn('Failed to refresh processed metrics', processError);
+      }
       setSavedAt(Date.now());
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : String(saveError));

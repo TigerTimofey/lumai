@@ -11,6 +11,7 @@ import {
 } from "../repositories/profile.repo.js";
 import { updateUserDocument } from "../repositories/user.repo.js";
 import { badRequest, notFound } from "../utils/api-error.js";
+import { recordProcessedMetricsSnapshot } from "./processed-metrics.service.js";
 
 export const getProfileSummary = async (userId: string) => {
   const profile = await getProfile(userId);
@@ -83,6 +84,13 @@ export const upsertHealthProfile = async (userId: string, input: HealthProfileIn
   await updateUserDocument(userId, {
     profileVersionId: versionDoc.versionId
   });
+
+  try {
+    await recordProcessedMetricsSnapshot(userId, versionDoc);
+  } catch (error) {
+    // Surface in logs but do not block profile updates
+    console.warn('[processed-metrics] failed to record snapshot', error);
+  }
 
   return {
     versionId: versionDoc.versionId,
