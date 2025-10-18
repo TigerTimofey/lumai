@@ -8,6 +8,7 @@ import SessionWidget from './security/SessionWidget';
 import PrivacySettingsWidget from './privacy/PrivacySettingsWidget';
 import EmailNotificationsWidget from './privacy/EmailNotificationsWidget';
 import ProfileCompletionWidget from './profile/ProfileCompletionWidget';
+import ProfileAnalyticsWidget from './profile/ProfileAnalyticsWidget';
 
 interface DashboardProps {
   user: User;
@@ -37,6 +38,7 @@ const Dashboard = ({ user }: DashboardProps) => {
             </header>
 
             <ProfileCompletionWidget uid={user.uid} />
+            <ProfileAnalyticsWidget uid={user.uid} />
 
             <section className="dashboard-hero" aria-labelledby="dashboard-hero-heading">
               <div className="dashboard-hero-text">
