@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authContext } from "../middleware/auth-context.js";
-import { prepareAiMetrics } from "../services/ai.service.js";
+import { prepareAiMetrics, generateAiInsights } from "../services/ai.service.js";
 import { listAiInsights } from "../repositories/ai-insight.repo.js";
 import { listProcessedMetrics } from "../repositories/processed-metrics.repo.js";
 import { unauthorized } from "../utils/api-error.js";
@@ -18,6 +18,20 @@ router.post("/prepare", async (req, res, next) => {
 
     const snapshot = await prepareAiMetrics(userId);
     return res.status(201).json(snapshot);
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post("/insights", async (req, res, next) => {
+  try {
+    const userId = req.authToken?.uid;
+    if (!userId) {
+      throw unauthorized();
+    }
+
+    const insight = await generateAiInsights(userId);
+    return res.status(201).json(insight);
   } catch (error) {
     return next(error);
   }

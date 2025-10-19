@@ -33,6 +33,8 @@ const PrivacySettingsWidget: React.FC<{ onVisibilityResolved?: (v: ProfileVisibi
 
   // For PUT payload, we also need notifications, but this widget won't change them.
   const [notifications, setNotifications] = useState({ insights: true, reminders: true, marketing: false });
+  const [aiInsights, setAiInsights] = useState<boolean>(false);
+  const [aiUpdating, setAiUpdating] = useState<boolean>(false);
 
   useEffect(() => {
     let active = true;
@@ -48,6 +50,9 @@ const PrivacySettingsWidget: React.FC<{ onVisibilityResolved?: (v: ProfileVisibi
 
         const dpStatus = doc.agreements?.data_processing?.status ?? 'pending';
         setDataUsage(dpStatus === 'granted');
+
+        const aiStatus = doc.agreements?.ai_insights?.status ?? 'pending';
+        setAiInsights(aiStatus === 'granted');
       })
       .catch((e) => {
         if (!active) return;
@@ -102,6 +107,23 @@ const PrivacySettingsWidget: React.FC<{ onVisibilityResolved?: (v: ProfileVisibi
     } catch (e) {
       setDataUsage(!next);
       setError((e as Error)?.message || 'Failed to update');
+    }
+  };
+
+  const toggleAiInsights = async () => {
+    const next = !aiInsights;
+    setAiInsights(next);
+    setAiUpdating(true);
+    try {
+      await apiFetch('/privacy/consents', {
+        method: 'POST',
+        body: JSON.stringify({ consentType: 'ai_insights', status: next ? 'granted' : 'denied' }),
+      });
+    } catch (e) {
+      setAiInsights(!next);
+      setError((e as Error)?.message || 'Failed to update');
+    } finally {
+      setAiUpdating(false);
     }
   };
 
@@ -205,6 +227,15 @@ const PrivacySettingsWidget: React.FC<{ onVisibilityResolved?: (v: ProfileVisibi
             <div className="settings-row">
               <span className="settings-label">Data usage</span>
               <ToggleSwitch checked={dataUsage} onChange={() => toggleDataUsage()} label="Data usage" />
+            </div>
+            <div className="settings-row">
+              <span className="settings-label">AI insights</span>
+              <ToggleSwitch
+                checked={aiInsights}
+                onChange={() => toggleAiInsights()}
+                disabled={aiUpdating}
+                label="AI insights"
+              />
             </div>
           </>
         )}

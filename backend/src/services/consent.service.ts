@@ -11,6 +11,16 @@ const createDefaultConsents = () => ({
       consentType: "data_processing",
       status: "pending" as const,
       updatedAt: Timestamp.now()
+    },
+    ai_insights: {
+      consentType: "ai_insights",
+      status: "pending" as const,
+      updatedAt: Timestamp.now()
+    },
+    marketing: {
+      consentType: "marketing",
+      status: "pending" as const,
+      updatedAt: Timestamp.now()
     }
   },
   sharingPreferences: {
@@ -28,7 +38,24 @@ const createDefaultConsents = () => ({
 export const getConsentSettings = async (userId: string) => {
   const consents = await getConsents(userId);
   if (consents) {
-    return consents;
+    const defaults = createDefaultConsents();
+    const mergedAgreements = {
+      ...defaults.agreements,
+      ...(consents.agreements ?? {})
+    } as typeof defaults.agreements;
+
+    const merged = {
+      ...defaults,
+      ...consents,
+      agreements: mergedAgreements
+    };
+
+    // If we had to add missing agreements, persist the merge.
+    if (Object.keys(mergedAgreements).length !== Object.keys(consents.agreements ?? {}).length) {
+      await setConsents(userId, merged);
+    }
+
+    return merged;
   }
 
   const defaults = createDefaultConsents();
@@ -110,10 +137,9 @@ export const recordConsent = async (
 
   await updateConsentStatus(userId, consentType, status, changedBy);
   const updated = await getConsents(userId);
-  // If data_processing changed, mirror to users/{uid}.privacySettings.dataUsage
+
   if (consentType === 'data_processing') {
     const granted = status === 'granted';
-    // Non-destructive: only update dataUsage; other fields retain previous values via merge
     await updateUserDocument(userId, {
       consent: FieldValue.delete() as any,
       privacySettings: {
@@ -121,5 +147,15 @@ export const recordConsent = async (
       } as any
     });
   }
+
+  if (consentType === 'ai_insights') {
+    await updateUserDocument(userId, {
+      consent: FieldValue.delete() as any,
+      privacy: {
+        aiInsightsConsent: status
+      } as any
+    });
+  }
+
   return updated;
 };

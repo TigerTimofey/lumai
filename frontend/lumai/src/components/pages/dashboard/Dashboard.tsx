@@ -9,6 +9,7 @@ import PrivacySettingsWidget from './privacy/PrivacySettingsWidget';
 import EmailNotificationsWidget from './privacy/EmailNotificationsWidget';
 import ProfileCompletionWidget from './profile/ProfileCompletionWidget';
 import ProfileAnalyticsWidget from './profile/ProfileAnalyticsWidget';
+import AiInsightsWidget from './profile/AiInsightsWidget';
 
 interface DashboardProps {
   user: User;
@@ -63,6 +64,7 @@ const Dashboard = ({ user }: DashboardProps) => {
 
           <aside className="dashboard-right" aria-label="Secondary widgets">
             <PrivacySettingsWidget />
+            <AiInsightsWidget />
             <EmailNotificationsWidget />
             <TwoFactorWidget />
             <SessionWidget />
