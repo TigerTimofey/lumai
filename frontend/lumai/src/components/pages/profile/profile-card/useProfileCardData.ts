@@ -15,11 +15,14 @@ import type {
   ProfileCardSectionData
 } from './types';
 
+import type { User as FirebaseUser } from 'firebase/auth';
+
 interface ProfileCardUser {
   uid: string;
   displayName: string | null;
   email: string | null;
   emailVerified: boolean | null;
+  firebaseUser?: FirebaseUser | null;
 }
 
 interface UseProfileCardDataParams {
@@ -113,7 +116,7 @@ const buildHeaderFields = (
   profile: ProfileSummary | null,
   user: ProfileCardUser
 ): ProfileCardHeaderField[] => {
-  const verifiedFlag = profile?.emailVerified ?? user.emailVerified;
+  const verifiedFlag = user.emailVerified;
   const emailVerified = verifiedFlag === null || verifiedFlag === undefined
     ? 'No'
     : verifiedFlag
@@ -122,7 +125,6 @@ const buildHeaderFields = (
 
   return [
     { label: 'Created', value: createdAtText },
-    { label: 'Name', value: profile?.displayName ?? user.displayName ?? '—' },
     { label: 'Email', value: profile?.email ?? user.email ?? '—' },
     { label: 'Email verified', value: emailVerified }
   ];

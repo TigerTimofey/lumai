@@ -100,7 +100,7 @@ export const generateAiInsights = async (userId: string) => {
 
   const requestBody = {
     model,
-    max_tokens: 600,
+    max_tokens: 900,
     temperature: 0.7,
     messages: [
       { role: "system", content: "You are an empathetic and motivational health coach." },
@@ -122,6 +122,7 @@ export const generateAiInsights = async (userId: string) => {
     );
 
     const content: string = data?.choices?.[0]?.message?.content ?? "";
+    console.info('[ai-insights] generated content', { userId, model, length: content.length, preview: content.slice(0, 120) });
 
     const log = await logAiInsight(userId, {
       promptContext: {

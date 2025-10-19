@@ -15,7 +15,6 @@ const AiInsightsWidget: React.FC = () => {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [content, setContent] = useState<string | null>(null);
-  const [timestamp, setTimestamp] = useState<string | null>(null);
   const [model, setModel] = useState<string | null>(null);
 
   const loadLatest = useCallback(async () => {
@@ -25,7 +24,6 @@ const AiInsightsWidget: React.FC = () => {
       const data = await apiFetch<{ insights?: InsightLog[] }>('/ai/insights?limit=1');
       const insight = data.insights?.[0];
       setContent(insight?.response?.content ?? null);
-      setTimestamp(insight?.createdAt ?? null);
       setModel(insight?.model ?? null);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -48,7 +46,7 @@ const AiInsightsWidget: React.FC = () => {
       });
       setContent(data.content ?? null);
       setModel(data.model ?? null);
-      setTimestamp(data.createdAt ?? new Date().toISOString());
+      // setTimestamp(data.createdAt ?? new Date().toISOString());
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg || 'Failed to generate insight. Enable AI consent in Privacy settings and try again.');
@@ -56,6 +54,15 @@ const AiInsightsWidget: React.FC = () => {
       setGenerating(false);
     }
   };
+
+  // Extract only the Motivational note from the response
+  const getMotivationalNote = (text: string | null) => {
+    if (!text) return null;
+    const match = text.match(/\*\*Motivational note\*\*[\s\n]*([\s\S]*)/i);
+    return match ? match[1].trim() : null;
+  };
+
+  const motivationalNote = getMotivationalNote(content);
 
   return (
     <section className="dashboard-widget" aria-labelledby="ai-insights-title" aria-busy={loading}>
@@ -76,8 +83,9 @@ const AiInsightsWidget: React.FC = () => {
           <p>Gathering your latest insight…</p>
         ) : error ? (
           <p role="alert" style={{ color: 'crimson', margin: 0 }}>{error}</p>
-        ) : content ? (
+        ) : motivationalNote ? (
           <>
+            <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-primary)' }}>Motivational note</p>
             <pre
               style={{
                 margin: 0,
@@ -86,15 +94,21 @@ const AiInsightsWidget: React.FC = () => {
                 lineHeight: 1.5,
                 color: 'var(--color-gray-600)'
               }}
-            >{content}</pre>
+            >{motivationalNote}</pre>
             <p style={{ margin: 0, fontSize: 12, color: 'var(--color-gray-400)' }}>
               {model ? `Model: ${model} · ` : ''}
-              {timestamp ? new Date(timestamp).toLocaleString() : 'Just now'}
             </p>
           </>
         ) : (
-          <p style={{ margin: 0 }}>No insights yet. Generate the first recommendation above.</p>
+          <p style={{ margin: 0 }}>No motivational note yet. Generate a new insight above.</p>
         )}
+        <a
+          href="/ai-insights"
+          className="dashboard-hero-action"
+          style={{ justifyContent: 'center', fontSize: 13 }}
+        >
+          View full insight history
+        </a>
       </div>
     </section>
   );

@@ -40,6 +40,7 @@ const Dashboard = ({ user }: DashboardProps) => {
 
             <ProfileCompletionWidget uid={user.uid} />
             <ProfileAnalyticsWidget uid={user.uid} />
+            <AiInsightsWidget />
 
             <section className="dashboard-hero" aria-labelledby="dashboard-hero-heading">
               <div className="dashboard-hero-text">
@@ -55,16 +56,11 @@ const Dashboard = ({ user }: DashboardProps) => {
               <div className="dashboard-hero-art" aria-hidden="true" />
             </section>
 
-            <section className="dashboard-placeholder" aria-live="polite">
-              <p className="dashboard-placeholder-text">
-                Your personalized wellness insights will appear here once you complete your profile.
-              </p>
-            </section>
+           
           </div>
 
           <aside className="dashboard-right" aria-label="Secondary widgets">
             <PrivacySettingsWidget />
-            <AiInsightsWidget />
             <EmailNotificationsWidget />
             <TwoFactorWidget />
             <SessionWidget />
