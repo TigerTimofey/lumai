@@ -7,6 +7,7 @@ import AuthPage from './components/auth/AuthPage';
 import Dashboard from './components/pages/dashboard/Dashboard';
 import Profile from './components/pages/profile/Profile';
 import AiInsightsPage from './components/pages/ai-insights/AiInsightsPage';
+import AnalyticsPage from './components/pages/analytics/AnalyticsPage';
 
 function App() {
   const [authedUser, setAuthedUser] = useState<User | null>(null);
@@ -91,6 +92,7 @@ function App() {
 
   if (!initializing && isDashboardAccessible && authedUser) {
     if (path.startsWith('/profile')) return <Profile user={authedUser} />;
+    if (path.startsWith('/analytics')) return <AnalyticsPage user={authedUser} />;
     if (path.startsWith('/ai-insights')) return <AiInsightsPage user={authedUser} />;
     return <Dashboard user={authedUser} />;
   }
