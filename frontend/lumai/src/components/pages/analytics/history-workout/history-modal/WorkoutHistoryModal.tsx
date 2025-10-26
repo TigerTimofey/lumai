@@ -20,6 +20,17 @@ const formatDuration = (value: number | null | undefined) => {
   return `${Math.round(value)} min`;
 };
 
+const formatDecimal = (value: number | null | undefined) => {
+  if (value == null || Number.isNaN(value)) return null;
+  return Number.isInteger(value) ? value.toString() : value.toFixed(1);
+};
+
+const formatLabel = (value: string | null | undefined) => {
+  if (!value) return null;
+  const spaced = value.replace(/_/g, ' ');
+  return spaced.replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
 const WorkoutHistoryModal: React.FC<WorkoutHistoryModalProps> = ({
   open,
   weekday,
@@ -67,8 +78,18 @@ const WorkoutHistoryModal: React.FC<WorkoutHistoryModalProps> = ({
               const key = workout.id ?? `${workout.createdAt ?? 'entry'}-${index}`;
               const time = formatTime(workout.createdAtDate);
               const durationLabel = formatDuration(workout.durationMinutes);
-              const intensityLabel = workout.intensity ? workout.intensity.replace(/_/g, ' ') : null;
+              const intensityLabel = formatLabel(workout.intensity);
               const weightLabel = workout.weightKg != null ? `${workout.weightKg} kg` : null;
+              const sleepLabel = formatDecimal(workout.sleepHours);
+              const waterLabel = formatDecimal(workout.waterLiters);
+              const stressLabel = formatLabel(workout.stressLevel);
+              const activityLabel = formatLabel(workout.activityLevel);
+
+              const habitFacts: string[] = [];
+              if (sleepLabel) habitFacts.push(`Sleep ${sleepLabel}h`);
+              if (waterLabel) habitFacts.push(`Water ${waterLabel}L`);
+              if (stressLabel) habitFacts.push(`Stress ${stressLabel}`);
+              if (activityLabel) habitFacts.push(`Activity ${activityLabel}`);
 
               return (
                 <li key={key} className="workout-history-modal__item">
@@ -81,6 +102,13 @@ const WorkoutHistoryModal: React.FC<WorkoutHistoryModalProps> = ({
                     {intensityLabel && <span>Intensity: {intensityLabel}</span>}
                     {weightLabel && <span>Weight: {weightLabel}</span>}
                   </div>
+                  {habitFacts.length > 0 && (
+                    <div className="workout-history-modal__habits">
+                      {habitFacts.map((fact) => (
+                        <span key={fact} className="workout-history-modal__habit-pill">{fact}</span>
+                      ))}
+                    </div>
+                  )}
                   {workout.notes && (
                     <p className="workout-history-modal__notes">{workout.notes}</p>
                   )}

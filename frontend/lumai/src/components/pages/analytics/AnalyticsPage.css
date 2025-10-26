@@ -235,6 +235,14 @@ background: transparent ;
   grid-column: span 2;
 }
 
+.analytics-panel--radar {
+  min-height: 240px;
+}
+
+.analytics-panel--radar .analytics-chart {
+  min-height: 200px;
+}
+
 @media (max-width: 1024px) {
   .analytics-panel--wide {
     grid-column: span 1;

@@ -32,6 +32,10 @@ const LogWorkoutModal: React.FC<Props> = ({ open, onClose, uid, onSaved, current
   const [intensity, setIntensity] = useState<'low' | 'medium' | 'high' | ''>('');
   const [notes, setNotes] = useState('');
   const [weightInput, setWeightInput] = useState<string>('');
+  const [sleepInput, setSleepInput] = useState<string>('');
+  const [waterInput, setWaterInput] = useState<string>('');
+  const [stressInput, setStressInput] = useState<string>('');
+  const [activityInput, setActivityInput] = useState<string>('');
   const [dateInput, setDateInput] = useState<string>(() => parseInitialDate(initialDate));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +48,10 @@ const LogWorkoutModal: React.FC<Props> = ({ open, onClose, uid, onSaved, current
     setIntensity('');
     setNotes('');
     setWeightInput('');
+    setSleepInput('');
+    setWaterInput('');
+    setStressInput('');
+    setActivityInput('');
     setDateInput(parseInitialDate(initialDate));
     setError(null);
   };
@@ -62,6 +70,12 @@ const LogWorkoutModal: React.FC<Props> = ({ open, onClose, uid, onSaved, current
       const dur = duration === '' ? null : Number(duration);
       const weightVal = weightInput === '' ? null : Number(weightInput);
       const finalWeight = weightVal != null && Number.isFinite(weightVal) ? weightVal : null;
+      const sleepVal = sleepInput === '' ? null : Number(sleepInput);
+      const finalSleep = sleepVal != null && Number.isFinite(sleepVal) ? sleepVal : null;
+      const waterVal = waterInput === '' ? null : Number(waterInput);
+      const finalWater = waterVal != null && Number.isFinite(waterVal) ? waterVal : null;
+      const finalStress = stressInput || null;
+      const finalActivity = activityInput || null;
       const chosenDate = dateInput ? new Date(dateInput) : new Date();
       const isValidDate = !Number.isNaN(chosenDate.getTime());
       if (isValidDate) {
@@ -74,30 +88,49 @@ const LogWorkoutModal: React.FC<Props> = ({ open, onClose, uid, onSaved, current
         intensity: intensity || null,
         notes: notes || null,
         createdAt: createdAtValue,
-        weightKg: finalWeight
+        weightKg: finalWeight,
+        sleepHours: finalSleep,
+        waterLiters: finalWater,
+        stressLevel: finalStress,
+        activityLevel: finalActivity
       };
       const writes: Array<Promise<unknown>> = [
         addDoc(collection(db, 'users', uid, 'workouts'), payload)
       ];
+      const analyticsPayload: Record<string, unknown> = {};
       if (finalWeight != null) {
+        analyticsPayload.weightKg = finalWeight;
+        analyticsPayload.weightUpdatedAt = serverTimestamp();
+      }
+      if (finalSleep != null) {
+        analyticsPayload.sleepHours = finalSleep;
+      }
+      if (finalWater != null) {
+        analyticsPayload.waterLiters = finalWater;
+      }
+      if (finalStress) {
+        analyticsPayload.stressLevel = finalStress;
+      }
+      if (finalActivity) {
+        analyticsPayload.activityLevel = finalActivity;
+      }
+      if (Object.keys(analyticsPayload).length > 0) {
+        analyticsPayload.updatedAt = serverTimestamp();
         writes.push(
           setDoc(
             doc(db, 'users', uid, 'analytics', 'latest'),
-            {
-              weightKg: finalWeight,
-              weightUpdatedAt: serverTimestamp()
-            },
+            analyticsPayload,
             { merge: true }
           )
         );
+      }
+      if (finalWeight != null) {
         writes.push(
           setDoc(
             doc(db, 'users', uid),
             {
-              requiredProfile: {
-                weight: finalWeight,
-                weightUpdatedAt: serverTimestamp()
-              }
+              'requiredProfile.weight': finalWeight,
+              'requiredProfile.weightUpdatedAt': serverTimestamp()
             },
             { merge: true }
           )
@@ -179,6 +212,58 @@ const LogWorkoutModal: React.FC<Props> = ({ open, onClose, uid, onSaved, current
           />
           <span className="log-workout-weight-hint">Leave blank to keep the previous weight.</span>
         </label>
+
+        <section className="log-workout-habits">
+          <p className="log-workout-habits__title">Daily habits</p>
+          <div className="log-workout-habits__grid">
+            <label>
+              Sleep (hrs)
+              <input
+                type="number"
+                min={0}
+                max={14}
+                step={0.25}
+                value={sleepInput}
+                onChange={(e) => setSleepInput(e.target.value)}
+                placeholder="e.g. 7.5"
+              />
+            </label>
+            <label>
+              Water (L)
+              <input
+                type="number"
+                min={0}
+                max={10}
+                step={0.1}
+                value={waterInput}
+                onChange={(e) => setWaterInput(e.target.value)}
+                placeholder="e.g. 2.5"
+              />
+            </label>
+            <label>
+              Stress level
+              <select value={stressInput} onChange={(e) => setStressInput(e.target.value)}>
+                <option value="">(not specified)</option>
+                <option value="low">Low</option>
+                <option value="moderate">Moderate</option>
+                <option value="high">High</option>
+              </select>
+            </label>
+            <label>
+              Activity level
+              <select value={activityInput} onChange={(e) => setActivityInput(e.target.value)}>
+                <option value="">(not specified)</option>
+                <option value="sedentary">Sedentary</option>
+                <option value="light">Light</option>
+                <option value="lightly_active">Lightly active</option>
+                <option value="moderate">Moderate</option>
+                <option value="active">Active</option>
+                <option value="very_active">Very active</option>
+                <option value="extra_active">Extra active</option>
+              </select>
+            </label>
+          </div>
+        </section>
 
         {error && <p className="log-workout-error">{error}</p>}
 

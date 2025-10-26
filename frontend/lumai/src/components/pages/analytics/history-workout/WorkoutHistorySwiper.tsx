@@ -10,6 +10,10 @@ export type WorkoutHistoryItem = {
   intensity?: string | null;
   notes?: string | null;
   weightKg?: number | null;
+  sleepHours?: number | null;
+  waterLiters?: number | null;
+  stressLevel?: string | null;
+  activityLevel?: string | null;
 };
 
 const parseDateInput = (value: unknown): Date | null => {

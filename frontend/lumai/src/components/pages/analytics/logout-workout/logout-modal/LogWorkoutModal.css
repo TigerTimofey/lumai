@@ -84,6 +84,34 @@
   color: #6b7280;
 }
 
+.log-workout-habits {
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 16px;
+  padding: 16px 18px;
+  background: rgba(248, 250, 252, 0.75);
+  display: grid;
+  gap: 12px;
+}
+
+.log-workout-habits__title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.log-workout-habits__grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.log-workout-habits__grid label {
+  font-size: 0.85rem;
+}
+
 .log-workout-error {
   margin: 0;
   padding: 10px 14px;
@@ -154,5 +182,13 @@
 
   .log-workout-weight-input {
     width: 100%;
+  }
+
+  .log-workout-habits {
+    padding: 14px 16px;
+  }
+
+  .log-workout-habits__grid {
+    grid-template-columns: 1fr;
   }
 }

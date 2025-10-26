@@ -102,7 +102,11 @@ const DashboardWorkoutWidget: React.FC<DashboardWorkoutWidgetProps> = ({ uid, re
           durationMinutes: toNumber(data.durationMinutes),
           intensity: typeof data.intensity === 'string' ? data.intensity : null,
           notes: typeof data.notes === 'string' ? data.notes : null,
-          weightKg: toNumber(data.weightKg)
+          weightKg: toNumber(data.weightKg),
+          sleepHours: toNumber(data.sleepHours),
+          waterLiters: toNumber(data.waterLiters),
+          stressLevel: typeof data.stressLevel === 'string' ? data.stressLevel : null,
+          activityLevel: typeof data.activityLevel === 'string' ? data.activityLevel : null
         } satisfies WorkoutHistoryItem;
       });
       setWorkouts(items);

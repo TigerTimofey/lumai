@@ -323,17 +323,21 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
           const data = docSnap.data() as Record<string, unknown>;
           const createdAtRaw = data.createdAt ?? null;
           const createdAtDate = resolveTimestamp(createdAtRaw);
-          return {
-            id: docSnap.id,
-            createdAt: createdAtRaw,
-            createdAtDate,
-            type: typeof data.type === 'string' ? data.type : null,
-            durationMinutes: toNumber(data.durationMinutes),
-            intensity: typeof data.intensity === 'string' ? data.intensity : null,
-            notes: typeof data.notes === 'string' ? data.notes : null,
-            weightKg: toNumber(data.weightKg)
-          } satisfies WorkoutHistoryItem;
-        });
+        return {
+          id: docSnap.id,
+          createdAt: createdAtRaw,
+          createdAtDate,
+          type: typeof data.type === 'string' ? data.type : null,
+          durationMinutes: toNumber(data.durationMinutes),
+          intensity: typeof data.intensity === 'string' ? data.intensity : null,
+          notes: typeof data.notes === 'string' ? data.notes : null,
+          weightKg: toNumber(data.weightKg),
+          sleepHours: toNumber(data.sleepHours),
+          waterLiters: toNumber(data.waterLiters),
+          stressLevel: typeof data.stressLevel === 'string' ? data.stressLevel : null,
+          activityLevel: typeof data.activityLevel === 'string' ? data.activityLevel : null
+        } satisfies WorkoutHistoryItem;
+      });
         setRecentWorkouts(items);
       },
       () => {
@@ -456,6 +460,22 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
     [snapshots]
   );
 
+  const latestHeightCm = useMemo(() => {
+    const required = (userDoc?.requiredProfile ?? {}) as Partial<RequiredProfile>;
+    const heightFromRequired = required?.height;
+    const numericHeight = heightFromRequired != null ? toNumber(heightFromRequired) : null;
+    if (numericHeight != null) return numericHeight;
+
+    // fall back to any ad-hoc height field if present on the additional profile payload
+    const additionalRaw = userDoc?.additionalProfile as Record<string, unknown> | null | undefined;
+    if (additionalRaw && 'height' in additionalRaw) {
+      const maybeHeight = toNumber(additionalRaw.height as number | string | null | undefined);
+      if (maybeHeight != null) return maybeHeight;
+    }
+
+    return null;
+  }, [userDoc]);
+
   const combinedSeries: CombinedMetrics[] = useMemo(() => {
     type CombinedAccumulator = { createdAt: Date | null } & Partial<CombinedMetrics>;
     const byDay = new Map<string, CombinedAccumulator>();
@@ -510,24 +530,50 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
     const sortedWorkouts = recentWorkouts
       .map((workout) => {
         const createdAtDate = workout.createdAtDate ?? resolveTimestamp(workout.createdAt);
+        if (!createdAtDate) return null;
         const weight = toNumber(workout.weightKg);
-        return createdAtDate && weight != null ? { createdAtDate, weight } : null;
+        const sleepHours = toNumber(workout.sleepHours);
+        const waterLiters = toNumber(workout.waterLiters);
+        const stressLevel = typeof workout.stressLevel === 'string' ? workout.stressLevel : null;
+        const activityLevel = typeof workout.activityLevel === 'string' ? workout.activityLevel : null;
+        if (
+          weight == null &&
+          sleepHours == null &&
+          waterLiters == null &&
+          !stressLevel &&
+          !activityLevel
+        ) {
+          return null;
+        }
+        return { createdAtDate, weight, sleepHours, waterLiters, stressLevel, activityLevel };
       })
-      .filter((entry): entry is { createdAtDate: Date; weight: number } => Boolean(entry))
+      .filter((entry): entry is {
+        createdAtDate: Date;
+        weight: number | null;
+        sleepHours: number | null;
+        waterLiters: number | null;
+        stressLevel: string | null;
+        activityLevel: string | null;
+      } => Boolean(entry))
       .sort((a, b) => a.createdAtDate.getTime() - b.createdAtDate.getTime());
 
-    sortedWorkouts.forEach(({ createdAtDate, weight }) => {
+    sortedWorkouts.forEach(({ createdAtDate, weight, sleepHours, waterLiters, stressLevel, activityLevel }) => {
+      let bmi: number | null = null;
+      if (weight != null && latestHeightCm && latestHeightCm > 0) {
+        const heightMeters = latestHeightCm / 100;
+        bmi = weight / (heightMeters * heightMeters);
+      }
       mergePoint({
         createdAt: createdAtDate,
-        weightKg: weight,
-        bmi: null,
-        activityLevel: null,
+        weightKg: weight ?? null,
+        bmi,
+        activityLevel: activityLevel,
         trainingDays: null,
         targetTraining: null,
         targetWeight: null,
-        sleepHours: null,
-        waterLiters: null,
-        stressLevel: null
+        sleepHours: sleepHours,
+        waterLiters: waterLiters,
+        stressLevel: stressLevel
       });
     });
 
@@ -562,7 +608,7 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
       const bTime = b.createdAt ? b.createdAt.getTime() : Number.POSITIVE_INFINITY;
       return bTime - aTime;
     });
-  }, [snapshotPoints, analyticsDoc, userDoc, recentWorkouts]);
+  }, [snapshotPoints, analyticsDoc, userDoc, recentWorkouts, latestHeightCm]);
 
   const weightSeries = useMemo(() => {
     const formatter = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
@@ -1316,7 +1362,7 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
           )}
 
           {habitRadar && (
-            <article className="analytics-panel analytics-panel--wide">
+            <article className="analytics-panel analytics-panel--wide analytics-panel--radar">
               <header>
                 <h2>Wellness balance</h2>
                 <p>Sleep, hydration, stress, and activity signals from your latest data.</p>
