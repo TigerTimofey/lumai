@@ -457,23 +457,112 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
   );
 
   const combinedSeries: CombinedMetrics[] = useMemo(() => {
-    const points = snapshotPoints.map((point) => ({
-      ...point,
-      wellnessScore: computeWellness(point)
-    }));
+    type CombinedAccumulator = { createdAt: Date | null } & Partial<CombinedMetrics>;
+    const byDay = new Map<string, CombinedAccumulator>();
 
-    if (points.length === 0) {
-      const backup = normalizeFromUserDoc(userDoc);
-      if (backup) {
-        return [{
-          ...backup,
-          wellnessScore: computeWellness(backup)
-        }];
+    const mergePoint = (point: SnapshotPoint) => {
+      const date = point.createdAt ?? null;
+      const key = date ? formatDayKey(startOfDay(date)) : 'latest';
+      const existing: CombinedAccumulator = byDay.get(key) ?? { createdAt: date ?? null };
+
+      if (date && (!existing.createdAt || date > existing.createdAt)) {
+        existing.createdAt = date;
       }
+
+      if (point.weightKg != null) existing.weightKg = point.weightKg;
+      if (point.bmi != null) existing.bmi = point.bmi;
+      if (point.activityLevel != null) existing.activityLevel = point.activityLevel;
+      if (point.trainingDays != null) existing.trainingDays = point.trainingDays;
+      if (point.targetTraining != null) existing.targetTraining = point.targetTraining;
+      if (point.targetWeight != null) existing.targetWeight = point.targetWeight;
+      if (point.sleepHours != null) existing.sleepHours = point.sleepHours;
+      if (point.waterLiters != null) existing.waterLiters = point.waterLiters;
+      if (point.stressLevel != null) existing.stressLevel = point.stressLevel;
+
+      byDay.set(key, existing);
+    };
+
+    snapshotPoints.forEach((point) => {
+      mergePoint(point);
+    });
+
+    if (analyticsDoc) {
+      const analyticPoint: SnapshotPoint = {
+        createdAt: resolveTimestamp(analyticsDoc.updatedAt ?? analyticsDoc.createdAt ?? null),
+        weightKg: toNumber(analyticsDoc.weightKg),
+        bmi: toNumber(analyticsDoc.bmi),
+        activityLevel: typeof analyticsDoc.activityLevel === 'string' ? analyticsDoc.activityLevel : null,
+        trainingDays: toNumber(analyticsDoc.trainingDays),
+        targetTraining: toNumber(analyticsDoc.targetTraining),
+        targetWeight: toNumber(analyticsDoc.targetWeight),
+        sleepHours: toNumber(analyticsDoc.sleepHours),
+        waterLiters: toNumber(analyticsDoc.waterLiters),
+        stressLevel: typeof analyticsDoc.stressLevel === 'string' ? analyticsDoc.stressLevel : null
+      };
+      mergePoint(analyticPoint);
     }
 
-    return points;
-  }, [snapshotPoints, userDoc]);
+    const backup = normalizeFromUserDoc(userDoc);
+    if (backup) {
+      mergePoint(backup);
+    }
+
+    const sortedWorkouts = recentWorkouts
+      .map((workout) => {
+        const createdAtDate = workout.createdAtDate ?? resolveTimestamp(workout.createdAt);
+        const weight = toNumber(workout.weightKg);
+        return createdAtDate && weight != null ? { createdAtDate, weight } : null;
+      })
+      .filter((entry): entry is { createdAtDate: Date; weight: number } => Boolean(entry))
+      .sort((a, b) => a.createdAtDate.getTime() - b.createdAtDate.getTime());
+
+    sortedWorkouts.forEach(({ createdAtDate, weight }) => {
+      mergePoint({
+        createdAt: createdAtDate,
+        weightKg: weight,
+        bmi: null,
+        activityLevel: null,
+        trainingDays: null,
+        targetTraining: null,
+        targetWeight: null,
+        sleepHours: null,
+        waterLiters: null,
+        stressLevel: null
+      });
+    });
+
+    const mergedPoints = Array.from(byDay.values()).map((partial) => {
+      const snapshot: SnapshotPoint = {
+        createdAt: partial.createdAt ?? null,
+        weightKg: partial.weightKg ?? null,
+        bmi: partial.bmi ?? null,
+        activityLevel: partial.activityLevel ?? null,
+        trainingDays: partial.trainingDays ?? null,
+        targetTraining: partial.targetTraining ?? null,
+        targetWeight: partial.targetWeight ?? null,
+        sleepHours: partial.sleepHours ?? null,
+        waterLiters: partial.waterLiters ?? null,
+        stressLevel: partial.stressLevel ?? null
+      };
+      return {
+        ...snapshot,
+        wellnessScore: computeWellness(snapshot)
+      };
+    });
+
+    if (mergedPoints.length === 0 && backup) {
+      return [{
+        ...backup,
+        wellnessScore: computeWellness(backup)
+      }];
+    }
+
+    return mergedPoints.sort((a, b) => {
+      const aTime = a.createdAt ? a.createdAt.getTime() : Number.POSITIVE_INFINITY;
+      const bTime = b.createdAt ? b.createdAt.getTime() : Number.POSITIVE_INFINITY;
+      return bTime - aTime;
+    });
+  }, [snapshotPoints, analyticsDoc, userDoc, recentWorkouts]);
 
   const weightSeries = useMemo(() => {
     const formatter = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });

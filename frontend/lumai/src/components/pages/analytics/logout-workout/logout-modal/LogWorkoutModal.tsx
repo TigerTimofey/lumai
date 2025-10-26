@@ -94,7 +94,10 @@ const LogWorkoutModal: React.FC<Props> = ({ open, onClose, uid, onSaved, current
           setDoc(
             doc(db, 'users', uid),
             {
-              'requiredProfile.weight': finalWeight
+              requiredProfile: {
+                weight: finalWeight,
+                weightUpdatedAt: serverTimestamp()
+              }
             },
             { merge: true }
           )
