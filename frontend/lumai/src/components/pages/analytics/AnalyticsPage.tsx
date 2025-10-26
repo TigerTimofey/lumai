@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { User } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { Line, Bar, Radar, Doughnut } from 'react-chartjs-2';
 import 'chart.js/auto';
 
 import SideNav from '../../navigation/SideNav';
 import UserSettingBar from '../dashboard/user-settings/userSettingBar';
+import LogWorkoutTrigger from './LogWorkoutTrigger';
+import WorkoutHistorySwiper, { type WorkoutHistoryItem } from './WorkoutHistorySwiper';
+import WorkoutHistoryModal from './WorkoutHistoryModal';
 import { apiFetch } from '../../../utils/api';
 import { db } from '../../../config/firebase';
 import type { AdditionalProfile, FirestoreUser, RequiredProfile } from '../profile/profileOptions/types';
@@ -53,18 +56,28 @@ const toNumber = (value: unknown): number | null => {
   return null;
 };
 
-const resolveTimestamp = (value?: string | FirestoreTimestamp): Date | null => {
+const resolveTimestamp = (value?: unknown): Date | null => {
   if (!value) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value;
+  }
   if (typeof value === 'string') {
     const parsed = new Date(value);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
-  if (typeof value.toDate === 'function') {
-    return value.toDate();
+  if (typeof value === 'number') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
-  const seconds = value._seconds ?? value.seconds;
-  if (typeof seconds === 'number') {
-    return new Date(seconds * 1000);
+  if (typeof value === 'object') {
+    const maybeTimestamp = value as FirestoreTimestamp;
+    if (typeof maybeTimestamp.toDate === 'function') {
+      return maybeTimestamp.toDate() ?? null;
+    }
+    const seconds = maybeTimestamp._seconds ?? maybeTimestamp.seconds;
+    if (typeof seconds === 'number') {
+      return new Date(seconds * 1000);
+    }
   }
   return null;
 };
@@ -105,6 +118,8 @@ const activityToTargetDays = (activity: string | null) => {
   };
   return map[activity] ?? null;
 };
+
+const formatDayKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 
 const bmiScore = (bmi: number | null) => {
   if (bmi == null) return 50;
@@ -242,6 +257,21 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
   const [error, setError] = useState<string | null>(null);
   const [snapshots, setSnapshots] = useState<ProcessedSnapshot[]>([]);
   const [userDoc, setUserDoc] = useState<FirestoreUser | null>(null);
+  const [analyticsDoc, setAnalyticsDoc] = useState<Record<string, unknown> | null>(null);
+  const [recentWorkouts, setRecentWorkouts] = useState<WorkoutHistoryItem[]>([]);
+  const [historyModalState, setHistoryModalState] = useState<{
+    open: boolean;
+    key: string | null;
+    weekday: string;
+    dateLabel: string;
+    workouts: WorkoutHistoryItem[];
+  }>({
+    open: false,
+    key: null,
+    weekday: '',
+    dateLabel: '',
+    workouts: []
+  });
 
   const loadSnapshots = useCallback(async () => {
     setLoading(true);
@@ -262,22 +292,157 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
   }, [loadSnapshots]);
 
   useEffect(() => {
-    let active = true;
-    const loadUserDoc = async () => {
-      try {
-        const ref = doc(db, 'users', user.uid);
-        const snap = await getDoc(ref);
-        if (!active) return;
-        setUserDoc(snap.exists() ? (snap.data() as FirestoreUser) : null);
-      } catch {
-        // Firestore read is best-effort for analytics enrichment
+    const workoutsRef = collection(db, 'users', user.uid, 'workouts');
+    const workoutsQuery = query(workoutsRef, orderBy('createdAt', 'desc'), limit(200));
+    const unsubscribe = onSnapshot(
+      workoutsQuery,
+      (snapshot) => {
+        const items = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data() as Record<string, unknown>;
+          const createdAtRaw = data.createdAt ?? null;
+          const createdAtDate = resolveTimestamp(createdAtRaw);
+          return {
+            id: docSnap.id,
+            createdAt: createdAtRaw,
+            createdAtDate,
+            type: typeof data.type === 'string' ? data.type : null,
+            durationMinutes: toNumber(data.durationMinutes),
+            intensity: typeof data.intensity === 'string' ? data.intensity : null,
+            notes: typeof data.notes === 'string' ? data.notes : null,
+            weightKg: toNumber(data.weightKg)
+          } satisfies WorkoutHistoryItem;
+        });
+        setRecentWorkouts(items);
+      },
+      () => {
+        // ignore subscription errors; component already guards with processed snapshots
       }
+    );
+    return () => unsubscribe();
+  }, [user.uid]);
+
+  const countTrainingDaysFromWorkouts = (workouts: WorkoutHistoryItem[]) => {
+    const days = new Set<string>();
+    workouts.forEach((w) => {
+      try {
+        const createdAt = w.createdAtDate ?? resolveTimestamp(w.createdAt);
+        const d = createdAt ? new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate()) : null;
+        if (!d || Number.isNaN(d.getTime())) return;
+        days.add(formatDayKey(d));
+      } catch {
+        // ignore invalid dates
+      }
+    });
+    return days.size;
+  };
+
+  const handleHistoryDaySelect = useCallback((info: {
+    id: string;
+    date: Date;
+    workouts: WorkoutHistoryItem[];
+    weekday: string;
+    dateLabel: string;
+  }) => {
+    const sorted = info.workouts.slice().sort((a, b) => {
+      const aTime = a.createdAtDate ? a.createdAtDate.getTime() : 0;
+      const bTime = b.createdAtDate ? b.createdAtDate.getTime() : 0;
+      return bTime - aTime;
+    });
+    setHistoryModalState({
+      open: true,
+      key: info.id,
+      weekday: info.weekday,
+      dateLabel: info.dateLabel,
+      workouts: sorted
+    });
+  }, []);
+
+  const closeHistoryModal = useCallback(() => {
+    setHistoryModalState((prev) => ({
+      ...prev,
+      open: false
+    }));
+  }, []);
+
+  useEffect(() => {
+    if (!historyModalState.key) return;
+    const key = historyModalState.key;
+    const nextWorkouts = recentWorkouts
+      .map((workout) => {
+        const createdAtDate = workout.createdAtDate ?? resolveTimestamp(workout.createdAt);
+        return {
+          ...workout,
+          createdAtDate
+        };
+      })
+      .filter((workout) => workout.createdAtDate && formatDayKey(workout.createdAtDate) === key)
+      .sort((a, b) => {
+        const aTime = a.createdAtDate ? a.createdAtDate.getTime() : 0;
+        const bTime = b.createdAtDate ? b.createdAtDate.getTime() : 0;
+        return bTime - aTime;
+      });
+
+    setHistoryModalState((prev) => {
+      if (prev.key !== key) return prev;
+      return {
+        ...prev,
+        workouts: nextWorkouts
+      };
+    });
+  }, [recentWorkouts, historyModalState.key]);
+
+  const fetchUserDocData = useCallback(async (): Promise<FirestoreUser | null> => {
+    try {
+      const ref = doc(db, 'users', user.uid);
+      const snap = await getDoc(ref);
+      return snap.exists() ? (snap.data() as FirestoreUser) : null;
+    } catch {
+      return null;
+    }
+  }, [user.uid]);
+
+  const fetchLatestAnalytics = useCallback(async (): Promise<Record<string, unknown> | null> => {
+    try {
+      const aRef = doc(db, 'users', user.uid, 'analytics', 'latest');
+      const aSnap = await getDoc(aRef);
+      return aSnap.exists() ? (aSnap.data() as Record<string, unknown>) : null;
+    } catch {
+      return null;
+    }
+  }, [user.uid]);
+
+  const reloadUserDoc = useCallback(async () => {
+    const data = await fetchUserDocData();
+    setUserDoc(data);
+  }, [fetchUserDocData]);
+
+  const reloadAnalyticsDoc = useCallback(async () => {
+    const data = await fetchLatestAnalytics();
+    setAnalyticsDoc(data);
+  }, [fetchLatestAnalytics]);
+
+  useEffect(() => {
+    let active = true;
+    const run = async () => {
+      const [userData, analyticsData] = await Promise.all([
+        fetchUserDocData(),
+        fetchLatestAnalytics()
+      ]);
+      if (!active) return;
+      setUserDoc(userData);
+      setAnalyticsDoc(analyticsData);
     };
-    void loadUserDoc();
+    void run();
     return () => {
       active = false;
     };
-  }, [user.uid]);
+  }, [fetchLatestAnalytics, fetchUserDocData]);
+
+  const handleWorkoutLogged = useCallback(() => {
+    void loadSnapshots();
+    void reloadAnalyticsDoc();
+    void reloadUserDoc();
+  }, [loadSnapshots, reloadAnalyticsDoc, reloadUserDoc]);
 
   const snapshotPoints = useMemo(
     () => snapshots.map(normalizeSnapshot).filter(Boolean),
@@ -371,7 +536,51 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
     };
   }, [combinedSeries]);
 
-  const latestMetrics = combinedSeries[0] ?? null;
+  const baseLatestMetrics = combinedSeries[0] ?? null;
+
+  const latestWeightKg = useMemo(() => {
+    const analyticWeight = typeof analyticsDoc?.weightKg === 'number' ? analyticsDoc.weightKg : null;
+    if (analyticWeight != null) return analyticWeight;
+    if (baseLatestMetrics?.weightKg != null) return baseLatestMetrics.weightKg;
+    const profileWeight = toNumber((userDoc?.requiredProfile as Partial<RequiredProfile> | null)?.weight);
+    return profileWeight;
+  }, [analyticsDoc, baseLatestMetrics, userDoc]);
+
+  const profileCreationTime = useMemo(() => {
+    if (userDoc?.createdAt != null) {
+      // ensure Firestore timestamp-like objects are converted to a Date
+      const resolved = resolveTimestamp(userDoc.createdAt as string | FirestoreTimestamp);
+      if (resolved) return resolved;
+    }
+    return user.metadata?.creationTime ?? null;
+  }, [userDoc, user.metadata?.creationTime]);
+  const latestMetrics = useMemo<CombinedMetrics | null>(() => {
+    if (!baseLatestMetrics) {
+      if (latestWeightKg == null) {
+        return null;
+      }
+      return {
+        createdAt: null,
+        weightKg: latestWeightKg,
+        bmi: null,
+        activityLevel: null,
+        trainingDays: null,
+        targetTraining: null,
+        targetWeight: null,
+        sleepHours: null,
+        waterLiters: null,
+        stressLevel: null,
+        wellnessScore: null
+      };
+    }
+    if (latestWeightKg == null || baseLatestMetrics.weightKg === latestWeightKg) {
+      return baseLatestMetrics;
+    }
+    return {
+      ...baseLatestMetrics,
+      weightKg: latestWeightKg
+    };
+  }, [baseLatestMetrics, latestWeightKg]);
 
   const trainingDoughnut = useMemo(() => {
     if (!latestMetrics || latestMetrics.trainingDays == null || latestMetrics.targetTraining == null) {
@@ -437,7 +646,7 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
     };
   }, [latestMetrics]);
 
-  const statCards = useMemo(() => {
+  const statCards: Array<{ label: string; value: string }> = (() => {
     if (!latestMetrics) return [];
     const cards: Array<{ label: string; value: string }> = [];
 
@@ -462,14 +671,24 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
       });
     }
 
-    if (latestMetrics.trainingDays != null) {
+    // Prefer explicit recorded workouts if available; otherwise use latestMetrics.trainingDays
+    const loggedAttained = recentWorkouts.length > 0 ? countTrainingDaysFromWorkouts(recentWorkouts) : null;
+    const rawTrainingDays = latestMetrics.trainingDays != null ? Math.max(0, Math.floor(latestMetrics.trainingDays)) : null;
+    const attained = rawTrainingDays ?? loggedAttained;
+    if (attained != null) {
       const target = latestMetrics.targetTraining ?? activityToTargetDays(latestMetrics.activityLevel);
-      cards.push({
-        label: 'Training cadence',
-        value: target != null
-          ? `${latestMetrics.trainingDays} of ${target} sessions`
-          : `${latestMetrics.trainingDays} sessions / week`
-      });
+      if (target != null && target > 0) {
+        const pct = Math.round((attained / target) * 100);
+        cards.push({
+          label: 'Training cadence',
+          value: `${attained} of ${target} sessions (${pct}%)${loggedAttained != null && rawTrainingDays == null ? ' (from logs)' : ''}`
+        });
+      } else {
+        cards.push({
+          label: 'Training cadence',
+          value: `${attained} sessions / week${loggedAttained != null && rawTrainingDays == null ? ' (from logs)' : ''}`
+        });
+      }
     }
 
     if (cards.length < 4) {
@@ -480,7 +699,7 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
     }
 
     return cards;
-  }, [latestMetrics]);
+  })();
 
   const hasWeightSeries = weightSeries.labels.length > 0 &&
     weightSeries.datasets.some((ds) => (ds.data as number[]).some((point) => Number.isFinite(point)));
@@ -529,6 +748,13 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
     return (
       <div className="analytics-results">
         <section className="analytics-grid">
+          <WorkoutHistorySwiper
+            workouts={recentWorkouts}
+            userCreationTime={user.metadata?.creationTime ?? null}
+            profileCreationTime={profileCreationTime}
+            onSelectDay={handleHistoryDaySelect}
+            selectedDayKey={historyModalState.key}
+          />
           {statCards.map((card) => (
             <article key={card.label} className="analytics-card">
               <span className="analytics-card-label">{card.label}</span>
@@ -684,23 +910,41 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
                   Visualise your processed wellness metrics and spot patterns across time.
                 </p>
               </div>
-              <button
-                type="button"
-                className="analytics-refresh"
-                onClick={() => void loadSnapshots()}
-                disabled={loading}
-              >
-                {loading ? 'Refreshing…' : 'Refresh data'}
-              </button>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="analytics-refresh"
+                  onClick={() => void loadSnapshots()}
+                  disabled={loading}
+                >
+                  {loading ? 'Refreshing…' : 'Refresh data'}
+                </button>
+                <LogWorkoutTrigger
+                  uid={user.uid}
+                  currentWeightKg={
+                    typeof analyticsDoc?.weightKg === 'number'
+                      ? (analyticsDoc?.weightKg as number)
+                      : null
+                  }
+                  onLogged={handleWorkoutLogged}
+                />
+              </div>
             </header>
 
             {error && (
               <p role="alert" className="analytics-error">{error}</p>
             )}
 
-      <div className="analytics-body">{renderBody()}</div>
-      </div>
-    </main>
+            <div className="analytics-body">{renderBody()}</div>
+            <WorkoutHistoryModal
+              open={historyModalState.open}
+              weekday={historyModalState.weekday}
+              dateLabel={historyModalState.dateLabel}
+              workouts={historyModalState.workouts}
+              onClose={closeHistoryModal}
+            />
+          </div>
+        </main>
       </div>
     </div>
   );

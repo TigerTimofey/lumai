@@ -47,6 +47,7 @@ export type FirestoreUser = {
   additionalProfile?: Partial<AdditionalProfile> | null;
   profileCompleted?: boolean;
   consent?: FirestoreUserConsent | null;
+  createdAt?: string | number | Date | null | { toDate?: () => Date };
 };
 
 export type ProfileSummary = {

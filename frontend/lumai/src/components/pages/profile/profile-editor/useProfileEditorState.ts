@@ -182,6 +182,16 @@ export const useProfileEditorState = ({ uid }: UseProfileEditorStateParams): Pro
         },
         { merge: true }
       );
+      if (required.weight != null) {
+        await setDoc(
+          doc(db, 'users', uid, 'analytics', 'latest'),
+          {
+            weightKg: required.weight,
+            weightUpdatedAt: serverTimestamp()
+          },
+          { merge: true }
+        );
+      }
       try {
         await apiFetch('/analytics/process', { method: 'POST' });
       } catch (processError) {

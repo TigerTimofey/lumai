@@ -1,0 +1,141 @@
+.workout-history-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.48);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  z-index: 100;
+  backdrop-filter: blur(2px);
+}
+
+.workout-history-modal {
+  width: min(520px, 100%);
+  max-height: 84vh;
+  overflow: hidden;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 32px 60px rgba(15, 23, 42, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+
+.workout-history-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.workout-history-modal__weekday {
+  margin: 0;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #64748b;
+}
+
+.workout-history-modal__title {
+  margin: 4px 0 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.workout-history-modal__close {
+  border: none;
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  background: rgba(148, 163, 184, 0.16);
+  color: #334155;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.workout-history-modal__close:hover {
+  background: rgba(148, 163, 184, 0.28);
+  transform: translateY(-1px);
+}
+
+.workout-history-modal__close:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.8);
+  outline-offset: 2px;
+}
+
+.workout-history-modal__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  max-height: 100%;
+  display: grid;
+  gap: 16px;
+  padding-right: 4px;
+}
+
+.workout-history-modal__item {
+  background: rgba(248, 250, 252, 0.85);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.workout-history-modal__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.workout-history-modal__time {
+  font-size: 0.95rem;
+}
+
+.workout-history-modal__type {
+  font-size: 0.95rem;
+  text-transform: capitalize;
+  color: #2563eb;
+}
+
+.workout-history-modal__details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.87rem;
+  color: #475569;
+}
+
+.workout-history-modal__notes {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.workout-history-modal__empty {
+  margin: 32px 0 0;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 640px) {
+  .workout-history-modal {
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .workout-history-modal__item {
+    padding: 12px 14px;
+  }
+}
