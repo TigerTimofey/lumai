@@ -70,21 +70,18 @@
 }
 
 .log-workout-weight-toggle {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.log-workout-checkbox {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--color-primary);
+  display: grid;
+  gap: 6px;
 }
 
 .log-workout-weight-input {
-  width: 96px;
-  margin-left: 4px;
+  width: 140px;
   padding-right: 12px;
+}
+
+.log-workout-weight-hint {
+  font-size: 0.75rem;
+  color: #6b7280;
 }
 
 .log-workout-error {
@@ -152,11 +149,10 @@
   }
 
   .log-workout-weight-toggle {
-    align-items: flex-start;
-    flex-direction: column;
+    gap: 4px;
   }
 
   .log-workout-weight-input {
-    margin-left: 0;
+    width: 100%;
   }
 }

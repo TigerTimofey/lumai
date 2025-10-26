@@ -115,9 +115,14 @@ const WorkoutHistorySwiper: React.FC<WorkoutHistorySwiperProps> = ({
       return new Date(candidate.getFullYear(), candidate.getMonth(), candidate.getDate());
     })();
 
-    const startDate = registrationDate && registrationDate <= normalizedToday
-      ? registrationDate
-      : normalizedToday;
+    const maxPastDays = 180;
+    const minAllowedStart = new Date(normalizedToday);
+    minAllowedStart.setDate(minAllowedStart.getDate() - maxPastDays);
+
+    let startDate = normalizedToday;
+    if (registrationDate && registrationDate <= normalizedToday) {
+      startDate = registrationDate < minAllowedStart ? minAllowedStart : registrationDate;
+    }
 
     const endDate = new Date(startDate);
     endDate.setTime(normalizedToday.getTime());

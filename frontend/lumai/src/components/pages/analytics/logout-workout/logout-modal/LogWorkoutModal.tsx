@@ -9,15 +9,30 @@ interface Props {
   uid: string;
   onSaved?: () => void;
   currentWeightKg?: number | null;
+  initialDate?: string | Date | null;
 }
 
-const LogWorkoutModal: React.FC<Props> = ({ open, onClose, uid, onSaved, currentWeightKg }) => {
+const parseInitialDate = (value?: string | Date | null) => {
+  if (!value) return new Date().toISOString().slice(0, 10);
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+  if (typeof value === 'string') {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString().slice(0, 10);
+    }
+  }
+  return new Date().toISOString().slice(0, 10);
+};
+
+const LogWorkoutModal: React.FC<Props> = ({ open, onClose, uid, onSaved, currentWeightKg, initialDate }) => {
   const [type, setType] = useState('workout');
   const [duration, setDuration] = useState<string>('');
   const [intensity, setIntensity] = useState<'low' | 'medium' | 'high' | ''>('');
   const [notes, setNotes] = useState('');
-  const [attachWeight, setAttachWeight] = useState(false);
   const [weightInput, setWeightInput] = useState<string>('');
+  const [dateInput, setDateInput] = useState<string>(() => parseInitialDate(initialDate));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,8 +43,8 @@ const LogWorkoutModal: React.FC<Props> = ({ open, onClose, uid, onSaved, current
     setDuration('');
     setIntensity('');
     setNotes('');
-    setAttachWeight(false);
     setWeightInput('');
+    setDateInput(parseInitialDate(initialDate));
     setError(null);
   };
 
@@ -45,14 +60,20 @@ const LogWorkoutModal: React.FC<Props> = ({ open, onClose, uid, onSaved, current
     setSaving(true);
     try {
       const dur = duration === '' ? null : Number(duration);
-      const weightVal = attachWeight ? (weightInput === '' ? currentWeightKg ?? null : Number(weightInput)) : null;
+      const weightVal = weightInput === '' ? null : Number(weightInput);
       const finalWeight = weightVal != null && Number.isFinite(weightVal) ? weightVal : null;
+      const chosenDate = dateInput ? new Date(dateInput) : new Date();
+      const isValidDate = !Number.isNaN(chosenDate.getTime());
+      if (isValidDate) {
+        chosenDate.setHours(12, 0, 0, 0);
+      }
+      const createdAtValue = isValidDate ? chosenDate : serverTimestamp();
       const payload: Record<string, unknown> = {
         type,
         durationMinutes: dur != null && Number.isFinite(dur) ? dur : null,
         intensity: intensity || null,
         notes: notes || null,
-        createdAt: serverTimestamp(),
+        createdAt: createdAtValue,
         weightKg: finalWeight
       };
       const writes: Array<Promise<unknown>> = [
@@ -96,6 +117,16 @@ const LogWorkoutModal: React.FC<Props> = ({ open, onClose, uid, onSaved, current
       <form className="log-workout-form" onSubmit={handleSubmit}>
         <h3>Log workout</h3>
         <label>
+          Date
+          <input
+            type="date"
+            max={new Date().toISOString().slice(0, 10)}
+            value={dateInput}
+            onChange={(e) => setDateInput(e.target.value)}
+          />
+        </label>
+
+        <label>
           Type
           <select value={type} onChange={(e) => setType(e.target.value)}>
             <option value="workout">Workout</option>
@@ -133,24 +164,17 @@ const LogWorkoutModal: React.FC<Props> = ({ open, onClose, uid, onSaved, current
         </label>
 
         <label className="log-workout-weight-toggle">
+          Weight (kg)
           <input
-            type="checkbox"
-            className="log-workout-checkbox"
-            checked={attachWeight}
-            onChange={(e) => setAttachWeight(e.target.checked)}
+            type="number"
+            min={30}
+            max={300}
+            placeholder={currentWeightKg ? String(currentWeightKg) : 'kg'}
+            value={weightInput}
+            onChange={(e) => setWeightInput(e.target.value)}
+            className="log-workout-weight-input"
           />
-          Attach weight to this workout
-          {attachWeight && (
-            <input
-              type="number"
-              min={30}
-              max={300}
-              placeholder={currentWeightKg ? String(currentWeightKg) : 'kg'}
-              value={weightInput}
-              onChange={(e) => setWeightInput(e.target.value)}
-              className="log-workout-weight-input"
-            />
-          )}
+          <span className="log-workout-weight-hint">Leave blank to keep the previous weight.</span>
         </label>
 
         {error && <p className="log-workout-error">{error}</p>}

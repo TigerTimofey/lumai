@@ -10,6 +10,7 @@ import EmailNotificationsWidget from './privacy/EmailNotificationsWidget';
 import ProfileCompletionWidget from './profile/ProfileCompletionWidget';
 import ProfileAnalyticsWidget from './profile/ProfileAnalyticsWidget';
 import AiInsightsWidget from './profile/AiInsightsWidget';
+import DashboardWorkoutWidget from './workouts/DashboardWorkoutWidget';
 
 interface DashboardProps {
   user: User;
@@ -21,6 +22,7 @@ const Dashboard = ({ user }: DashboardProps) => {
     month: 'long',
     year: 'numeric',
   }).format(new Date());
+  const userRegisteredAt = user.metadata?.creationTime ? new Date(user.metadata.creationTime) : null;
 
   return (
     <div className="dashboard-shell">
@@ -38,6 +40,7 @@ const Dashboard = ({ user }: DashboardProps) => {
 
             </header>
 
+            <DashboardWorkoutWidget uid={user.uid} registeredAt={userRegisteredAt} />
             <ProfileCompletionWidget uid={user.uid} />
             <ProfileAnalyticsWidget uid={user.uid} />
             <AiInsightsWidget />
