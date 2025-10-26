@@ -6,9 +6,9 @@ import 'chart.js/auto';
 
 import SideNav from '../../navigation/SideNav';
 import UserSettingBar from '../dashboard/user-settings/userSettingBar';
-import LogWorkoutTrigger from './LogWorkoutTrigger';
-import WorkoutHistorySwiper, { type WorkoutHistoryItem } from './WorkoutHistorySwiper';
-import WorkoutHistoryModal from './WorkoutHistoryModal';
+import LogWorkoutTrigger from './logout-workout/LogWorkoutTrigger';
+import WorkoutHistorySwiper, { type WorkoutHistoryItem } from './history-workout/WorkoutHistorySwiper';
+import WorkoutHistoryModal from './history-workout/history-modal/WorkoutHistoryModal';
 import { apiFetch } from '../../../utils/api';
 import { db } from '../../../config/firebase';
 import type { AdditionalProfile, FirestoreUser, RequiredProfile } from '../profile/profileOptions/types';

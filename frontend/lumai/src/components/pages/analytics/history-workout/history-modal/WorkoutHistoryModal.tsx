@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import type { WorkoutHistoryItem } from './WorkoutHistorySwiper';
+import type { WorkoutHistoryItem } from '../WorkoutHistorySwiper';
 import './WorkoutHistoryModal.css';
 
 interface WorkoutHistoryModalProps {

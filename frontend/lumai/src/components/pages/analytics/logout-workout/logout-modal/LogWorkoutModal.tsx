@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { addDoc, collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { db } from '../../../config/firebase';
+import { db } from '../../../../../config/firebase';
 import './LogWorkoutModal.css';
 
 interface Props {

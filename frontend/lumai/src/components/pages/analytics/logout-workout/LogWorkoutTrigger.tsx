@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import LogWorkoutModal from './LogWorkoutModal';
+import LogWorkoutModal from './logout-modal/LogWorkoutModal';
 import './LogWorkoutTrigger.css';
 
 type LogWorkoutTriggerProps = {
