@@ -3,6 +3,7 @@ import type { User } from 'firebase/auth';
 import { collection, doc, getDoc, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { Line, Bar, Radar, Doughnut } from 'react-chartjs-2';
 import 'chart.js/auto';
+import type { ChartData } from 'chart.js';
 
 import SideNav from '../../navigation/SideNav';
 import UserSettingBar from '../dashboard/user-settings/userSettingBar';
@@ -120,6 +121,27 @@ const activityToTargetDays = (activity: string | null) => {
 };
 
 const formatDayKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+const startOfDay = (value: Date) => {
+  const copy = new Date(value);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+};
+
+const startOfWeek = (value: Date) => {
+  const day = startOfDay(value);
+  const dayIndex = day.getDay();
+  const diff = (dayIndex + 6) % 7; // Monday as start of week
+  day.setDate(day.getDate() - diff);
+  return day;
+};
+
+const endOfWeek = (value: Date) => {
+  const start = startOfWeek(value);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+  return end;
+};
 
 const bmiScore = (bmi: number | null) => {
   if (bmi == null) return 50;
@@ -320,21 +342,6 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
     );
     return () => unsubscribe();
   }, [user.uid]);
-
-  const countTrainingDaysFromWorkouts = (workouts: WorkoutHistoryItem[]) => {
-    const days = new Set<string>();
-    workouts.forEach((w) => {
-      try {
-        const createdAt = w.createdAtDate ?? resolveTimestamp(w.createdAt);
-        const d = createdAt ? new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate()) : null;
-        if (!d || Number.isNaN(d.getTime())) return;
-        days.add(formatDayKey(d));
-      } catch {
-        // ignore invalid dates
-      }
-    });
-    return days.size;
-  };
 
   const handleHistoryDaySelect = useCallback((info: {
     id: string;
@@ -582,26 +589,302 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
     };
   }, [baseLatestMetrics, latestWeightKg]);
 
-  const trainingDoughnut = useMemo(() => {
-    if (!latestMetrics || latestMetrics.trainingDays == null || latestMetrics.targetTraining == null) {
+  const trainingTargetSeries = useMemo(() => {
+    return combinedSeries
+      .filter((point) => point.targetTraining != null)
+      .map((point) => ({
+        date: point.createdAt ? startOfDay(point.createdAt) : null,
+        value: point.targetTraining as number
+      }))
+      .sort((a, b) => {
+        const aTime = a.date ? a.date.getTime() : Number.NEGATIVE_INFINITY;
+        const bTime = b.date ? b.date.getTime() : Number.NEGATIVE_INFINITY;
+        return aTime - bTime;
+      });
+  }, [combinedSeries]);
+
+  const resolveTargetTraining = useCallback(
+    (referenceDate: Date) => {
+      let target: number | null = null;
+      const refTime = referenceDate.getTime();
+      for (const entry of trainingTargetSeries) {
+        if (!entry.date || entry.date.getTime() <= refTime) {
+          target = entry.value;
+        } else {
+          break;
+        }
+      }
+      if (target != null) {
+        return target;
+      }
+      return latestMetrics?.targetTraining ?? null;
+    },
+    [latestMetrics?.targetTraining, trainingTargetSeries]
+  );
+
+  const trainingActivity = useMemo(() => {
+    const dayCounts = new Map<string, {
+      date: Date;
+      count: number;
+      totalWeight: number;
+      weightSamples: number;
+    }>();
+    recentWorkouts.forEach((workout) => {
+      const createdAt = workout.createdAtDate ?? resolveTimestamp(workout.createdAt);
+      if (!createdAt) return;
+      const day = startOfDay(createdAt);
+      const key = formatDayKey(day);
+      const existing = dayCounts.get(key);
+      const weightSample = toNumber(workout.weightKg);
+      if (existing) {
+        existing.count += 1;
+        if (weightSample != null) {
+          existing.totalWeight += weightSample;
+          existing.weightSamples += 1;
+        }
+      } else {
+        dayCounts.set(key, {
+          date: day,
+          count: 1,
+          totalWeight: weightSample ?? 0,
+          weightSamples: weightSample != null ? 1 : 0
+        });
+      }
+    });
+
+    const today = startOfDay(new Date());
+
+    const parseRegistrationCandidate = (value: unknown) => {
+      const resolved = resolveTimestamp(value);
+      return resolved ? startOfDay(resolved) : null;
+    };
+
+    const registrationCandidates = [
+      parseRegistrationCandidate(profileCreationTime),
+      parseRegistrationCandidate(user.metadata?.creationTime ?? null)
+    ].filter((value): value is Date => Boolean(value));
+
+    const registration =
+      registrationCandidates.length > 0
+        ? registrationCandidates.reduce((earliest, current) => (current < earliest ? current : earliest))
+        : null;
+
+    const dailyFormatter = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
+    const dailyRange = 14;
+    const daily: Array<{
+      key: string;
+      date: Date;
+      label: string;
+      count: number;
+      aiDailyTarget: number | null;
+      avgWeight: number | null;
+    }> = [];
+
+    for (let offset = dailyRange - 1; offset >= 0; offset -= 1) {
+      const day = new Date(today);
+      day.setDate(today.getDate() - offset);
+      if (registration && day < registration) {
+        continue;
+      }
+      const normalizedDay = startOfDay(day);
+      const key = formatDayKey(normalizedDay);
+      const entry = dayCounts.get(key);
+      const count = entry ? entry.count : 0;
+      const aiWeeklyTarget = resolveTargetTraining(endOfWeek(normalizedDay));
+      const avgWeight = entry && entry.weightSamples > 0 ? entry.totalWeight / entry.weightSamples : null;
+      daily.push({
+        key,
+        date: normalizedDay,
+        label: dailyFormatter.format(normalizedDay),
+        count,
+        aiDailyTarget: aiWeeklyTarget != null ? aiWeeklyTarget / 7 : null,
+        avgWeight
+      });
+    }
+
+    const weekFormatter = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
+    const weekly: Array<{
+      key: string;
+      start: Date;
+      end: Date;
+      label: string;
+      count: number;
+      activeDays: number;
+      aiTarget: number | null;
+      avgWeight: number | null;
+    }> = [];
+
+    const baseWeekStart = startOfWeek(today);
+    const weeksRange = 8;
+    for (let offset = weeksRange - 1; offset >= 0; offset -= 1) {
+      const weekStart = new Date(baseWeekStart);
+      weekStart.setDate(baseWeekStart.getDate() - offset * 7);
+      const normalizedStart = startOfWeek(weekStart);
+      const weekEnd = endOfWeek(normalizedStart);
+      if (registration && weekEnd < registration) {
+        continue;
+      }
+      let count = 0;
+      let activeDays = 0;
+      let weightTotal = 0;
+      let weightSamples = 0;
+      for (let i = 0; i < 7; i += 1) {
+        const day = new Date(normalizedStart);
+        day.setDate(normalizedStart.getDate() + i);
+        const key = formatDayKey(day);
+        const entry = dayCounts.get(key);
+        const dayCount = entry ? entry.count : 0;
+        count += dayCount;
+        if (dayCount > 0) {
+          activeDays += 1;
+        }
+        if (entry && entry.weightSamples > 0) {
+          weightTotal += entry.totalWeight;
+          weightSamples += entry.weightSamples;
+        }
+      }
+      const aiTarget = resolveTargetTraining(weekEnd);
+      const avgWeight = weightSamples > 0 ? weightTotal / weightSamples : null;
+      weekly.push({
+        key: formatDayKey(normalizedStart),
+        start: normalizedStart,
+        end: weekEnd,
+        label: `Week of ${weekFormatter.format(normalizedStart)}`,
+        count,
+        activeDays,
+        aiTarget,
+        avgWeight
+      });
+    }
+
+    const lastWeek = weekly.length > 0 ? weekly[weekly.length - 1] : null;
+    const trailingSevenDays = daily.slice(-7).reduce((sum, day) => sum + day.count, 0);
+
+    return {
+      daily,
+      weekly,
+      lastWeek,
+      trailingSevenDays
+    };
+  }, [profileCreationTime, recentWorkouts, resolveTargetTraining, user.metadata?.creationTime]);
+
+  const weeklyTrainingSeries = useMemo<ChartData<'bar', number[], string> | null>(() => {
+    if (!trainingActivity || trainingActivity.weekly.length === 0) {
       return null;
     }
-    const target = Math.max(latestMetrics.targetTraining, 1);
-    const attained = Math.max(Math.min(latestMetrics.trainingDays, target), 0);
+    const labels = trainingActivity.weekly.map((week) => week.label);
+    const logged = trainingActivity.weekly.map((week) => week.count);
+    const aiTarget = trainingActivity.weekly.map((week) => (week.aiTarget ?? NaN));
+    const avgWeight = trainingActivity.weekly.map((week) => (week.avgWeight ?? NaN));
+
+    return {
+      labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Logged workouts',
+          data: logged,
+          yAxisID: 'sessions',
+          backgroundColor: 'rgba(59, 130, 246, 0.7)',
+          borderRadius: 6,
+          maxBarThickness: 48
+        },
+        {
+          type: 'line',
+          label: 'AI target per week',
+          data: aiTarget,
+          yAxisID: 'sessions',
+          borderColor: 'rgba(234, 88, 12, 0.9)',
+          backgroundColor: 'rgba(234, 88, 12, 0.2)',
+          tension: 0.3,
+          spanGaps: true
+        },
+        {
+          type: 'line',
+          label: 'Avg weight (kg)',
+          data: avgWeight,
+          yAxisID: 'weight',
+          borderColor: 'rgba(30, 64, 175, 0.85)',
+          backgroundColor: 'rgba(30, 64, 175, 0.15)',
+          tension: 0.25,
+          spanGaps: true
+        }
+      ]
+    } as ChartData<'bar', number[], string>;
+  }, [trainingActivity]);
+
+  const dailyTrainingSeries = useMemo<ChartData<'bar', number[], string> | null>(() => {
+    if (!trainingActivity || trainingActivity.daily.length === 0) {
+      return null;
+    }
+    const labels = trainingActivity.daily.map((day) => day.label);
+    const logged = trainingActivity.daily.map((day) => day.count);
+    const aiTarget = trainingActivity.daily.map((day) => (day.aiDailyTarget ?? NaN));
+    const avgWeight = trainingActivity.daily.map((day) => (day.avgWeight ?? NaN));
+
+    return {
+      labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Logged workouts',
+          data: logged,
+          yAxisID: 'sessions',
+          backgroundColor: 'rgba(99, 181, 125, 0.75)',
+          borderRadius: 6,
+          maxBarThickness: 36
+        },
+        {
+          type: 'line',
+          label: 'AI target per day',
+          data: aiTarget,
+          yAxisID: 'sessions',
+          borderColor: 'rgba(14, 116, 144, 0.9)',
+          backgroundColor: 'rgba(14, 116, 144, 0.2)',
+          tension: 0.25,
+          spanGaps: true
+        },
+        {
+          type: 'line',
+          label: 'Avg weight (kg)',
+          data: avgWeight,
+          yAxisID: 'weight',
+          borderColor: 'rgba(79, 70, 229, 0.85)',
+          backgroundColor: 'rgba(79, 70, 229, 0.15)',
+          tension: 0.2,
+          spanGaps: true
+        }
+      ]
+    } as ChartData<'bar', number[], string>;
+  }, [trainingActivity]);
+
+  const trainingDoughnut = useMemo(() => {
+    const lastWeek = trainingActivity?.lastWeek;
+    const targetValue = lastWeek?.aiTarget ?? latestMetrics?.targetTraining ?? null;
+    const attainedSessions = lastWeek ? lastWeek.count : latestMetrics?.trainingDays ?? null;
+
+    if (targetValue == null || targetValue <= 0 || attainedSessions == null) {
+      return null;
+    }
+
+    const attained = Math.max(attainedSessions, 0);
+    const remaining = Math.max(targetValue - attained, 0);
+
     return {
       data: {
         labels: ['Completed', 'Remaining'],
         datasets: [
           {
-            data: [attained, Math.max(target - attained, 0)],
+            data: [Math.min(attained, targetValue), remaining],
             backgroundColor: ['rgba(99, 181, 125, 0.8)', 'rgba(229, 231, 235, 0.9)'],
             borderWidth: 0
           }
         ]
       },
-      target
+      target: targetValue,
+      attained
     };
-  }, [latestMetrics]);
+  }, [latestMetrics?.targetTraining, latestMetrics?.trainingDays, trainingActivity]);
 
   const habitRadar = useMemo(() => {
     if (!latestMetrics) return null;
@@ -671,24 +954,42 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
       });
     }
 
-    // Prefer explicit recorded workouts if available; otherwise use latestMetrics.trainingDays
-    const loggedAttained = recentWorkouts.length > 0 ? countTrainingDaysFromWorkouts(recentWorkouts) : null;
-    const rawTrainingDays = latestMetrics.trainingDays != null ? Math.max(0, Math.floor(latestMetrics.trainingDays)) : null;
-    const attained = rawTrainingDays ?? loggedAttained;
-    if (attained != null) {
-      const target = latestMetrics.targetTraining ?? activityToTargetDays(latestMetrics.activityLevel);
-      if (target != null && target > 0) {
-        const pct = Math.round((attained / target) * 100);
+    const lastWeek = trainingActivity?.lastWeek ?? null;
+    const sessionsLogged = lastWeek?.count ?? null;
+    const activeDays = lastWeek?.activeDays ?? null;
+    const targetFromAi = lastWeek?.aiTarget ?? null;
+    const fallbackTarget = latestMetrics.targetTraining ?? activityToTargetDays(latestMetrics.activityLevel);
+    const target = targetFromAi ?? fallbackTarget;
+
+    if (sessionsLogged != null || target != null) {
+      if (target != null && target > 0 && sessionsLogged != null) {
+        const pct = Math.round((sessionsLogged / target) * 100);
+        const targetLabel = Number.isInteger(target) ? target.toString() : target.toFixed(1);
+        const daySuffix = activeDays != null ? ` · ${activeDays} active day${activeDays === 1 ? '' : 's'}` : '';
         cards.push({
           label: 'Training cadence',
-          value: `${attained} of ${target} sessions (${pct}%)${loggedAttained != null && rawTrainingDays == null ? ' (from logs)' : ''}`
+          value: `${sessionsLogged} of ${targetLabel} sessions (${pct}%)${daySuffix}`
         });
-      } else {
+      } else if (sessionsLogged != null) {
+        const daySuffix = activeDays != null ? ` · ${activeDays} active day${activeDays === 1 ? '' : 's'}` : '';
         cards.push({
           label: 'Training cadence',
-          value: `${attained} sessions / week${loggedAttained != null && rawTrainingDays == null ? ' (from logs)' : ''}`
+          value: `${sessionsLogged} sessions logged this week${daySuffix}`
+        });
+      } else if (target != null) {
+        const targetLabel = Number.isInteger(target) ? target.toString() : target.toFixed(1);
+        cards.push({
+          label: 'Training cadence',
+          value: `Target ${targetLabel} sessions / week`
         });
       }
+    }
+
+    if (trainingActivity) {
+      cards.push({
+        label: '7-day workouts',
+        value: `${trainingActivity.trailingSevenDays} workout${trainingActivity.trailingSevenDays === 1 ? '' : 's'}`
+      });
     }
 
     if (cards.length < 4) {
@@ -790,6 +1091,36 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
             </article>
           )}
 
+          {dailyTrainingSeries && (
+            <article className="analytics-panel analytics-panel--wide">
+              <header>
+                <h2>Daily sessions</h2>
+                <p>Past two weeks of workouts compared with AI pacing.</p>
+              </header>
+              <div className="analytics-chart">
+                <Bar
+                  data={dailyTrainingSeries}
+                  options={{
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: {
+                      sessions: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 },
+                        title: { display: true, text: 'Sessions' }
+                      },
+                      weight: {
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: 'Weight (kg)' }
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </article>
+          )}
+
           {wellnessSeries && (
             <article className="analytics-panel">
               <header>
@@ -844,11 +1175,41 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
             </article>
           )}
 
+          {weeklyTrainingSeries && (
+            <article className="analytics-panel">
+              <header>
+                <h2>Weekly training volume</h2>
+                <p>Logged sessions against AI recommended cadence.</p>
+              </header>
+              <div className="analytics-chart">
+                <Bar
+                  data={weeklyTrainingSeries}
+                  options={{
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: {
+                      sessions: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 },
+                        title: { display: true, text: 'Sessions' }
+                      },
+                      weight: {
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: 'Weight (kg)' }
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </article>
+          )}
+
           {trainingDoughnut && (
             <article className="analytics-panel">
               <header>
                 <h2>Training cadence</h2>
-                <p>{`Targeting ${trainingDoughnut.target} sessions per week`}</p>
+                <p>{`Logged ${Number.isInteger(trainingDoughnut.attained) ? trainingDoughnut.attained : trainingDoughnut.attained.toFixed(1)} of ${Number.isInteger(trainingDoughnut.target) ? trainingDoughnut.target : trainingDoughnut.target.toFixed(1)} sessions this week`}</p>
               </header>
               <div className="analytics-chart analytics-chart--centered">
                 <Doughnut

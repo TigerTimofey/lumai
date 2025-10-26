@@ -48,7 +48,7 @@
   overflow-y: hidden;
   width: 100%;
   max-width: 100%;
-  padding: 4px 2px;
+  padding: 14px 2px;
   scrollbar-width: thin;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
