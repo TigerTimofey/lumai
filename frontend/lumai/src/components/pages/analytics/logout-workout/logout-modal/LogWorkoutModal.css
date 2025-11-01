@@ -17,7 +17,7 @@
   box-shadow: 0 32px 72px rgba(15, 23, 42, 0.18);
   padding: 32px 34px;
   display: grid;
-  gap: 18px;
+  gap: 3px;
 }
 
 .log-workout-form h3 {
@@ -66,7 +66,6 @@
 
 .log-workout-form textarea {
   resize: vertical;
-  min-height: 96px;
 }
 
 .log-workout-weight-toggle {
