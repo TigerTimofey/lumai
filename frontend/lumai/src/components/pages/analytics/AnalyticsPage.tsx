@@ -1200,7 +1200,36 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
         </section>
 
         <section className="analytics-panels">
-          {hasWeightSeries && (
+            {weeklyTrainingSeries && (
+            <article className="analytics-panel">
+              <header>
+                <h2>Weekly training volume</h2>
+                <p>Logged sessions against AI recommended cadence.</p>
+              </header>
+              <div className="analytics-chart">
+                <Bar
+                  data={weeklyTrainingSeries}
+                  options={{
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: {
+                      sessions: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 },
+                        title: { display: true, text: 'Sessions' }
+                      },
+                      weight: {
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: 'Weight (kg)' }
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </article>
+          )}
+         {hasWeightSeries && (
             <article className="analytics-panel">
               <header>
                 <h2>Body metrics trend</h2>
@@ -1310,35 +1339,7 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
             </article>
           )}
 
-          {weeklyTrainingSeries && (
-            <article className="analytics-panel">
-              <header>
-                <h2>Weekly training volume</h2>
-                <p>Logged sessions against AI recommended cadence.</p>
-              </header>
-              <div className="analytics-chart">
-                <Bar
-                  data={weeklyTrainingSeries}
-                  options={{
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } },
-                    scales: {
-                      sessions: {
-                        beginAtZero: true,
-                        ticks: { stepSize: 1 },
-                        title: { display: true, text: 'Sessions' }
-                      },
-                      weight: {
-                        position: 'right',
-                        grid: { drawOnChartArea: false },
-                        title: { display: true, text: 'Weight (kg)' }
-                      }
-                    }
-                  }}
-                />
-              </div>
-            </article>
-          )}
+       
 
           {trainingDoughnut && (
             <article className="analytics-panel">

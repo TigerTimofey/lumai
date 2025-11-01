@@ -168,7 +168,7 @@ background: transparent ;
 }
 
 .analytics-card-value {
-  font-size: clamp(1.2rem, 2vw, 1rem);
+  font-size: clamp(1rem, 2vw, 1.2rem);
   color: var(--color-gray-900);
   letter-spacing: -0.015em;
 }
@@ -176,8 +176,10 @@ background: transparent ;
 .analytics-panels {
   display: grid;
   gap: 24px;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  /* Two equal columns that fill the available width. Each column won't be smaller than 300px */
+  grid-template-columns: repeat(2, minmax(300px, 1fr));
   margin-top: 20px;
+  align-items: start;
 }
 
 .analytics-panel {
@@ -208,7 +210,6 @@ background: transparent ;
   min-height: 240px;
 }
 
-/* Ensure any canvas, svg or images inside charts scale to fit their container */
 .analytics-chart canvas,
 .analytics-chart svg,
 .analytics-chart img {
@@ -218,7 +219,6 @@ background: transparent ;
   display: block;
 }
 
-/* Make chart inner wrappers take full height so canvas can fill */
 .analytics-chart > div {
   position: absolute;
   inset: 0;
@@ -230,9 +230,8 @@ background: transparent ;
   display: grid;
   place-items: center;
 }
-
 .analytics-panel--wide {
-  grid-column: span 2;
+  grid-column: 1 / -1; 
 }
 
 .analytics-panel--radar {
@@ -244,8 +243,12 @@ background: transparent ;
 }
 
 @media (max-width: 1024px) {
+  /* keep two-column layout on medium screens but allow wide panels to behave normally */
+  .analytics-panels {
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+  }
   .analytics-panel--wide {
-    grid-column: span 1;
+    grid-column: 1 / -1;
   }
 }
 
@@ -265,6 +268,13 @@ background: transparent ;
   .analytics-placeholder,
   .analytics-body {
     min-height: 280px;
+  }
+
+  .analytics-panels {
+    grid-template-columns: 1fr;
+  }
+  .analytics-panel--wide {
+    grid-column: auto;
   }
 }
 
