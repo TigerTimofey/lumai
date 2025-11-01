@@ -6,13 +6,12 @@ import dashboardIcon from '../../assets/icons/dashboard.svg';
 import profileIcon from '../../assets/icons/profile.svg';
 import analyticsIcon from '../../assets/icons/analytics.svg';
 import insightsIcon from '../../assets/icons/insights.svg';
-import settingsIcon from '../../assets/icons/settings.svg';
 import logoutIcon from '../../assets/icons/logout.svg';
 import leftIcon from '../../assets/icons/left.svg';
 import rightIcon from '../../assets/icons/right.svg';
 import logoLumai from '../../assets/icons/logo.svg';
 
-export type NavKey = 'dashboard' | 'profile' | 'analytics' | 'ai-insights' | 'settings' | 'logout';
+export type NavKey = 'dashboard' | 'profile' | 'analytics' | 'ai-insights' | 'logout';
 
 export interface SideNavProps {
   activeKey?: NavKey;
@@ -25,7 +24,6 @@ const NAV_ITEMS: { key: NavKey; label: string; path: string }[] = [
   { key: 'profile', label: 'Profile', path: '/profile' },
   { key: 'analytics', label: 'Analytics', path: '/analytics' },
   { key: 'ai-insights', label: 'AI Insights', path: '/ai-insights' },
-  { key: 'settings', label: 'Settings', path: '/settings' },
   { key: 'logout', label: 'Logout', path: '#logout' }
 ];
 
@@ -34,7 +32,6 @@ const ICONS: Record<NavKey, string> = {
   'profile': profileIcon,
   'analytics': analyticsIcon,
   'ai-insights': insightsIcon,
-  'settings': settingsIcon,
   'logout': logoutIcon 
 };
 
