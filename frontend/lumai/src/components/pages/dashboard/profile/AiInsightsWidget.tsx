@@ -2,12 +2,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { apiFetch } from '../../../../utils/api';
 
-type InsightLog = {
-  response?: {
-    content?: string;
-  } | null;
+type InsightVersion = {
+  version: number;
+  content: string | null;
+  model: string | null;
   createdAt?: string;
-  model?: string;
+  status: 'success' | 'errored';
 };
 
 const AiInsightsWidget: React.FC = () => {
@@ -21,10 +21,15 @@ const AiInsightsWidget: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetch<{ insights?: InsightLog[] }>('/ai/insights?limit=1');
-      const insight = data.insights?.[0];
-      setContent(insight?.response?.content ?? null);
-      setModel(insight?.model ?? null);
+      const data = await apiFetch<{ insight?: InsightVersion | null }>('/ai/insights/latest');
+      const insight = data.insight ?? null;
+      if (insight && insight.status === 'success') {
+        setContent(insight.content ?? null);
+        setModel(insight.model ?? null);
+      } else {
+        setContent(null);
+        setModel(null);
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg || 'Failed to load AI insight');
@@ -41,9 +46,12 @@ const AiInsightsWidget: React.FC = () => {
     setGenerating(true);
     setError(null);
     try {
-      const data = await apiFetch<{ content: string; model?: string; createdAt?: string }>('/ai/insights', {
-        method: 'POST'
-      });
+      const data = await apiFetch<{ content: string; model?: string | null; version?: number; createdAt?: string }>(
+        '/ai/insights',
+        {
+          method: 'POST'
+        }
+      );
       setContent(data.content ?? null);
       setModel(data.model ?? null);
       // setTimestamp(data.createdAt ?? new Date().toISOString());

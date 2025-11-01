@@ -13,6 +13,16 @@ const envSchema = z.object({
   HF_API_URL: z.string().url().optional(),
   HF_API_KEY: z.string().optional(),
   HF_MODEL: z.string().optional(),
+  AI_RATE_LIMIT_MAX: z
+    .string()
+    .optional()
+    .transform((value) => (value ? Number(value) : undefined))
+    .pipe(z.number().int().positive().optional()),
+  AI_RATE_LIMIT_WINDOW_MS: z
+    .string()
+    .optional()
+    .transform((value) => (value ? Number(value) : undefined))
+    .pipe(z.number().int().positive().optional()),
   ALLOW_UNVERIFIED_LOGIN: z
     .preprocess((v) => (typeof v === "string" ? v === "true" : false), z.boolean())
     .default(false),

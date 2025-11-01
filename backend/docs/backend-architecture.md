@@ -68,6 +68,8 @@ backend/
 | `WEB_API_KEY` | Firebase Web API key (used for Identity Toolkit sign-in/refresh) |
 | `ANONYMIZATION_SALT` | Secret salt for hashing user identifiers in processed AI payloads |
 | `FRONTEND_URL` | Public URL used as callback for Firebase OAuth flows (local dev: `http://localhost:5173`) |
+| `AI_RATE_LIMIT_MAX` | Optional per-user AI request burst limit (default 5 per minute) |
+| `AI_RATE_LIMIT_WINDOW_MS` | Optional rate-limit window in milliseconds (default 60 000) |
 | `PORT` | Express HTTP port (defaults to 4000) |
 
 > ⚠️ Create a Firebase service account with roles: **Firebase Admin** and **Cloud Datastore User**. Cloud Storage permissions can be granted later when export functionality is re-enabled.
@@ -75,6 +77,48 @@ backend/
 ## Firestore Data Model (Auth additions)
 - `users/{uid}` now stores `mfa` metadata: `{ enabled, secret?, otpauthUrl?, enrolledAt? }`
 - MFA secrets are stored base32 encoded; disable flow clears secrets via `FieldValue.delete()`
+
+## Security & Encryption Story
+
+### Data classification
+- **Tier 0 (identity/PII):** Auth records managed by Firebase Authentication; mirrored profile data lives under `users/{uid}`.
+- **Tier 1 (health metrics & consents):** Documents stored in Firestore collections `profiles`, `processedMetrics`, `consents`, and `aiInsights`.
+- **Tier 2 (diagnostics):** Structured logs emitted via `pino` and streamed to Cloud Logging with request identifiers only.
+
+### Encryption in transit
+- All client ↔ backend calls terminate on HTTPS (Cloud Run/HTTPS load balancer). Express behind `trust proxy` enforces TLS-only origins.
+- Backend ↔ Firebase Admin SDK uses gRPC/HTTPS with Google-managed TLS certificates.
+- Service-to-service callbacks (e.g., AI providers) are invoked over HTTPS with mutual authentication tokens.
+
+### Encryption at rest
+- Firestore, Firebase Authentication, and Cloud Logging are encrypted at rest with Google-managed keys (AES-256). This covers Tier 0–2 data by default.
+- **Field anonymisation:** `ANONYMIZATION_SALT` (env var) seeds SHA-256 hashing for user identifiers before insights/processed metrics are stored; keeps AI payloads pseudonymised.
+
+### Field-level encryption (application-managed)
+- **Scope:** Highly sensitive health attributes (future blood markers, lab results) must be symmetrically encrypted before writes.
+- **Cipher:** AES-256-GCM using Node's `crypto` module. Plaintext is padded & encoded; auth tag stored alongside ciphertext.
+- **Envelope key:** `FIELD_ENCRYPTION_KEY` (32-byte base64) retrieved at boot from Secret Manager (local dev reads `.env`). Key never logged, and held only in memory after boot.
+- **Helpers:** `encryptField(value, context)`/`decryptField(value, context)` utilities to be added under `src/utils/crypto.ts`. Repositories must wrap writes/reads for protected fields.
+- **Key rotation:** Maintain `FIELD_ENCRYPTION_KEY_VERSION`. Rotation procedure:
+  1. Provision new key in Secret Manager.
+  2. Deploy with both old & new keys; decrypt with old, re-encrypt with new during incremental migration script.
+  3. Mark old key as retired, remove after verification.
+
+### Secret management
+- Environment secrets (`FIREBASE_SERVICE_ACCOUNT_KEY`, `ANONYMIZATION_SALT`, `FIELD_ENCRYPTION_KEY`) are sourced from Google Secret Manager in production. Local dev uses `.env` with limited scopes.
+- CI/CD pipeline pulls secrets via workload identity; no secrets committed to git.
+
+### Audit & monitoring
+- **Access logging:** Cloud Audit Logs enabled for Firestore, Secret Manager, Cloud Run. Retention: 400 days.
+- **Tamper checks:** Weekly automated job exports `consents` and `processedMetrics` hashes to Cloud Storage for integrity comparison.
+- **Incident response:** runbook outlines containment steps (revoke keys, rotate salts, notify DPO within 72h).
+- **Evidence pack:** Maintain `/backend/docs/audit-checklist.md` (see TODO) with quarterly verification of key rotation, salt review, and penetration-test results.
+- **Availability controls:** AI-facing endpoints gated by per-user in-memory throttling (default 5 req/60s) and emit structured errors when upstream models time out or reject requests.
+
+### Open items / TODOs
+- Implement `crypto` helpers + repository wrappers for Tier 1 fields when encryption flag is toggled.
+- Wire Secret Manager integration for `FIELD_ENCRYPTION_KEY` and document local bootstrap script.
+- Draft `audit-checklist.md` and populate with verification steps + sign-off table.
 
 ## Authentication Workflow
 1. **Registration** → Firebase Admin creates user, backend seeds `users` + `consents`, returns verification link + tokens

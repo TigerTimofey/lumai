@@ -7,8 +7,9 @@ import { CONSENT_TYPES } from "../domain/enums.js";
 import { getLatestProfileVersion } from "../repositories/profile.repo.js";
 import { createProcessedMetrics, listProcessedMetrics } from "../repositories/processed-metrics.repo.js";
 import { getConsents } from "../repositories/consent.repo.js";
-import { logAiInsight } from "../repositories/ai-insight.repo.js";
-import { forbidden, internalError, notFound } from "../utils/api-error.js";
+import { logAiInsight, saveAiInsightVersion } from "../repositories/ai-insight.repo.js";
+import { forbidden, internalError, notFound, serviceUnavailable } from "../utils/api-error.js";
+import { logger } from "../utils/logger.js";
 
 const AI_CONSENT = "ai_insights" satisfies (typeof CONSENT_TYPES)[number];
 
@@ -92,7 +93,7 @@ export const generateAiInsights = async (userId: string) => {
   }
 
   if (!env.HF_API_URL || !env.HF_API_KEY) {
-    throw internalError("Hugging Face API configuration missing");
+    throw serviceUnavailable("AI insights temporarily unavailable: missing provider configuration");
   }
 
   const model = env.HF_MODEL ?? "meta-llama/Meta-Llama-3-8B-Instruct";
@@ -137,12 +138,26 @@ export const generateAiInsights = async (userId: string) => {
       }
     });
 
+    const savedVersion = await saveAiInsightVersion(userId, {
+      content,
+      model,
+      status: "success",
+      usage: data?.usage ?? null,
+      promptContext: {
+        reason: "ai_health_insight",
+        processedMetricsId: latestSnapshot.sourceProfileVersion
+      }
+    });
+
     return {
       content,
       model,
-      createdAt: log.createdAt ?? null
+      version: savedVersion.version,
+      createdAt: savedVersion.createdAt.toDate().toISOString()
     };
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
     await logAiInsight(userId, {
       promptContext: {
         reason: "ai_health_insight",
@@ -151,9 +166,33 @@ export const generateAiInsights = async (userId: string) => {
       model,
       status: "errored",
       response: {
-        error: error instanceof Error ? error.message : String(error)
+        error: errorMessage
       }
     });
-    throw internalError("Failed to generate AI insight", error);
+
+    if (axios.isAxiosError(error)) {
+      if (error.code === "ECONNABORTED") {
+        logger.warn({ userId, model }, "AI provider request timed out");
+        throw serviceUnavailable("AI provider timed out. Please try again later.");
+      }
+      const status = error.response?.status;
+      if (status === 401 || status === 403) {
+        logger.warn({ userId, model, status, error: errorMessage }, "AI provider authentication failed");
+        throw serviceUnavailable("AI provider rejected the request. Please try again later.");
+      }
+      if (status === 429) {
+        logger.warn({ userId, model, status }, "AI provider rate limit reached");
+        throw serviceUnavailable("AI provider is busy. Please retry in a few moments.");
+      }
+      if (status && status >= 500) {
+        logger.error({ userId, model, status, error: errorMessage }, "AI provider service error");
+        throw serviceUnavailable("AI provider is currently unavailable. Please try again later.");
+      }
+      logger.error({ userId, model, status, error: errorMessage }, "Unexpected AI provider response");
+      throw serviceUnavailable("Unexpected AI provider response. Please try again later.");
+    }
+
+    logger.error({ userId, model, error: errorMessage }, "AI insight generation failed");
+    throw internalError("Failed to generate AI insight", errorMessage);
   }
 };

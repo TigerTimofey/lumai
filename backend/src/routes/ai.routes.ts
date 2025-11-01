@@ -1,15 +1,16 @@
 import { Router } from "express";
 import { authContext } from "../middleware/auth-context.js";
 import { prepareAiMetrics, generateAiInsights } from "../services/ai.service.js";
-import { listAiInsights } from "../repositories/ai-insight.repo.js";
+import { getLatestAiInsight, listAiInsightVersions } from "../repositories/ai-insight.repo.js";
 import { listProcessedMetrics } from "../repositories/processed-metrics.repo.js";
 import { unauthorized } from "../utils/api-error.js";
+import { aiRateLimit } from "../middleware/ai-rate-limit.js";
 
 const router = Router();
 
 router.use(authContext);
 
-router.post("/prepare", async (req, res, next) => {
+router.post("/prepare", aiRateLimit, async (req, res, next) => {
   try {
     const userId = req.authToken?.uid;
     if (!userId) {
@@ -23,7 +24,7 @@ router.post("/prepare", async (req, res, next) => {
   }
 });
 
-router.post("/insights", async (req, res, next) => {
+router.post("/insights", aiRateLimit, async (req, res, next) => {
   try {
     const userId = req.authToken?.uid;
     if (!userId) {
@@ -60,8 +61,33 @@ router.get("/insights", async (req, res, next) => {
     }
 
     const limit = req.query.limit ? Number(req.query.limit) : undefined;
-    const insights = await listAiInsights(userId, limit);
-    return res.json({ insights });
+    const versions = await listAiInsightVersions(userId, limit ?? 10);
+    const serialized = versions.map((entry) => ({
+      ...entry,
+      createdAt: entry.createdAt.toDate().toISOString()
+    }));
+    return res.json({ insights: serialized });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get("/insights/latest", async (req, res, next) => {
+  try {
+    const userId = req.authToken?.uid;
+    if (!userId) {
+      throw unauthorized();
+    }
+
+    const latest = await getLatestAiInsight(userId);
+    return res.json({
+      insight: latest
+        ? {
+            ...latest,
+            createdAt: latest.createdAt.toDate().toISOString()
+          }
+        : null
+    });
   } catch (error) {
     return next(error);
   }

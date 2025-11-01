@@ -6,16 +6,16 @@ import UserSettingBar from '../dashboard/user-settings/userSettingBar';
 import { apiFetch } from '../../../utils/api';
 import './AiInsightsPage.css';
 
+type Timestampish = string | { seconds?: number; _seconds?: number; toDate?: () => Date };
+
 type InsightResponse = {
-  promptContext?: Record<string, unknown>;
-  response?: {
-    content?: string;
-    usage?: Record<string, unknown> | null;
-    [key: string]: unknown;
-  } | null;
+  version: number;
+  content: string | null;
+  model: string | null;
   status: 'success' | 'errored';
-  model?: string;
-  createdAt?: string | { seconds?: number; _seconds?: number; toDate?: () => Date };
+  usage?: Record<string, unknown> | null;
+  promptContext?: Record<string, unknown>;
+  createdAt?: Timestampish;
 };
 
 type ListResponse = {
@@ -24,11 +24,12 @@ type ListResponse = {
 
 type GenerateResponse = {
   content: string;
-  model?: string;
+  model?: string | null;
+  version?: number;
   createdAt?: string;
 };
 
-const formatTimestamp = (value?: InsightResponse['createdAt']) => {
+const formatTimestamp = (value?: Timestampish) => {
   if (!value) return 'moments ago';
   if (typeof value === 'string') {
     const date = new Date(value);
@@ -71,7 +72,9 @@ const InsightCard: React.FC<{
   expanded: boolean;
   onToggle: () => void;
 }> = ({ insight, expanded, onToggle }) => {
-  const content = insight.response?.content ?? 'No content generated';
+  const content = insight.status === 'success'
+    ? insight.content ?? 'No content generated'
+    : 'Insight generation failed. Please try again later.';
 
   return (
     <article
@@ -84,8 +87,9 @@ const InsightCard: React.FC<{
           {insight.status === 'success' ? 'Generated insight' : 'Generation failed'}
         </span>
         <span className="ai-insight-card__meta">
-          {insight.model ? `${insight.model} · ` : ''}
-          {formatTimestamp(insight.createdAt)}
+          {`v${insight.version}`}
+          {insight.model ? ` · ${insight.model}` : ''}
+          {` · ${formatTimestamp(insight.createdAt)}`}
         </span>
         <button type="button" className="ai-insight-card__toggle" onClick={onToggle}>
           {expanded ? 'Collapse' : 'Expand'}

@@ -22,3 +22,6 @@ export const internalError = (message = "Internal Server Error", details?: unkno
   new ApiError(500, message, details);
 
 export const tooManyRequests = (message = "Too Many Requests") => new ApiError(429, message);
+
+export const serviceUnavailable = (message = "Service Unavailable", details?: unknown) =>
+  new ApiError(503, message, details);
