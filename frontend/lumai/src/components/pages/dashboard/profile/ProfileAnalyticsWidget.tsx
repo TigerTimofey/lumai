@@ -123,7 +123,8 @@ const ProfileAnalyticsWidget: React.FC<ProfileAnalyticsWidgetProps> = ({ uid }) 
     const bmi = weight != null && height != null && height > 0 ? weight / Math.pow(height / 100, 2) : null;
 
     const bmiScore = scoreFromBmi(bmi);
-    const activityScore = scoreFromActivity(required.activityLevel ?? extra.desiredActivityLevel ?? null);
+    const rawActivity = required.activityLevel ?? extra.desiredActivityLevel ?? null;
+    const activityScore = scoreFromActivity(rawActivity);
     const progressScore = scoreFromProgress(parseNumber(strength.trainingDaysPerWeek ?? null), 5);
     const habitsScore = scoreFromHabits(extra.dietaryPreferences, extra.sessionDuration);
 
@@ -141,7 +142,12 @@ const ProfileAnalyticsWidget: React.FC<ProfileAnalyticsWidgetProps> = ({ uid }) 
       bmiLabel: bmiClassification(bmi),
       wellnessScore,
       trainingDays: parseNumber(strength.trainingDaysPerWeek ?? null),
-      activityLabel: ACTIVITY_LABELS[required.activityLevel ?? extra.desiredActivityLevel ?? ''] ?? '—'
+      activityLabel: rawActivity
+        ? (ACTIVITY_LABELS[rawActivity] ??
+          rawActivity
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, (char) => char.toUpperCase()))
+        : '—'
     };
   }, [profile]);
 
