@@ -71,10 +71,19 @@ export const prepareAiMetrics = async (userId: string) => {
 
 const buildInsightPrompt = (metrics: Record<string, unknown>) => {
   const condensed = JSON.stringify(metrics, null, 2).slice(0, 6000);
-  return `You are an empathetic wellness coach. Review the anonymized user metrics below and provide:
-1. A brief health status summary (2 sentences).
-2. Three actionable recommendations tailored to the goals and lifestyle.
-3. A motivational note (one sentence).
+  return `You are an empathetic wellness coach. Review the anonymized user metrics below and reply in Markdown with the following sections exactly:
+
+**Health status summary**
+Two sentences describing the user's current state.
+
+**Three actionable recommendations**
+Provide three numbered recommendations tailored to the user's goals and lifestyle.
+
+**Daily focus tasks**
+List three short bullet items (imperative voice) that the user can complete today. Each item must start with a hyphen (-).
+
+**Motivational note**
+One uplifting sentence.
 
 Metrics JSON:
 ${condensed}`;

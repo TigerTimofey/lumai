@@ -6,6 +6,7 @@ import LogWorkoutModal from '../../analytics/logout-workout/logout-modal/LogWork
 import WorkoutHistoryModal from '../../analytics/history-workout/history-modal/WorkoutHistoryModal';
 import type { WorkoutHistoryItem } from '../../analytics/history-workout/WorkoutHistorySwiper';
 import './DashboardWorkoutWidget.css';
+import { DASHBOARD_LOG_WORKOUT_EVENT } from '../events';
 
 type DaySummary = {
   id: string;
@@ -85,6 +86,16 @@ const DashboardWorkoutWidget: React.FC<DashboardWorkoutWidgetProps> = ({ uid, re
     if (Number.isNaN(base.getTime())) return null;
     return new Date(base.getFullYear(), base.getMonth(), base.getDate());
   }, [registeredAt]);
+
+  useEffect(() => {
+    const handleLogWorkoutEvent = () => {
+      setModalOpen(true);
+    };
+    window.addEventListener(DASHBOARD_LOG_WORKOUT_EVENT, handleLogWorkoutEvent);
+    return () => {
+      window.removeEventListener(DASHBOARD_LOG_WORKOUT_EVENT, handleLogWorkoutEvent);
+    };
+  }, []);
 
   useEffect(() => {
     const workoutsRef = collection(db, 'users', uid, 'workouts');

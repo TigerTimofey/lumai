@@ -11,6 +11,7 @@ import ProfileCompletionWidget from './profile/ProfileCompletionWidget';
 import ProfileAnalyticsWidget from './profile/ProfileAnalyticsWidget';
 import AiInsightsWidget from './profile/AiInsightsWidget';
 import DashboardWorkoutWidget from './workouts/DashboardWorkoutWidget';
+import DashboardTasksWidget from './tasks/DashboardTasksWidget';
 
 interface DashboardProps {
   user: User;
@@ -44,6 +45,7 @@ const Dashboard = ({ user }: DashboardProps) => {
             <ProfileCompletionWidget uid={user.uid} />
             <ProfileAnalyticsWidget uid={user.uid} />
             <AiInsightsWidget />
+            <DashboardTasksWidget />
 
 
            
@@ -54,20 +56,9 @@ const Dashboard = ({ user }: DashboardProps) => {
             <EmailNotificationsWidget />
             <TwoFactorWidget />
             <SessionWidget />
-            <div className="dashboard-widget">
-              <h3 className="dashboard-widget-title">Calendar</h3>
-              <div className="dashboard-widget-body">
-                <p>Coming soon</p>
-              </div>
-            </div>
+
             <div className="dashboard-widget">
               <h3 className="dashboard-widget-title">Streak day</h3>
-              <div className="dashboard-widget-body">
-                <p>Coming soon</p>
-              </div>
-            </div>
-            <div className="dashboard-widget">
-              <h3 className="dashboard-widget-title">Today Tasks</h3>
               <div className="dashboard-widget-body">
                 <p>Coming soon</p>
               </div>

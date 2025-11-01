@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { addDoc, collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, runTransaction, serverTimestamp, type DocumentSnapshot } from 'firebase/firestore';
 import { db } from '../../../../../config/firebase';
 import './LogWorkoutModal.css';
 
@@ -78,10 +78,12 @@ const LogWorkoutModal: React.FC<Props> = ({ open, onClose, uid, onSaved, current
       const finalActivity = activityInput || null;
       const chosenDate = dateInput ? new Date(dateInput) : new Date();
       const isValidDate = !Number.isNaN(chosenDate.getTime());
+      const now = new Date();
       if (isValidDate) {
-        chosenDate.setHours(12, 0, 0, 0);
+        chosenDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
       }
       const createdAtValue = isValidDate ? chosenDate : serverTimestamp();
+      const measurementEpoch = isValidDate ? chosenDate.getTime() : Date.now();
       const payload: Record<string, unknown> = {
         type,
         durationMinutes: dur != null && Number.isFinite(dur) ? dur : null,
@@ -97,43 +99,79 @@ const LogWorkoutModal: React.FC<Props> = ({ open, onClose, uid, onSaved, current
       const writes: Array<Promise<unknown>> = [
         addDoc(collection(db, 'users', uid, 'workouts'), payload)
       ];
-      const analyticsPayload: Record<string, unknown> = {};
-      if (finalWeight != null) {
-        analyticsPayload.weightKg = finalWeight;
-        analyticsPayload.weightUpdatedAt = serverTimestamp();
-      }
-      if (finalSleep != null) {
-        analyticsPayload.sleepHours = finalSleep;
-      }
-      if (finalWater != null) {
-        analyticsPayload.waterLiters = finalWater;
-      }
-      if (finalStress) {
-        analyticsPayload.stressLevel = finalStress;
-      }
-      if (finalActivity) {
-        analyticsPayload.activityLevel = finalActivity;
-      }
-      if (Object.keys(analyticsPayload).length > 0) {
-        analyticsPayload.updatedAt = serverTimestamp();
+
+      if (
+        finalWeight != null ||
+        finalSleep != null ||
+        finalWater != null ||
+        finalStress ||
+        finalActivity
+      ) {
         writes.push(
-          setDoc(
-            doc(db, 'users', uid, 'analytics', 'latest'),
-            analyticsPayload,
-            { merge: true }
-          )
-        );
-      }
-      if (finalWeight != null) {
-        writes.push(
-          setDoc(
-            doc(db, 'users', uid),
-            {
-              'requiredProfile.weight': finalWeight,
-              'requiredProfile.weightUpdatedAt': serverTimestamp()
-            },
-            { merge: true }
-          )
+          runTransaction(db, async (tx) => {
+            const analyticsRef = doc(db, 'users', uid, 'analytics', 'latest');
+            const analyticsSnap = await tx.get(analyticsRef);
+            const existingMeasured = analyticsSnap.exists()
+              ? analyticsSnap.data()?.weightMeasuredAt
+              : undefined;
+
+            let userSnap: DocumentSnapshot | null = null;
+            const userRef = doc(db, 'users', uid);
+            if (finalWeight != null) {
+              userSnap = await tx.get(userRef);
+            }
+
+            const shouldUpdateWeight =
+              finalWeight != null &&
+              (typeof existingMeasured !== 'number' || measurementEpoch >= existingMeasured);
+
+            const analyticsUpdate: Record<string, unknown> = {};
+            if (shouldUpdateWeight) {
+              analyticsUpdate.weightKg = finalWeight;
+              analyticsUpdate.weightUpdatedAt = serverTimestamp();
+              analyticsUpdate.weightMeasuredAt = measurementEpoch;
+            }
+            if (finalSleep != null) {
+              analyticsUpdate.sleepHours = finalSleep;
+            }
+            if (finalWater != null) {
+              analyticsUpdate.waterLiters = finalWater;
+            }
+            if (finalStress) {
+              analyticsUpdate.stressLevel = finalStress;
+            }
+            if (finalActivity) {
+              analyticsUpdate.activityLevel = finalActivity;
+            }
+
+            if (Object.keys(analyticsUpdate).length > 0) {
+              analyticsUpdate.updatedAt = serverTimestamp();
+              tx.set(analyticsRef, analyticsUpdate, { merge: true });
+            }
+
+            if (finalWeight != null) {
+              const existingProfileMeasured = userSnap?.exists()
+                ? userSnap.get('requiredProfile.weightMeasuredAt')
+                : undefined;
+
+              if (
+                typeof existingProfileMeasured !== 'number' ||
+                measurementEpoch >= existingProfileMeasured
+              ) {
+                tx.set(
+                  userRef,
+                  {
+                    requiredProfile: {
+                      weight: finalWeight,
+                      weightUpdatedAt: serverTimestamp(),
+                      weightMeasuredAt: measurementEpoch
+                    }
+                  },
+                  { merge: true }
+                );
+              }
+            }
+          })
         );
       }
       await Promise.all(writes);

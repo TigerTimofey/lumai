@@ -243,11 +243,12 @@ const normalizeFromUserDoc = (userDoc: FirestoreUser | null): SnapshotPoint | nu
   const weight = toNumber(required.weight);
   const height = toNumber(required.height);
   const bmi = weight != null && height != null && height > 0 ? weight / Math.pow(height / 100, 2) : null;
+  const weightMeasuredAt = toNumber((required as Record<string, unknown>).weightMeasuredAt);
 
   const activityLevel = required.activityLevel ?? bonus.desiredActivityLevel ?? null;
 
   return {
-    createdAt: null,
+    createdAt: weightMeasuredAt != null ? new Date(weightMeasuredAt) : null,
     weightKg: weight ?? null,
     bmi,
     activityLevel,
@@ -507,8 +508,13 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
     });
 
     if (analyticsDoc) {
+      const measuredAtMs = typeof analyticsDoc.weightMeasuredAt === 'number' ? analyticsDoc.weightMeasuredAt : null;
+      const derivedCreatedAt = measuredAtMs != null
+        ? new Date(measuredAtMs)
+        : resolveTimestamp(analyticsDoc.updatedAt ?? analyticsDoc.createdAt ?? null);
+
       const analyticPoint: SnapshotPoint = {
-        createdAt: resolveTimestamp(analyticsDoc.updatedAt ?? analyticsDoc.createdAt ?? null),
+        createdAt: derivedCreatedAt,
         weightKg: toNumber(analyticsDoc.weightKg),
         bmi: toNumber(analyticsDoc.bmi),
         activityLevel: typeof analyticsDoc.activityLevel === 'string' ? analyticsDoc.activityLevel : null,

@@ -10,8 +10,10 @@ interface WorkoutHistoryModalProps {
   onClose: () => void;
 }
 
-const formatTime = (date: Date | null | undefined) => {
-  if (!date) return '—';
+const formatTime = (value: Date | null | undefined) => {
+  if (!value) return '—';
+  const date = typeof value === 'string' ? new Date(value) : value;
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '—';
   return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 };
 
