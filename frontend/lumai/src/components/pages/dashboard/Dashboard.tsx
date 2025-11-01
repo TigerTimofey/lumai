@@ -45,19 +45,6 @@ const Dashboard = ({ user }: DashboardProps) => {
             <ProfileAnalyticsWidget uid={user.uid} />
             <AiInsightsWidget />
 
-            <section className="dashboard-hero" aria-labelledby="dashboard-hero-heading">
-              <div className="dashboard-hero-text">
-                <h2 id="dashboard-hero-heading">Complete your health profile</h2>
-                <p>
-                  Share a few more details about your habits and goals to unlock personalized insights powered by
-                  Lumai AI.
-                </p>
-                <button type="button" className="dashboard-hero-action" disabled>
-                  Finish profile setup
-                </button>
-              </div>
-              <div className="dashboard-hero-art" aria-hidden="true" />
-            </section>
 
            
           </div>
