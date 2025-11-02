@@ -343,3 +343,111 @@ export const generateAiInsights = async (userId: string) => {
     throw internalError("Failed to generate AI insight", errorMessage);
   }
 };
+
+// Generate AI-powered health summary insights
+export const generateHealthSummaryInsights = async (
+  userId: string,
+  summaryData: {
+    period: 'weekly' | 'monthly';
+    metrics: any;
+    progress: any;
+    keyInsights: string[];
+    recommendations: string[];
+  }
+) => {
+  try {
+    // Check AI consent
+    const consents = await getConsents(userId);
+    if (!consents || consents.agreements[AI_CONSENT]?.status !== "granted") {
+      throw forbidden("AI insights consent required");
+    }
+
+    const prompt = `Based on the following ${summaryData.period} health summary data, provide 2-3 intelligent insights and 1-2 personalized recommendations. Focus on trends, improvements, and actionable advice.
+
+Health Metrics:
+- Average Weight: ${summaryData.metrics.averageWeight ? summaryData.metrics.averageWeight.toFixed(1) + 'kg' : 'Not available'}
+- Average BMI: ${summaryData.metrics.averageBmi ? summaryData.metrics.averageBmi.toFixed(1) : 'Not available'}
+- Average Wellness Score: ${summaryData.metrics.averageWellnessScore ? Math.round(summaryData.metrics.averageWellnessScore) : 'Not available'}
+- Average Sleep: ${summaryData.metrics.averageSleepHours ? summaryData.metrics.averageSleepHours.toFixed(1) + ' hours' : 'Not available'}
+- Average Water Intake: ${summaryData.metrics.averageWaterIntake ? summaryData.metrics.averageWaterIntake.toFixed(1) + ' liters' : 'Not available'}
+- Total Workouts: ${summaryData.metrics.totalWorkouts}
+- Average Workout Duration: ${summaryData.metrics.averageWorkoutDuration ? Math.round(summaryData.metrics.averageWorkoutDuration) + ' minutes' : 'Not available'}
+- Most Active Day: ${summaryData.metrics.mostActiveDay || 'Not available'}
+- Consistency Score: ${summaryData.metrics.consistencyScore}%
+
+Progress Changes:
+- Weight Change: ${summaryData.progress.weightChange ? summaryData.progress.weightChange.toFixed(1) + 'kg' : 'Not available'}
+- BMI Change: ${summaryData.progress.bmiChange ? summaryData.progress.bmiChange.toFixed(1) : 'Not available'}
+- Wellness Score Change: ${summaryData.progress.wellnessScoreChange ? Math.round(summaryData.progress.wellnessScoreChange) : 'Not available'}
+- Sleep Improvement: ${summaryData.progress.sleepImprovement ? summaryData.progress.sleepImprovement.toFixed(1) + ' hours' : 'Not available'}
+- Water Intake Improvement: ${summaryData.progress.waterIntakeImprovement ? summaryData.progress.waterIntakeImprovement.toFixed(1) + ' liters' : 'Not available'}
+- Activity Increase: ${summaryData.progress.activityIncrease ? Math.round(summaryData.progress.activityIncrease) + '%' : 'Not available'}
+
+Existing Insights: ${summaryData.keyInsights.join(', ')}
+Existing Recommendations: ${summaryData.recommendations.join(', ')}
+
+Please provide:
+1. 2-3 intelligent insights about trends and patterns
+2. 1-2 personalized recommendations based on the data
+
+Keep it concise and actionable.`;
+
+    const response = await axios.post(
+      env.HF_API_URL || "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
+      {
+        inputs: prompt,
+        parameters: {
+          max_new_tokens: 300,
+          temperature: 0.7,
+          do_sample: true,
+          return_full_text: false,
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${env.HF_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        timeout: 30000,
+      }
+    );
+
+    const content = response.data[0]?.generated_text?.trim();
+    if (!content) {
+      throw new Error("Empty response from AI service");
+    }
+
+    // Log the AI insight generation
+    await logAiInsight(userId, {
+      promptContext: {
+        type: "health_summary",
+        period: summaryData.period,
+        wellnessScore: summaryData.metrics.averageWellnessScore,
+      },
+      model: "health-summary-insights",
+      response: { content },
+      status: "success",
+      meta: {
+        period: summaryData.period,
+        generatedAt: new Date().toISOString(),
+      },
+    });
+
+    return {
+      aiInsights: content,
+      generatedAt: new Date().toISOString(),
+    };
+
+  } catch (error: any) {
+    const errorMessage = error.message || "Unknown AI service error";
+
+    logger.error({ userId, period: summaryData.period, error: errorMessage }, "Failed to generate health summary AI insights");
+
+    // For health summaries, we can provide basic insights even if AI fails
+    return {
+      aiInsights: "AI insights temporarily unavailable. Basic summary analysis provided above.",
+      generatedAt: new Date().toISOString(),
+      fallback: true,
+    };
+  }
+};

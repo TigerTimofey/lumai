@@ -29,3 +29,20 @@ export const listProcessedMetrics = async (userId: string, limit = 10) => {
 
   return snapshot.docs.map((doc) => doc.data() as ProcessedMetricsDocument);
 };
+
+export const getProcessedMetricsByDateRange = async (
+  userId: string,
+  startDate: Date,
+  endDate: Date
+) => {
+  const startTimestamp = Timestamp.fromDate(startDate);
+  const endTimestamp = Timestamp.fromDate(endDate);
+
+  const snapshot = await processedMetricsCollection(userId)
+    .where("createdAt", ">=", startTimestamp)
+    .where("createdAt", "<=", endTimestamp)
+    .orderBy("createdAt", "asc")
+    .get();
+
+  return snapshot.docs.map((doc) => doc.data() as ProcessedMetricsDocument);
+};

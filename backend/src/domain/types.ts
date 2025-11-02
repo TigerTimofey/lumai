@@ -106,3 +106,43 @@ export interface ProcessedMetricsDocument {
   createdAt: Timestamp;
   expiresAt?: Timestamp;
 }
+
+export interface HealthSummaryMetrics {
+  averageWeight: number | null;
+  averageBmi: number | null;
+  averageWellnessScore: number | null;
+  averageSleepHours: number | null;
+  averageWaterIntake: number | null;
+  totalWorkouts: number;
+  averageWorkoutDuration: number | null;
+  mostActiveDay: string | null;
+  consistencyScore: number; // 0-100 based on regular activity
+}
+
+export interface HealthProgress {
+  weightChange: number | null; // kg change from start to end
+  bmiChange: number | null;
+  wellnessScoreChange: number | null;
+  sleepImprovement: number | null; // hours change
+  waterIntakeImprovement: number | null; // liters change
+  activityIncrease: number | null; // percentage increase in workouts
+}
+
+export interface HealthSummary {
+  period: 'weekly' | 'monthly';
+  startDate: Date;
+  endDate: Date;
+  metrics: HealthSummaryMetrics;
+  progress: HealthProgress;
+  keyInsights: string[];
+  recommendations: string[];
+  generatedAt: Date;
+  aiInsights?: string;
+  aiGeneratedAt?: string;
+}
+
+export interface HealthSummaryDocument {
+  userId: string;
+  summary: HealthSummary;
+  createdAt: Timestamp;
+}
