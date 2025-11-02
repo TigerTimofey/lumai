@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { addDoc, collection, doc, runTransaction, serverTimestamp, type DocumentSnapshot } from 'firebase/firestore';
+import { addDoc, collection, doc, runTransaction, serverTimestamp, type DocumentSnapshot, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../../../config/firebase';
 import './LogWorkoutModal.css';
 
@@ -96,6 +96,33 @@ const LogWorkoutModal: React.FC<Props> = ({ open, onClose, uid, onSaved, current
         stressLevel: finalStress,
         activityLevel: finalActivity
       };
+
+      // Check for duplicate entries with the same timestamp and key fields
+      const workoutsRef = collection(db, 'users', uid, 'workouts');
+      const duplicateQuery = query(
+        workoutsRef,
+        where('createdAt', '==', createdAtValue),
+        where('type', '==', type)
+      );
+      const duplicateSnapshot = await getDocs(duplicateQuery);
+      
+      if (!duplicateSnapshot.empty) {
+        // Check if the duplicate has the same key data
+        const isExactDuplicate = duplicateSnapshot.docs.some(doc => {
+          const data = doc.data();
+          return (
+            data.durationMinutes === payload.durationMinutes &&
+            data.intensity === payload.intensity &&
+            data.notes === payload.notes &&
+            data.weightKg === payload.weightKg
+          );
+        });
+        
+        if (isExactDuplicate) {
+          throw new Error('A workout with the same date, type, and details already exists. Please modify your entry or choose a different time.');
+        }
+      }
+
       const writes: Array<Promise<unknown>> = [
         addDoc(collection(db, 'users', uid, 'workouts'), payload)
       ];
