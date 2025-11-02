@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { User } from 'firebase/auth';
 import { onAuthStateChanged, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { auth } from './config/firebase';
+import { logoutUser } from './utils/logout';
 
 import AuthPage from './components/auth/AuthPage';
 import Dashboard from './components/pages/dashboard/Dashboard';
@@ -9,10 +10,62 @@ import Profile from './components/pages/profile/Profile';
 import AiInsightsPage from './components/pages/ai-insights/AiInsightsPage';
 import AnalyticsPage from './components/pages/analytics/AnalyticsPage';
 
+import { SESSION_TIMEOUT_MS } from './config/session';
+import SessionContext, { type SessionContextValue } from './context/SessionContext';
+
 function App() {
   const [authedUser, setAuthedUser] = useState<User | null>(null);
   const [initializing, setInitializing] = useState(true);
   const [path, setPath] = useState<string>(() => (typeof window !== 'undefined' ? window.location.pathname : '/dashboard'));
+  const [sessionExpiry, setSessionExpiry] = useState<number | null>(null);
+  const sessionTimeoutRef = useRef<number | null>(null);
+
+  const clearSessionTimeout = useCallback(() => {
+    if (sessionTimeoutRef.current !== null && typeof window !== 'undefined') {
+      window.clearTimeout(sessionTimeoutRef.current);
+      sessionTimeoutRef.current = null;
+    }
+  }, []);
+
+  const scheduleSessionTimeout = useCallback(() => {
+    if (!authedUser) {
+      setSessionExpiry(null);
+      return;
+    }
+    if (typeof window === 'undefined') return;
+    if (SESSION_TIMEOUT_MS <= 0) {
+      setSessionExpiry(null);
+      return;
+    }
+
+    clearSessionTimeout();
+    const expiry = Date.now() + SESSION_TIMEOUT_MS;
+    setSessionExpiry(expiry);
+    sessionTimeoutRef.current = window.setTimeout(() => {
+      sessionTimeoutRef.current = null;
+      setSessionExpiry(null);
+      void logoutUser();
+    }, SESSION_TIMEOUT_MS);
+  }, [authedUser, clearSessionTimeout]);
+
+  useEffect(() => {
+    if (!authedUser) {
+      clearSessionTimeout();
+      setSessionExpiry(null);
+      return;
+    }
+
+    scheduleSessionTimeout();
+
+    return () => {
+      clearSessionTimeout();
+    };
+  }, [authedUser, scheduleSessionTimeout, clearSessionTimeout]);
+
+  const sessionContextValue = useMemo<SessionContextValue>(() => ({
+    sessionExpiry,
+    resetSessionTimer: scheduleSessionTimeout
+  }), [sessionExpiry, scheduleSessionTimeout]);
 
   const handleAuthenticated = (user: User) => {
     const isTrustedProvider = [user.providerId, ...user.providerData.map(p => p?.providerId)]
@@ -90,16 +143,20 @@ function App() {
           .includes('github.com'))
   );
 
-  if (!initializing && isDashboardAccessible && authedUser) {
-    if (path.startsWith('/profile')) return <Profile user={authedUser} />;
-    if (path.startsWith('/analytics')) return <AnalyticsPage user={authedUser} />;
-    if (path.startsWith('/ai-insights')) return <AiInsightsPage user={authedUser} />;
-    return <Dashboard user={authedUser} />;
-  }
+  let content: ReactNode;
 
-  // While Firebase restores session, show a minimal splash to avoid login-page flicker
-  if (initializing) {
-    return (
+  if (!initializing && isDashboardAccessible && authedUser) {
+    if (path.startsWith('/profile')) {
+      content = <Profile user={authedUser} />;
+    } else if (path.startsWith('/analytics')) {
+      content = <AnalyticsPage user={authedUser} />;
+    } else if (path.startsWith('/ai-insights')) {
+      content = <AiInsightsPage user={authedUser} />;
+    } else {
+      content = <Dashboard user={authedUser} />;
+    }
+  } else if (initializing) {
+    content = (
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -111,9 +168,15 @@ function App() {
           <span style={{ fontWeight: 700, letterSpacing: '-0.02em' }}>Lumai checking credentials...</span>
       </div>
     );
+  } else {
+    content = <AuthPage onAuthenticated={handleAuthenticated} />;
   }
 
-  return <AuthPage onAuthenticated={handleAuthenticated} />;
+  return (
+    <SessionContext.Provider value={sessionContextValue}>
+      {content}
+    </SessionContext.Provider>
+  );
 }
 
 export default App;

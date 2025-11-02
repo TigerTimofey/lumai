@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './SideNav.css';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../config/firebase';
+import { logoutUser } from '../../utils/logout';
 import dashboardIcon from '../../assets/icons/dashboard.svg';
 import profileIcon from '../../assets/icons/profile.svg';
 import analyticsIcon from '../../assets/icons/analytics.svg';
@@ -80,11 +79,7 @@ const SideNav: React.FC<SideNavProps> = ({ activeKey, onNavigate, collapsed = fa
     e.preventDefault();
 
     if (key === 'logout') {
-      signOut(auth)
-        .catch(() => void 0)
-        .finally(() => {
-          window.location.assign('/');
-        });
+      void logoutUser();
       return;
     }
 
