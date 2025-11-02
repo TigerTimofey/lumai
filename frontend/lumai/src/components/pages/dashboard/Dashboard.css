@@ -323,7 +323,7 @@
 
   .dashboard-canvas {
     margin-left: 0;
-    padding: 64px 24px 24px 24px;
+    padding: 64px 20px
   }
 
   /* On mobile, the sidebar is off-canvas; never push content */

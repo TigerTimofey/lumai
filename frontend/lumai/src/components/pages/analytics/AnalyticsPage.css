@@ -254,7 +254,7 @@ background: transparent ;
 
 @media (max-width: 720px) {
   .analytics-main {
-    padding: 32px 20px 48px;
+    padding: 0px
   }
 
   .analytics-panel {

@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import insightsIcon from '../../../../assets/icons/profile.svg';
+import React, { useEffect, useMemo, useState } from 'react';
+import insightsIcon from '../../../../assets/icons/insights.svg';
 import analyticsIcon from '../../../../assets/icons/analytics.svg';
 import settingsIcon from '../../../../assets/icons/settings.svg';
+import dashboardIcon from '../../../../assets/icons/dashboard.svg';
 import './userSettingBar.css';
+import { TOPBAR_NAV_ITEMS, type TopbarNavKey } from './topbarNav';
 
 interface UserSettingBarProps {
   name: string;
@@ -38,18 +40,43 @@ const UserSettingBar: React.FC<UserSettingBarProps> = ({ name, photoURL }) => {
     return () => window.removeEventListener('scroll', onScroll as EventListener);
   }, []);
 
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/dashboard';
+  const activeKey: TopbarNavKey | undefined = useMemo(() => {
+    const match = TOPBAR_NAV_ITEMS.find((item) => currentPath.startsWith(item.path));
+    return match?.key;
+  }, [currentPath]);
+
+  const iconMap: Record<TopbarNavKey, { icon: string; aria: string }> = {
+    dashboard: { icon: dashboardIcon, aria: 'Dashboard' },
+    analytics: { icon: analyticsIcon, aria: 'Analytics' },
+    'ai-insights': { icon: insightsIcon, aria: 'Insights' },
+    settings: { icon: settingsIcon, aria: 'Settings' }
+  };
+
   return (
     <div className={"user-setting-bar" + (atTop ? '' : ' is-hidden')} role="banner" aria-hidden={atTop ? undefined : true}>
       <div className="topbar-actions">
-        <button type="button" className="icon-button" aria-label="Insights" disabled>
-          <img src={insightsIcon} alt="" aria-hidden="true" />
-        </button>
-        <button type="button" className="icon-button" aria-label="Analytics" disabled>
-          <img src={analyticsIcon} alt="" aria-hidden="true" />
-        </button>
-        <button type="button" className="icon-button" aria-label="Settings" disabled>
-          <img src={settingsIcon} alt="" aria-hidden="true" />
-        </button>
+        {TOPBAR_NAV_ITEMS.map((item) => {
+          const { icon, aria } = iconMap[item.key];
+          const isActive = activeKey === item.key;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              className={`icon-button${isActive ? ' is-active' : ''}`}
+              aria-label={aria}
+              aria-pressed={isActive}
+              onClick={() => {
+                if (window.location.pathname !== item.path) {
+                  window.history.pushState({}, '', item.path);
+                  window.dispatchEvent(new PopStateEvent('popstate'));
+                }
+              }}
+            >
+              <img src={icon} alt="" aria-hidden="true" />
+            </button>
+          );
+        })}
         <div className="topbar-user" aria-label={`Signed in as ${name}`}>
           {photoURL ? (
             <img className="topbar-avatar topbar-avatar-img" src={photoURL} alt="" aria-hidden="true" />

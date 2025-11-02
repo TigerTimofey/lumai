@@ -167,7 +167,7 @@ const AiInsightsPage: React.FC<{ user: User }> = ({ user }) => {
                 onClick={generateInsight}
                 disabled={generating}
               >
-                {generating ? 'Asking AI…' : 'Request fresh insight'}
+                {generating ? 'Thinking...' : 'Request insight'}
               </button>
             </header>
 
@@ -187,7 +187,7 @@ const AiInsightsPage: React.FC<{ user: User }> = ({ user }) => {
                   onClick={generateInsight}
                   disabled={generating}
                 >
-                  {generating ? 'Asking AI…' : 'Generate insight'}
+                  {generating ? 'Thinking...' : 'Generate insight'}
                 </button>
               </div>
         ) : (
