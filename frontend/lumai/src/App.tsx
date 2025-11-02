@@ -14,6 +14,7 @@ import DataUsageConsentModal from './components/privacy/DataUsageConsentModal';
 import { SESSION_TIMEOUT_MS } from './config/session';
 import SessionContext, { type SessionContextValue } from './context/SessionContext';
 import { apiFetch } from './utils/api';
+import ApiErrorToast from './components/shared/ApiErrorToast';
 
 function App() {
   const [authedUser, setAuthedUser] = useState<User | null>(null);
@@ -247,6 +248,7 @@ function App() {
           onReview={handleConsentReview}
         />
       )}
+      <ApiErrorToast />
     </SessionContext.Provider>
   );
 }
