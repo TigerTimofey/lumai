@@ -619,6 +619,79 @@ const generateRecommendations = (metrics: HealthSummaryMetrics, progress: Health
   return recommendations;
 };
 
+const ensureSummaryRelevance = (
+  summary: HealthSummary,
+  metrics: HealthSummaryMetrics,
+  progress: HealthProgress
+): HealthSummary => {
+  const insights = [...summary.keyInsights];
+  const recommendations = [...summary.recommendations];
+
+  const hasWeight = metrics.averageWeight != null;
+  const hasWellness = metrics.averageWellnessScore != null;
+  const hasWorkouts = metrics.totalWorkouts > 0;
+  const hasSleep = metrics.averageSleepHours != null;
+  const hasHydration = metrics.averageWaterIntake != null;
+  const hasAnyMetric = hasWeight || hasWellness || hasWorkouts || hasSleep || hasHydration;
+
+  const pushInsight = (message: string) => {
+    if (!insights.includes(message)) insights.push(message);
+  };
+
+  const pushRecommendation = (message: string) => {
+    if (!recommendations.includes(message)) recommendations.push(message);
+  };
+
+  if (!hasAnyMetric) {
+    pushInsight(
+      `Not enough tracked data ${summary.period === "weekly" ? "this week" : "this month"}. Log workouts, sleep, hydration, and weight to unlock richer guidance.`
+    );
+    pushRecommendation(
+      `Capture at least one workout and daily habits so the ${summary.period} summary can surface trends and personalised tips.`
+    );
+  } else {
+    if (insights.length === 0) {
+      if (hasWellness) {
+        pushInsight(`Wellness score averaged ${Math.round(metrics.averageWellnessScore!)} points this ${summary.period}.`);
+      }
+      if (hasWorkouts) {
+        pushInsight(`Logged ${metrics.totalWorkouts} workouts with ${metrics.consistencyScore}% consistency.`);
+      }
+      if (hasSleep) {
+        pushInsight(`Sleep averaged ${metrics.averageSleepHours?.toFixed(1)} hours per night.`);
+      }
+      if (!insights.length) {
+        pushInsight('Your logging is up to date—keep capturing weight, sleep, and hydration to reveal deeper trends.');
+      }
+    }
+
+    if (recommendations.length === 0) {
+      if (hasWorkouts) {
+        if ((progress.activityIncrease ?? 0) < 0) {
+          pushRecommendation('Revisit your weekly plan and reserve two training blocks you can consistently protect.');
+        } else {
+          pushRecommendation('Maintain your workout cadence by scheduling sessions and recovery in advance.');
+        }
+      }
+      if (hasSleep && metrics.averageSleepHours! < 7) {
+        pushRecommendation('Prioritise a wind-down routine to reach at least 7 hours of sleep nightly.');
+      }
+      if (hasHydration && metrics.averageWaterIntake! < 2) {
+        pushRecommendation('Carry a water bottle and target 2 litres throughout the day to support recovery.');
+      }
+      if (!recommendations.length) {
+        pushRecommendation('Set one clear habit focus (sleep, training, or nutrition) and track it for the upcoming period.');
+      }
+    }
+  }
+
+  return {
+    ...summary,
+    keyInsights: insights,
+    recommendations
+  };
+};
+
 // Generate weekly health summary
 export const generateWeeklySummary = async (userId: string, referenceDate: Date = new Date()): Promise<HealthSummary> => {
   const weekStart = getStartOfWeek(referenceDate);
@@ -646,7 +719,7 @@ export const generateWeeklySummary = async (userId: string, referenceDate: Date 
   const insights = generateInsights(metrics, progress);
   const recommendations = generateRecommendations(metrics, progress);
 
-  return {
+  return ensureSummaryRelevance({
     period: 'weekly',
     startDate: weekStart,
     endDate: weekEnd,
@@ -655,7 +728,7 @@ export const generateWeeklySummary = async (userId: string, referenceDate: Date 
     keyInsights: insights,
     recommendations,
     generatedAt: new Date()
-  };
+  }, metrics, progress);
 };
 
 // Generate monthly health summary
@@ -685,7 +758,7 @@ export const generateMonthlySummary = async (userId: string, referenceDate: Date
   const insights = generateInsights(metrics, progress);
   const recommendations = generateRecommendations(metrics, progress);
 
-  return {
+  return ensureSummaryRelevance({
     period: 'monthly',
     startDate: monthStart,
     endDate: monthEnd,
@@ -694,5 +767,5 @@ export const generateMonthlySummary = async (userId: string, referenceDate: Date
     keyInsights: insights,
     recommendations,
     generatedAt: new Date()
-  };
+  }, metrics, progress);
 };
