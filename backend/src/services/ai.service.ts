@@ -13,6 +13,67 @@ import { logger } from "../utils/logger.js";
 
 const AI_CONSENT = "ai_insights" satisfies (typeof CONSENT_TYPES)[number];
 
+const toNumber = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const extractFallbackMetrics = (payload: Record<string, unknown> | undefined) => {
+  const current = (payload?.current_state ?? {}) as Record<string, unknown>;
+  const normalized = (payload?.normalized ?? current?.normalized ?? {}) as Record<string, unknown>;
+  const habits = (payload?.habits ?? {}) as Record<string, unknown>;
+
+  const weight = toNumber(current?.weight_kg ?? current?.weightKg ?? normalized?.weightKg ?? normalized?.weight_kg);
+  const bmi = toNumber(current?.bmi ?? normalized?.bmi);
+  const weeklyActivity = toNumber(current?.weekly_activity_frequency ?? current?.weeklyActivityFrequency);
+  const sleepHours = toNumber(habits?.sleep_hours ?? habits?.sleepHours);
+  const waterLiters = toNumber(habits?.water_intake_liters ?? habits?.waterIntakeLiters);
+  const stress = typeof habits?.stress_level === "string"
+    ? (habits?.stress_level as string)
+    : (typeof habits?.stressLevel === "string" ? (habits?.stressLevel as string) : null);
+
+  return { weight, bmi, weeklyActivity, sleepHours, waterLiters, stress };
+};
+
+const buildFallbackInsight = (payload: Record<string, unknown> | undefined) => {
+  const metrics = extractFallbackMetrics(payload);
+
+  const formatWeight = () => metrics.weight != null ? `${metrics.weight.toFixed(1)} kg` : "your current weight";
+  const formatBmi = () => metrics.bmi != null ? `${metrics.bmi.toFixed(1)}` : "a healthy range";
+  const formatActivity = () => metrics.weeklyActivity != null ? `${Math.max(3, Math.round(metrics.weeklyActivity))} weekly sessions` : "regular weekly activity";
+  const formatSleep = () => metrics.sleepHours != null ? `${metrics.sleepHours.toFixed(1)} hours of sleep` : "consistent sleep";
+  const formatWater = () => metrics.waterLiters != null ? `${metrics.waterLiters.toFixed(1)} L of water` : "solid hydration";
+  const stressNote = metrics.stress ? ` Stress level is currently ${metrics.stress}.` : "";
+
+  return `**Health status summary**\nYou're maintaining ${formatWeight()} with a BMI near ${formatBmi()}. Training cadence averages ${formatActivity()}, supported by ${formatSleep()} and ${formatWater()} each day.${stressNote}\n\n**Three actionable recommendations**\n1. Schedule your key workouts and recovery blocks at the start of each week.\n2. Prioritise nutrient-dense meals and hydration to reinforce energy and sleep quality.\n3. Record a short reflection after sessions to track progress and adjust intensity early.\n\n**Daily focus tasks**\n- Complete a 10-minute mobility or stretching routine.\n- Prepare a balanced meal or snack that aligns with your goals.\n- Review tomorrow's plan and set a simple, specific intention.\n\n**Motivational note**\nYou already have the data and habits in motion—stay consistent and celebrate every small win.`;
+};
+
+const ensureInsightQuality = (content: string, payload: Record<string, unknown> | undefined) => {
+  const REQUIRED_HEADINGS = [
+    "Health status summary",
+    "Three actionable recommendations",
+    "Daily focus tasks",
+    "Motivational note"
+  ];
+
+  const hasHeadings = REQUIRED_HEADINGS.every((heading) => new RegExp(`\\*\\*${heading}\\*\\*`, "i").test(content));
+  const numberedItems = (content.match(/\n\s*\d+\.\s+/g) ?? []).length;
+  const bulletItems = (content.match(/\n\s*-\s+/g) ?? []).length;
+
+  if (hasHeadings && numberedItems >= 3 && bulletItems >= 3) {
+    return { content, replaced: false };
+  }
+
+  const fallback = buildFallbackInsight(payload);
+  return { content: fallback, replaced: true };
+};
+
 export const determineInsightPriority = (content: string): "high" | "medium" | "low" => {
   const lowerContent = content.toLowerCase();
 
@@ -286,6 +347,15 @@ export const generateAiInsights = async (userId: string) => {
       });
     }
 
+    const { content: qualityCheckedContent, replaced: replacedWithFallback } = ensureInsightQuality(
+      validatedContent,
+      latestSnapshot.userMetrics as Record<string, unknown> | undefined
+    );
+
+    if (replacedWithFallback) {
+      logger.warn({ userId }, '[ai-insights] generated content replaced with fallback for quality assurance');
+    }
+
     const log = await logAiInsight(userId, {
       promptContext: {
         reason: "ai_health_insight",
@@ -294,16 +364,16 @@ export const generateAiInsights = async (userId: string) => {
       model,
       status: "success",
       response: {
-        content: validatedContent,
+        content: qualityCheckedContent,
         usage: data?.usage ?? null
       }
     });
 
     const savedVersion = await saveAiInsightVersion(userId, {
-      content: validatedContent,
+      content: qualityCheckedContent,
       model,
       status: "success",
-      priority: determineInsightPriority(validatedContent),
+      priority: determineInsightPriority(qualityCheckedContent),
       usage: data?.usage ?? null,
       promptContext: {
         reason: "ai_health_insight",
@@ -312,7 +382,7 @@ export const generateAiInsights = async (userId: string) => {
     });
 
     return {
-      content: validatedContent,
+      content: qualityCheckedContent,
       model,
       version: savedVersion.version,
       createdAt: savedVersion.createdAt.toDate().toISOString(),
