@@ -10,8 +10,10 @@ import Profile from './components/pages/profile/Profile';
 import AiInsightsPage from './components/pages/ai-insights/AiInsightsPage';
 import AnalyticsPage from './components/pages/analytics/AnalyticsPage';
 
+import DataUsageConsentModal from './components/privacy/DataUsageConsentModal';
 import { SESSION_TIMEOUT_MS } from './config/session';
 import SessionContext, { type SessionContextValue } from './context/SessionContext';
+import { apiFetch } from './utils/api';
 
 function App() {
   const [authedUser, setAuthedUser] = useState<User | null>(null);
@@ -19,6 +21,7 @@ function App() {
   const [path, setPath] = useState<string>(() => (typeof window !== 'undefined' ? window.location.pathname : '/dashboard'));
   const [sessionExpiry, setSessionExpiry] = useState<number | null>(null);
   const sessionTimeoutRef = useRef<number | null>(null);
+  const [dataProcessingConsent, setDataProcessingConsent] = useState<'pending' | 'granted' | 'denied' | null>(null);
 
   const clearSessionTimeout = useCallback(() => {
     if (sessionTimeoutRef.current !== null && typeof window !== 'undefined') {
@@ -67,6 +70,26 @@ function App() {
     resetSessionTimer: scheduleSessionTimeout
   }), [sessionExpiry, scheduleSessionTimeout]);
 
+  useEffect(() => {
+    if (!authedUser) {
+      setDataProcessingConsent(null);
+      return;
+    }
+    let active = true;
+    apiFetch<{ agreements: Record<string, { status: 'pending' | 'granted' | 'denied' }> }>('/privacy')
+      .then((data) => {
+        if (!active) return;
+        setDataProcessingConsent(data.agreements?.data_processing?.status ?? 'pending');
+      })
+      .catch(() => {
+        if (!active) return;
+        setDataProcessingConsent('pending');
+      });
+    return () => {
+      active = false;
+    };
+  }, [authedUser]);
+
   const handleAuthenticated = (user: User) => {
     const isTrustedProvider = [user.providerId, ...user.providerData.map(p => p?.providerId)]
       .filter(Boolean)
@@ -89,6 +112,43 @@ function App() {
       setAuthedUser(user);
     }
   };
+
+  const handleConsentAccept = useCallback(async () => {
+    try {
+      await apiFetch('/privacy/consents', {
+        method: 'POST',
+        body: JSON.stringify({ consentType: 'data_processing', status: 'granted' })
+      });
+      setDataProcessingConsent('granted');
+    } catch (error) {
+      console.error('Failed to accept consent:', error);
+    }
+  }, []);
+
+  const handleConsentDecline = useCallback(async () => {
+    try {
+      await apiFetch('/privacy/consents', {
+        method: 'POST',
+        body: JSON.stringify({ consentType: 'data_processing', status: 'denied' })
+      });
+      setDataProcessingConsent('denied');
+      void logoutUser();
+    } catch (error) {
+      console.error('Failed to decline consent:', error);
+    }
+  }, []);
+
+  const handleConsentReview = useCallback(async () => {
+    try {
+      await apiFetch('/privacy/consents', {
+        method: 'POST',
+        body: JSON.stringify({ consentType: 'data_processing', status: 'pending' })
+      });
+      setDataProcessingConsent('pending');
+    } catch (error) {
+      console.error('Failed to review consent:', error);
+    }
+  }, []);
 
   // Persist session locally and restore user on refresh without logging out
   useEffect(() => {
@@ -172,9 +232,21 @@ function App() {
     content = <AuthPage onAuthenticated={handleAuthenticated} />;
   }
 
+  const shouldShowConsentModal = dataProcessingConsent === 'pending' || dataProcessingConsent === 'denied';
+  const consentMode = dataProcessingConsent === 'denied' ? 'declined' : 'pending';
+
   return (
     <SessionContext.Provider value={sessionContextValue}>
       {content}
+      {!initializing && shouldShowConsentModal && (
+        <DataUsageConsentModal
+          open
+          mode={consentMode}
+          onAccept={handleConsentAccept}
+          onDecline={handleConsentDecline}
+          onReview={handleConsentReview}
+        />
+      )}
     </SessionContext.Provider>
   );
 }
