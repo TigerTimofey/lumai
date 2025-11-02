@@ -46,6 +46,7 @@ export interface AiInsightVersion {
   content: string | null;
   model: string | null;
   status: "success" | "errored";
+  priority?: "high" | "medium" | "low";
   usage?: Record<string, unknown> | null;
   promptContext?: Record<string, unknown>;
   createdAt: Timestamp;
@@ -69,6 +70,7 @@ export const saveAiInsightVersion = async (userId: string, input: AiInsightVersi
       content: input.content,
       model: input.model,
       status: input.status,
+      priority: input.priority,
       usage: input.usage ?? null,
       promptContext: input.promptContext
     };
@@ -85,6 +87,7 @@ export const saveAiInsightVersion = async (userId: string, input: AiInsightVersi
           version: nextVersion,
           model: input.model ?? null,
           status: input.status,
+          priority: input.priority ?? null,
           createdAt
         }
       },

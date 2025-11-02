@@ -13,6 +13,38 @@ import { logger } from "../utils/logger.js";
 
 const AI_CONSENT = "ai_insights" satisfies (typeof CONSENT_TYPES)[number];
 
+export const determineInsightPriority = (content: string): "high" | "medium" | "low" => {
+  const lowerContent = content.toLowerCase();
+
+  // High priority indicators - critical health concerns
+  const highPriorityKeywords = [
+    'significant weight loss', 'rapid weight change', 'extreme stress',
+    'severe sleep deprivation', 'critical', 'urgent', 'immediate attention',
+    'health risk', 'dangerous', 'concerning trend', 'alarming',
+    'weeks without activity', 'no exercise', 'sedentary for weeks'
+  ];
+
+  // Medium priority indicators - important but not critical
+  const mediumPriorityKeywords = [
+    'improve sleep', 'better nutrition', 'increase activity',
+    'stress management', 'moderate', 'concerning', 'needs attention',
+    'should focus on', 'recommend', 'consider', 'important'
+  ];
+
+  // Check for high priority first
+  if (highPriorityKeywords.some(keyword => lowerContent.includes(keyword))) {
+    return 'high';
+  }
+
+  // Check for medium priority
+  if (mediumPriorityKeywords.some(keyword => lowerContent.includes(keyword))) {
+    return 'medium';
+  }
+
+  // Default to low priority for general motivation and maintenance
+  return 'low';
+};
+
 const validateRecommendations = (content: string, restrictions: string[] = []) => {
   if (!restrictions.length) return content;
 
@@ -271,6 +303,7 @@ export const generateAiInsights = async (userId: string) => {
       content: validatedContent,
       model,
       status: "success",
+      priority: determineInsightPriority(validatedContent),
       usage: data?.usage ?? null,
       promptContext: {
         reason: "ai_health_insight",
@@ -282,7 +315,8 @@ export const generateAiInsights = async (userId: string) => {
       content: validatedContent,
       model,
       version: savedVersion.version,
-      createdAt: savedVersion.createdAt.toDate().toISOString()
+      createdAt: savedVersion.createdAt.toDate().toISOString(),
+      priority: savedVersion.priority
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

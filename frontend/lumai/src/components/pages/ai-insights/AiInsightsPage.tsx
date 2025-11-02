@@ -13,6 +13,7 @@ type InsightResponse = {
   content: string | null;
   model: string | null;
   status: 'success' | 'errored';
+  priority?: 'high' | 'medium' | 'low';
   usage?: Record<string, unknown> | null;
   promptContext?: Record<string, unknown>;
   createdAt?: Timestampish;
@@ -27,6 +28,7 @@ type GenerateResponse = {
   model?: string | null;
   version?: number;
   createdAt?: string;
+  priority?: "high" | "medium" | "low";
 };
 
 const formatTimestamp = (value?: Timestampish) => {
@@ -76,16 +78,43 @@ const InsightCard: React.FC<{
     ? insight.content ?? 'No content generated'
     : 'Insight generation failed. Please try again later.';
 
+  const getPriorityIcon = (priority?: string) => {
+    switch (priority) {
+      case 'high': return '🚨';
+      case 'medium': return '⚠️';
+      case 'low': return '💡';
+      default: return '';
+    }
+  };
+
+  const getPriorityLabel = (priority?: string) => {
+    switch (priority) {
+      case 'high': return 'High Priority';
+      case 'medium': return 'Medium Priority';
+      case 'low': return 'Low Priority';
+      default: return '';
+    }
+  };
+
   return (
     <article
       className={`ai-insight-card ${expanded ? 'is-expanded' : 'is-collapsed'} ${
         insight.status !== 'success' ? 'ai-insight-card--error' : ''
       }`}
+      data-priority={insight.priority}
     >
       <header className="ai-insight-card__header">
-        <span className="ai-insight-card__status" data-status={insight.status}>
-          {insight.status === 'success' ? 'Generated insight' : 'Generation failed'}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {insight.priority && (
+            <>
+              <span className="ai-insight-card__priority-icon">{getPriorityIcon(insight.priority)}</span>
+              <span className="ai-insight-card__priority-label">{getPriorityLabel(insight.priority)}</span>
+            </>
+          )}
+          <span className="ai-insight-card__status" data-status={insight.status}>
+            {insight.status === 'success' ? 'Generated insight' : 'Generation failed'}
+          </span>
+        </div>
         <span className="ai-insight-card__meta">
           {`v${insight.version}`}
           {insight.model ? ` · ${insight.model}` : ''}

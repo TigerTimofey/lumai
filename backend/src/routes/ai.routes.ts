@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authContext } from "../middleware/auth-context.js";
-import { prepareAiMetrics, generateAiInsights } from "../services/ai.service.js";
+import { prepareAiMetrics, generateAiInsights, determineInsightPriority } from "../services/ai.service.js";
 import { getLatestAiInsight, listAiInsightVersions } from "../repositories/ai-insight.repo.js";
 import { listProcessedMetrics } from "../repositories/processed-metrics.repo.js";
 import { unauthorized } from "../utils/api-error.js";
@@ -62,10 +62,16 @@ router.get("/insights", async (req, res, next) => {
 
     const limit = req.query.limit ? Number(req.query.limit) : undefined;
     const versions = await listAiInsightVersions(userId, limit ?? 10);
-    const serialized = versions.map((entry) => ({
-      ...entry,
-      createdAt: entry.createdAt.toDate().toISOString()
-    }));
+    const serialized = versions.map((entry) => {
+      const priority =
+        entry.priority ??
+        (entry.content ? determineInsightPriority(entry.content) : undefined);
+      return {
+        ...entry,
+        priority,
+        createdAt: entry.createdAt.toDate().toISOString()
+      };
+    });
     return res.json({ insights: serialized });
   } catch (error) {
     return next(error);
@@ -80,14 +86,16 @@ router.get("/insights/latest", async (req, res, next) => {
     }
 
     const latest = await getLatestAiInsight(userId);
-    return res.json({
-      insight: latest
-        ? {
-            ...latest,
-            createdAt: latest.createdAt.toDate().toISOString()
-          }
-        : null
-    });
+    const insight = latest
+      ? {
+          ...latest,
+          priority:
+            latest.priority ??
+            (latest.content ? determineInsightPriority(latest.content) : undefined),
+          createdAt: latest.createdAt.toDate().toISOString()
+        }
+      : null;
+    return res.json({ insight });
   } catch (error) {
     return next(error);
   }

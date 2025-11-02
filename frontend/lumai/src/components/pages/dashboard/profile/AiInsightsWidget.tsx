@@ -7,6 +7,7 @@ type InsightVersion = {
   content: string | null;
   model: string | null;
   createdAt?: string;
+  priority?: 'high' | 'medium' | 'low';
   status: 'success' | 'errored';
 };
 
@@ -16,6 +17,7 @@ const AiInsightsWidget: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [content, setContent] = useState<string | null>(null);
   const [model, setModel] = useState<string | null>(null);
+  const [priority, setPriority] = useState<'high' | 'medium' | 'low' | undefined>(undefined);
 
   const loadLatest = useCallback(async () => {
     setLoading(true);
@@ -26,9 +28,11 @@ const AiInsightsWidget: React.FC = () => {
       if (insight && insight.status === 'success') {
         setContent(insight.content ?? null);
         setModel(insight.model ?? null);
+        setPriority(insight.priority);
       } else {
         setContent(null);
         setModel(null);
+        setPriority(undefined);
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -46,7 +50,7 @@ const AiInsightsWidget: React.FC = () => {
     setGenerating(true);
     setError(null);
     try {
-      const data = await apiFetch<{ content: string; model?: string | null; version?: number; createdAt?: string }>(
+      const data = await apiFetch<{ content: string; model?: string | null; version?: number; createdAt?: string; priority?: 'high' | 'medium' | 'low' }>(
         '/ai/insights',
         {
           method: 'POST'
@@ -54,7 +58,7 @@ const AiInsightsWidget: React.FC = () => {
       );
       setContent(data.content ?? null);
       setModel(data.model ?? null);
-      // setTimestamp(data.createdAt ?? new Date().toISOString());
+      setPriority(data.priority);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg || 'Failed to generate insight. Enable AI consent in Privacy settings and try again.');
@@ -72,10 +76,24 @@ const AiInsightsWidget: React.FC = () => {
 
   const motivationalNote = getMotivationalNote(content);
 
+  const getPriorityIcon = (priority?: string) => {
+    switch (priority) {
+      case 'high': return '🚨';
+      case 'medium': return '⚠️';
+      case 'low': return '💡';
+      default: return '';
+    }
+  };
+
   return (
     <section className="dashboard-widget" aria-labelledby="ai-insights-title" aria-busy={loading}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-        <h3 id="ai-insights-title" className="dashboard-widget-title">AI insights</h3>
+        <h3 id="ai-insights-title" className="dashboard-widget-title">
+          AI insights
+          {priority === 'high' && (
+            <span style={{ marginLeft: '8px', fontSize: '1rem' }}>{getPriorityIcon('high')}</span>
+          )}
+        </h3>
         <button
           type="button"
           className="dashboard-hero-action"
