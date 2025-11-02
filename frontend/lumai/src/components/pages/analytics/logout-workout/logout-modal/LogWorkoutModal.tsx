@@ -238,11 +238,12 @@ const LogWorkoutModal: React.FC<Props> = ({ open, onClose, uid, onSaved, current
         </label>
 
         <label className="log-workout-weight-toggle">
-          Weight (kg)
+          Weight (kg) *
           <input
             type="number"
             min={30}
             max={300}
+            required={true}
             placeholder={currentWeightKg ? String(currentWeightKg) : 'kg'}
             value={weightInput}
             onChange={(e) => setWeightInput(e.target.value)}
