@@ -146,3 +146,26 @@ export interface HealthSummaryDocument {
   summary: HealthSummary;
   createdAt: Timestamp;
 }
+
+export interface GoalMilestone {
+  id: string;
+  type: 'weight' | 'activity' | 'habit';
+  title: string;
+  description: string;
+  targetValue: number;
+  currentValue: number;
+  unit: string;
+  progress: number; // 0-100
+  achieved: boolean;
+  achievedAt?: Date;
+  category: string;
+}
+
+export interface GoalProgress {
+  primaryGoal: string;
+  milestones: GoalMilestone[];
+  overallProgress: number; // 0-100
+  completedMilestones: number;
+  totalMilestones: number;
+  estimatedCompletion?: Date;
+}

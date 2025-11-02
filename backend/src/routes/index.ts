@@ -6,6 +6,7 @@ import privacyRoutes from "./privacy.routes.js";
 import profileRoutes from "./profile.routes.js";
 import analyticsRoutes from "./analytics.routes.js";
 import healthSummaryRoutes from "./health-summary.routes.js";
+import goalProgressRoutes from "./goal-progress.routes.js";
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use("/analytics", analyticsRoutes);
 router.use("/ai", aiRoutes);
 router.use("/export", exportRoutes);
 router.use("/health-summary", healthSummaryRoutes);
+router.use("/goal-progress", goalProgressRoutes);
 
 export default router;

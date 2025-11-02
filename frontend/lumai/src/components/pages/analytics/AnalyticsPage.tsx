@@ -47,6 +47,29 @@ type CombinedMetrics = SnapshotPoint & {
   wellnessScore: number | null;
 };
 
+type GoalMilestone = {
+  id: string;
+  type: 'weight' | 'activity' | 'habit';
+  title: string;
+  description: string;
+  targetValue: number;
+  currentValue: number;
+  unit: string;
+  progress: number; // 0-100
+  achieved: boolean;
+  achievedAt?: Date;
+  category: string;
+};
+
+type GoalProgress = {
+  primaryGoal: string;
+  milestones: GoalMilestone[];
+  overallProgress: number; // 0-100
+  completedMilestones: number;
+  totalMilestones: number;
+  estimatedCompletion?: Date;
+};
+
 const toNumber = (value: unknown): number | null => {
   if (value === null || value === undefined) return null;
   if (typeof value === 'number') return Number.isFinite(value) ? value : null;
@@ -282,6 +305,7 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
   const [userDoc, setUserDoc] = useState<FirestoreUser | null>(null);
   const [analyticsDoc, setAnalyticsDoc] = useState<Record<string, unknown> | null>(null);
   const [recentWorkouts, setRecentWorkouts] = useState<WorkoutHistoryItem[]>([]);
+  const [goalProgress, setGoalProgress] = useState<GoalProgress | null>(null);
   const [historyModalState, setHistoryModalState] = useState<{
     open: boolean;
     key: string | null;
@@ -302,6 +326,16 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
     try {
       const data = await apiFetch<ProcessedResponse>('/ai/processed?limit=20');
       setSnapshots(data.snapshots ?? []);
+      
+      // Load goal progress
+      try {
+        const goalData = await apiFetch<GoalProgress>('/goal-progress');
+        setGoalProgress(goalData);
+      } catch (goalError) {
+        // Goal progress is optional, don't fail the whole load
+        console.warn('Failed to load goal progress:', goalError);
+        setGoalProgress(null);
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg || 'Failed to load analytics data');
@@ -1271,6 +1305,51 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
           ))}
         </section>
 
+              {goalProgress && goalProgress.milestones.length > 0 && (
+            <article className="analytics-panel analytics-panel--wide">
+              <header>
+                <h2>Goal Progress Milestones</h2>
+                <p>Track your achievements across weight, activity, and habit goals.</p>
+              </header>
+              <div className="goal-progress-milestones">
+                {goalProgress.milestones.map((milestone) => (
+                  <div key={milestone.id} className={`milestone-item ${milestone.achieved ? 'achieved' : ''}`}>
+                    <div className="milestone-header">
+                      <div className="milestone-icon">
+                        {milestone.achieved ? '🏆' : milestone.type === 'weight' ? '⚖️' : milestone.type === 'activity' ? '💪' : '🌱'}
+                      </div>
+                      <div className="milestone-content">
+                        <h4 className="milestone-title">{milestone.title}</h4>
+                        <p className="milestone-description">{milestone.description}</p>
+                        <div className="milestone-progress">
+                          <div className="progress-bar">
+                            <div 
+                              className="progress-fill" 
+                              style={{ width: `${Math.min(milestone.progress, 100)}%` }}
+                            ></div>
+                          </div>
+                          <span className="progress-text">
+                            {milestone.currentValue.toFixed(milestone.unit === '%' ? 1 : 0)}{milestone.unit} / {milestone.targetValue}{milestone.unit}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <div className="goal-summary">
+                  <div className="summary-stat">
+                    <span className="summary-label">Overall Progress</span>
+                    <span className="summary-value">{goalProgress.overallProgress.toFixed(1)}%</span>
+                  </div>
+                  <div className="summary-stat">
+                    <span className="summary-label">Milestones Completed</span>
+                    <span className="summary-value">{goalProgress.completedMilestones} / {goalProgress.totalMilestones}</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          )}
+
         <section className="analytics-panels">
             {weeklyTrainingSeries && (
             <article className="analytics-panel">
@@ -1356,31 +1435,7 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
               </div>
             </article>
           )}
-
-          {wellnessSeries && (
-            <article className="analytics-panel">
-              <header>
-                <h2>Wellness score</h2>
-                <p>Overall balance based on BMI, activity, training cadence, and habits.</p>
-              </header>
-              <div className="analytics-chart">
-                <Line
-                  data={wellnessSeries}
-                  options={{
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                      y: {
-                        beginAtZero: true,
-                        suggestedMax: 100
-                      }
-                    }
-                  }}
-                />
-              </div>
-            </article>
-          )}
-
+          
           {progressChartSeries && (
             <article className="analytics-panel analytics-panel--wide">
               <header>
@@ -1465,6 +1520,32 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
               </div>
             </article>
           )}
+          
+          {wellnessSeries && (
+            <article className="analytics-panel">
+              <header>
+                <h2>Wellness score</h2>
+                <p>Overall balance based on BMI, activity, training cadence, and habits.</p>
+              </header>
+              <div className="analytics-chart">
+                <Line
+                  data={wellnessSeries}
+                  options={{
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        suggestedMax: 100
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </article>
+          )}
+
+         
 
           {weightTargetBar && (
             <article className="analytics-panel">
@@ -1543,6 +1624,8 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
               </div>
             </article>
           )}
+
+    
         </section>
       </div>
     );
