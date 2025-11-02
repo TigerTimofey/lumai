@@ -126,11 +126,6 @@ const DataUsageConsentModal = ({
                   I have read and understand how Lumai collects and uses my data for this experience.
                 </span>
               </label>
-              {!hasScrolledDetails && (
-                <p className="data-consent-hint">
-                  Scroll through the statement above to enable the acknowledgment.
-                </p>
-              )}
             </div>
 
             <div className="data-consent-actions">
