@@ -7,7 +7,7 @@ import { CONSENT_TYPES } from "../domain/enums.js";
 import { getLatestProfileVersion } from "../repositories/profile.repo.js";
 import { createProcessedMetrics, listProcessedMetrics } from "../repositories/processed-metrics.repo.js";
 import { getConsents } from "../repositories/consent.repo.js";
-import { logAiInsight, saveAiInsightVersion } from "../repositories/ai-insight.repo.js";
+import { logAiInsight, saveAiInsightVersion, getLatestAiInsight } from "../repositories/ai-insight.repo.js";
 import { forbidden, internalError, notFound, serviceUnavailable } from "../utils/api-error.js";
 import { logger } from "../utils/logger.js";
 
@@ -87,6 +87,34 @@ const validateRecommendations = (content: string, restrictions: string[] = []) =
   }
 
   return content;
+};
+
+const tryReturnCachedInsights = async (userId: string, model: string, errorMessage: string) => {
+  try {
+    const cachedInsight = await getLatestAiInsight(userId);
+    if (cachedInsight && cachedInsight.status === 'success' && cachedInsight.content) {
+      console.info('[ai-insights] returning cached insight due to service unavailability', {
+        userId,
+        cachedVersion: cachedInsight.version,
+        cachedCreatedAt: cachedInsight.createdAt.toDate().toISOString(),
+        originalError: errorMessage
+      });
+
+      // Add a note that this is cached content
+      const cachedContent = cachedInsight.content + '\n\n*Note: This insight was generated previously. The AI service is currently unavailable.*';
+
+      return {
+        content: cachedContent,
+        model: cachedInsight.model ?? model,
+        version: cachedInsight.version,
+        createdAt: cachedInsight.createdAt.toDate().toISOString(),
+        isCached: true
+      };
+    }
+  } catch (cacheError) {
+    console.warn('[ai-insights] failed to retrieve cached insight', { userId, cacheError });
+  }
+  return null;
 };
 
 export const prepareAiMetrics = async (userId: string) => {
@@ -274,26 +302,44 @@ export const generateAiInsights = async (userId: string) => {
     if (axios.isAxiosError(error)) {
       if (error.code === "ECONNABORTED") {
         logger.warn({ userId, model }, "AI provider request timed out");
+        // Try to return cached insights for timeout
+        const cachedResult = await tryReturnCachedInsights(userId, model, errorMessage);
+        if (cachedResult) return cachedResult;
         throw serviceUnavailable("AI provider timed out. Please try again later.");
       }
       const status = error.response?.status;
       if (status === 401 || status === 403) {
         logger.warn({ userId, model, status, error: errorMessage }, "AI provider authentication failed");
+        // Try to return cached insights for auth failures
+        const cachedResult = await tryReturnCachedInsights(userId, model, errorMessage);
+        if (cachedResult) return cachedResult;
         throw serviceUnavailable("AI provider rejected the request. Please try again later.");
       }
       if (status === 429) {
         logger.warn({ userId, model, status }, "AI provider rate limit reached");
+        // Try to return cached insights for rate limiting
+        const cachedResult = await tryReturnCachedInsights(userId, model, errorMessage);
+        if (cachedResult) return cachedResult;
         throw serviceUnavailable("AI provider is busy. Please retry in a few moments.");
       }
       if (status && status >= 500) {
         logger.error({ userId, model, status, error: errorMessage }, "AI provider service error");
+        // Try to return cached insights for server errors
+        const cachedResult = await tryReturnCachedInsights(userId, model, errorMessage);
+        if (cachedResult) return cachedResult;
         throw serviceUnavailable("AI provider is currently unavailable. Please try again later.");
       }
       logger.error({ userId, model, status, error: errorMessage }, "Unexpected AI provider response");
+      // Try to return cached insights for unexpected responses
+      const cachedResult = await tryReturnCachedInsights(userId, model, errorMessage);
+      if (cachedResult) return cachedResult;
       throw serviceUnavailable("Unexpected AI provider response. Please try again later.");
     }
 
     logger.error({ userId, model, error: errorMessage }, "AI insight generation failed");
+    // Try to return cached insights for general errors
+    const cachedResult = await tryReturnCachedInsights(userId, model, errorMessage);
+    if (cachedResult) return cachedResult;
     throw internalError("Failed to generate AI insight", errorMessage);
   }
 };
