@@ -23,6 +23,16 @@ const envSchema = z.object({
     .optional()
     .transform((value) => (value ? Number(value) : undefined))
     .pipe(z.number().int().positive().optional()),
+  API_RATE_LIMIT_MAX: z
+    .string()
+    .optional()
+    .transform((value) => (value ? Number(value) : undefined))
+    .pipe(z.number().int().positive().optional()),
+  API_RATE_LIMIT_WINDOW_MS: z
+    .string()
+    .optional()
+    .transform((value) => (value ? Number(value) : undefined))
+    .pipe(z.number().int().positive().optional()),
   ALLOW_UNVERIFIED_LOGIN: z
     .preprocess((v) => (typeof v === "string" ? v === "true" : false), z.boolean())
     .default(false),

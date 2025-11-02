@@ -7,12 +7,15 @@ import profileRoutes from "./profile.routes.js";
 import analyticsRoutes from "./analytics.routes.js";
 import healthSummaryRoutes from "./health-summary.routes.js";
 import goalProgressRoutes from "./goal-progress.routes.js";
+import { apiRateLimit } from "../middleware/api-rate-limit.js";
 
 const router = Router();
 
 router.get("/status", (_req, res) => {
   res.json({ status: "ok" });
 });
+
+router.use(apiRateLimit);
 
 router.use("/auth", authRoutes);
 router.use("/profile", profileRoutes);
