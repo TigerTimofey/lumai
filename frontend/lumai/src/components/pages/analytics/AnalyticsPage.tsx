@@ -282,6 +282,9 @@ const normalizeFromUserDoc = (userDoc: FirestoreUser | null): SnapshotPoint | nu
   const bonus = (userDoc.additionalProfile ?? {}) as Partial<AdditionalProfile>;
   const strength = (bonus.strengthMetrics ?? {}) as Partial<AdditionalProfile['strengthMetrics']>;
 
+  const requiredRecord = required as Record<string, unknown>;
+  const bonusRecord = bonus as Record<string, unknown>;
+
   const weight = toNumber(required.weight);
   const height = toNumber(required.height);
   const bmi = weight != null && height != null && height > 0 ? weight / Math.pow(height / 100, 2) : null;
@@ -296,7 +299,10 @@ const normalizeFromUserDoc = (userDoc: FirestoreUser | null): SnapshotPoint | nu
     activityLevel,
     trainingDays: toNumber(strength.trainingDaysPerWeek),
     targetTraining: activityToTargetDays(activityLevel ?? null),
-    targetWeight: null,
+    targetWeight:
+      toNumber(requiredRecord.targetWeight ?? requiredRecord.targetWeightKg) ??
+      toNumber(bonusRecord.targetWeight ?? bonusRecord.targetWeightKg ?? bonusRecord.desiredWeight) ??
+      null,
     sleepHours: null,
     waterLiters: null,
     stressLevel: null
@@ -713,6 +719,16 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
   });
 }, [snapshotPoints, analyticsDoc, userDoc, recentWorkouts, latestHeightCm]);
 
+  const fallbackTargetWeight = useMemo(() => {
+    const seriesTarget = combinedSeries.find((point) => point.targetWeight != null)?.targetWeight ?? null;
+    const analyticsTarget = toNumber(analyticsDoc?.targetWeight);
+    const required = (userDoc?.requiredProfile ?? {}) as Record<string, unknown>;
+    const additional = (userDoc?.additionalProfile ?? {}) as Record<string, unknown>;
+    const requiredTarget = toNumber(required.targetWeight ?? required.targetWeightKg);
+    const additionalTarget = toNumber(additional.targetWeight ?? additional.targetWeightKg ?? additional.desiredWeight);
+    return seriesTarget ?? analyticsTarget ?? requiredTarget ?? additionalTarget ?? null;
+  }, [analyticsDoc, combinedSeries, userDoc]);
+
   const baseLatestMetrics = combinedSeries[0] ?? null;
 
   const latestWeightKg = useMemo(() => {
@@ -733,17 +749,17 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
 
   const latestMetrics = useMemo<CombinedMetrics | null>(() => {
     if (!baseLatestMetrics) {
-      if (latestWeightKg == null) {
+      if (latestWeightKg == null && fallbackTargetWeight == null) {
         return null;
       }
       return {
         createdAt: null,
-        weightKg: latestWeightKg,
+        weightKg: latestWeightKg ?? null,
         bmi: null,
         activityLevel: null,
         trainingDays: null,
         targetTraining: null,
-        targetWeight: null,
+        targetWeight: fallbackTargetWeight ?? null,
         sleepHours: null,
         waterLiters: null,
         stressLevel: null,
@@ -751,128 +767,21 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
       };
     }
     if (latestWeightKg == null || baseLatestMetrics.weightKg === latestWeightKg) {
-      return baseLatestMetrics;
+      const nextTarget = baseLatestMetrics.targetWeight ?? fallbackTargetWeight ?? null;
+      if (nextTarget === baseLatestMetrics.targetWeight) {
+        return baseLatestMetrics;
+      }
+      return {
+        ...baseLatestMetrics,
+        targetWeight: nextTarget
+      };
     }
     return {
       ...baseLatestMetrics,
-      weightKg: latestWeightKg
+      weightKg: latestWeightKg ?? baseLatestMetrics.weightKg,
+      targetWeight: fallbackTargetWeight ?? baseLatestMetrics.targetWeight ?? null
     };
-  }, [baseLatestMetrics, latestWeightKg]);
-
-  const comparisonMetrics = useMemo<ComparisonMetric[]>(() => {
-    if (!combinedSeries.length) return [];
-    const current = combinedSeries[0];
-    if (!current) return [];
-
-    const currentTime = current.createdAt?.getTime() ?? null;
-
-    const resolveReference = (days: number): CombinedMetrics | null => {
-      if (currentTime == null) {
-        return combinedSeries[Math.min(days === 7 ? 1 : 2, combinedSeries.length - 1)] ?? null;
-      }
-      const targetDiff = days * DAY_MS;
-      const match = combinedSeries.find((point, index) => {
-        if (index === 0 || !point.createdAt) return false;
-        return currentTime - point.createdAt.getTime() >= targetDiff;
-      });
-      return match ?? combinedSeries[combinedSeries.length - 1] ?? null;
-    };
-
-    const valueDiff = (currentValue: number | null | undefined, reference: number | null | undefined) => {
-      if (currentValue == null || reference == null || !Number.isFinite(reference)) return null;
-      const delta = Number((currentValue - reference).toFixed(2));
-      return Number.isFinite(delta) ? delta : null;
-    };
-
-    const weeklyReference = resolveReference(7);
-    const monthlyReference = resolveReference(30);
-    const metrics: ComparisonMetric[] = [];
-
-    const pushMetric = (
-      id: string,
-      label: string,
-      unit: string,
-      currentValue: number | null | undefined,
-      targetValue: number | null | undefined,
-      weeklyValue: number | null | undefined,
-      monthlyValue: number | null | undefined,
-      guidance: string
-    ) => {
-      const currentNumber = currentValue != null ? Number(currentValue) : null;
-      metrics.push({
-        id,
-        label,
-        unit,
-        current: currentNumber,
-        target: targetValue != null ? Number(targetValue) : null,
-        weeklyDelta: valueDiff(currentNumber, weeklyValue),
-        monthlyDelta: valueDiff(currentNumber, monthlyValue),
-        guidance
-      });
-    };
-
-    const weightTarget = latestMetrics?.targetWeight ?? null;
-    const weightWeekly = weeklyReference?.weightKg ?? null;
-    const weightMonthly = monthlyReference?.weightKg ?? null;
-    const weightGuidance = (() => {
-      if (current.weightKg == null || weightTarget == null) {
-        return 'Log more weight entries to unlock guidance.';
-      }
-      const gap = current.weightKg - weightTarget;
-      if (Math.abs(gap) <= 1) {
-        return 'Right on target—keep the momentum.';
-      }
-      return gap > 0
-        ? 'Slightly above target—tighten nutrition and sleep to edge closer.'
-        : 'Below target—solid progress, maintain your current habits.';
-    })();
-    pushMetric('weight', 'Body Weight', 'kg', current.weightKg, weightTarget, weightWeekly, weightMonthly, weightGuidance);
-
-    const trainingTarget = latestMetrics?.targetTraining ?? null;
-    const trainingWeekly = weeklyReference?.trainingDays ?? null;
-    const trainingMonthly = monthlyReference?.trainingDays ?? null;
-    const trainingGuidance = (() => {
-      if (current.trainingDays == null || trainingTarget == null) {
-        return 'Track a few more sessions to compare against your cadence goal.';
-      }
-      return current.trainingDays >= trainingTarget
-        ? 'Training cadence meets the goal—nice work.'
-        : 'You’re under the weekly target—plan your next sessions now.';
-    })();
-    pushMetric('training', 'Training Days', 'd/wk', current.trainingDays, trainingTarget, trainingWeekly, trainingMonthly, trainingGuidance);
-
-    const wellnessWeekly = weeklyReference?.wellnessScore ?? null;
-    const wellnessMonthly = monthlyReference?.wellnessScore ?? null;
-    const wellnessGuidance = (() => {
-      if (current.wellnessScore == null) {
-        return 'Add more habit data to build your wellness score.';
-      }
-      if (current.wellnessScore >= 80) return 'Excellent balance—keep reinforcing your routines.';
-      if (current.wellnessScore >= 65) return 'Solid footing—sleep and hydration tweaks could unlock more gains.';
-      return 'Prioritise rest, hydration, and stress relief to lift wellness.';
-    })();
-    pushMetric(
-      'wellness',
-      'Wellness Score',
-      'pts',
-      current.wellnessScore,
-      goalProgress?.overallProgress ? Math.min(100, goalProgress.overallProgress) : null,
-      wellnessWeekly,
-      wellnessMonthly,
-      wellnessGuidance
-    );
-
-    const sleepWeekly = weeklyReference?.sleepHours ?? null;
-    const sleepMonthly = monthlyReference?.sleepHours ?? null;
-    const sleepGuidance = (() => {
-      if (current.sleepHours == null) return 'Log nightly sleep to spot trends.';
-      if (current.sleepHours >= 7) return 'Sleep depth looks great—protect your evening routine.';
-      return 'Aim for at least 7 hours tonight—wind down 30 minutes earlier.';
-    })();
-    pushMetric('sleep', 'Sleep Hours', 'h', current.sleepHours, 7, sleepWeekly, sleepMonthly, sleepGuidance);
-
-    return metrics.filter(metric => metric.current != null || metric.target != null);
-  }, [combinedSeries, goalProgress, latestMetrics]);
+  }, [baseLatestMetrics, latestWeightKg, fallbackTargetWeight]);
 
 
   const weightSeries = useMemo(() => {
@@ -880,6 +789,7 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
     const labels: string[] = [];
     const weight: number[] = [];
     const bmi: number[] = [];
+    const targetWeights: Array<number | null> = [];
 
     combinedSeries.forEach((point, index) => {
       const label = point.createdAt
@@ -890,7 +800,28 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
       labels.push(label);
       weight.push(point.weightKg ?? NaN);
       bmi.push(point.bmi ?? NaN);
+      targetWeights.push(point.targetWeight ?? null);
     });
+
+    const fallbackTarget =
+      targetWeights.find((value) => value != null && Number.isFinite(value)) ??
+      latestMetrics?.targetWeight ??
+      fallbackTargetWeight ??
+      null;
+
+    const goalDataset =
+      fallbackTarget != null
+        ? [{
+            label: 'Goal weight',
+            data: labels.map(() => fallbackTarget),
+            borderColor: 'rgba(99, 102, 241, 0.65)',
+            borderWidth: 2,
+            borderDash: [6, 6],
+            pointRadius: 0,
+            fill: false,
+            spanGaps: true
+          }]
+        : [];
 
     return {
       labels,
@@ -911,10 +842,11 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
           tension: 0.3,
           spanGaps: true,
           yAxisID: 'bmi-axis'
-        }
+        },
+        ...goalDataset
       ]
     };
-  }, [combinedSeries]);
+  }, [combinedSeries, latestMetrics?.targetWeight, fallbackTargetWeight]);
 
   const wellnessSeries = useMemo(() => {
     if (!combinedSeries.some((pt) => pt.wellnessScore != null)) {
@@ -1041,6 +973,125 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
     },
     [latestMetrics?.targetTraining, trainingTargetSeries]
   );
+
+  const comparisonMetrics = useMemo<ComparisonMetric[]>(() => {
+    if (!combinedSeries.length) return [];
+    const current = combinedSeries[0];
+    if (!current) return [];
+
+    const currentTime = current.createdAt?.getTime() ?? null;
+
+    const resolveReference = (days: number): CombinedMetrics | null => {
+      if (currentTime == null) {
+        return combinedSeries[Math.min(days === 7 ? 1 : 2, combinedSeries.length - 1)] ?? null;
+      }
+      const targetDiff = days * DAY_MS;
+      const match = combinedSeries.find((point, index) => {
+        if (index === 0 || !point.createdAt) return false;
+        return currentTime - point.createdAt.getTime() >= targetDiff;
+      });
+      return match ?? combinedSeries[combinedSeries.length - 1] ?? null;
+    };
+
+    const valueDiff = (currentValue: number | null | undefined, reference: number | null | undefined) => {
+      if (currentValue == null || reference == null || !Number.isFinite(reference)) return null;
+      const delta = Number((currentValue - reference).toFixed(2));
+      return Number.isFinite(delta) ? delta : null;
+    };
+
+    const weeklyReference = resolveReference(7);
+    const monthlyReference = resolveReference(30);
+    const metrics: ComparisonMetric[] = [];
+
+    const pushMetric = (
+      id: string,
+      label: string,
+      unit: string,
+      currentValue: number | null | undefined,
+      targetValue: number | null | undefined,
+      weeklyValue: number | null | undefined,
+      monthlyValue: number | null | undefined,
+      guidance: string
+    ) => {
+      const currentNumber = currentValue != null ? Number(currentValue) : null;
+      metrics.push({
+        id,
+        label,
+        unit,
+        current: currentNumber,
+        target: targetValue != null ? Number(targetValue) : null,
+        weeklyDelta: valueDiff(currentNumber, weeklyValue),
+        monthlyDelta: valueDiff(currentNumber, monthlyValue),
+        guidance
+      });
+    };
+
+    const currentWeight = latestWeightKg ?? current.weightKg ?? null;
+    const weightTarget =
+      fallbackTargetWeight ??
+      latestMetrics?.targetWeight ??
+      current.targetWeight ??
+      combinedSeries.find((point) => point.targetWeight != null)?.targetWeight ??
+      null;
+    const weightWeekly = weeklyReference?.weightKg ?? null;
+    const weightMonthly = monthlyReference?.weightKg ?? null;
+    const weightGuidance = (() => {
+      if (currentWeight == null || weightTarget == null) {
+        return 'Log more weight entries to unlock guidance.';
+      }
+      const gap = currentWeight - weightTarget;
+      if (Math.abs(gap) <= 1) {
+        return 'Right on target—keep the momentum.';
+      }
+      return gap > 0
+        ? 'Slightly above target—tighten nutrition and sleep to edge closer.'
+        : 'Below target—solid progress, maintain your current habits.';
+    })();
+    pushMetric('weight', 'Body Weight', 'kg', currentWeight, weightTarget, weightWeekly, weightMonthly, weightGuidance);
+
+    const currentTrainingDays =
+      latestMetrics?.trainingDays ??
+      current.trainingDays ??
+      null;
+    const trainingTarget = resolveTargetTraining(new Date());
+    const trainingWeekly = weeklyReference?.trainingDays ?? null;
+    const trainingMonthly = monthlyReference?.trainingDays ?? null;
+    const trainingGuidance = (() => {
+      if (currentTrainingDays == null || trainingTarget == null) {
+        return 'Track a few more sessions to compare against your cadence goal.';
+      }
+      return currentTrainingDays >= trainingTarget
+        ? 'Training cadence meets the goal—nice work.'
+        : 'You’re under the weekly target—plan your next sessions now.';
+    })();
+    pushMetric('training', 'Training Days', 'd/wk', currentTrainingDays, trainingTarget, trainingWeekly, trainingMonthly, trainingGuidance);
+
+    const wellnessCurrent = current.wellnessScore ?? null;
+    const wellnessTarget = goalProgress?.overallProgress ? Math.min(100, goalProgress.overallProgress) : null;
+    const wellnessWeekly = weeklyReference?.wellnessScore ?? null;
+    const wellnessMonthly = monthlyReference?.wellnessScore ?? null;
+    const wellnessGuidance = (() => {
+      if (wellnessCurrent == null) {
+        return 'Add more habit data to build your wellness score.';
+      }
+      if (wellnessCurrent >= 80) return 'Excellent balance—keep reinforcing your routines.';
+      if (wellnessCurrent >= 65) return 'Solid footing—sleep and hydration tweaks could unlock more gains.';
+      return 'Prioritise rest, hydration, and stress relief to lift wellness.';
+    })();
+    pushMetric('wellness', 'Wellness Score', 'pts', wellnessCurrent, wellnessTarget, wellnessWeekly, wellnessMonthly, wellnessGuidance);
+
+    const sleepCurrent = current.sleepHours ?? latestMetrics?.sleepHours ?? null;
+    const sleepWeekly = weeklyReference?.sleepHours ?? null;
+    const sleepMonthly = monthlyReference?.sleepHours ?? null;
+    const sleepGuidance = (() => {
+      if (sleepCurrent == null) return 'Log nightly sleep to spot trends.';
+      if (sleepCurrent >= 7) return 'Sleep depth looks great—protect your evening routine.';
+      return 'Aim for at least 7 hours tonight—wind down 30 minutes earlier.';
+    })();
+    pushMetric('sleep', 'Sleep Hours', 'h', sleepCurrent, 7, sleepWeekly, sleepMonthly, sleepGuidance);
+
+    return metrics.filter(metric => metric.current != null || metric.target != null);
+  }, [combinedSeries, goalProgress, latestMetrics, latestWeightKg, fallbackTargetWeight, resolveTargetTraining]);
 
   const trainingActivity = useMemo(() => {
     const dayCounts = new Map<string, {
