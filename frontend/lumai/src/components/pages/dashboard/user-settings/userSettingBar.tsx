@@ -1,8 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import insightsIcon from '../../../../assets/icons/insights.svg';
-import analyticsIcon from '../../../../assets/icons/analytics.svg';
-import settingsIcon from '../../../../assets/icons/settings.svg';
-import dashboardIcon from '../../../../assets/icons/dashboard.svg';
 import './userSettingBar.css';
 import { TOPBAR_NAV_ITEMS, type TopbarNavKey } from './topbarNav';
 
@@ -46,25 +42,17 @@ const UserSettingBar: React.FC<UserSettingBarProps> = ({ name, photoURL }) => {
     return match?.key;
   }, [currentPath]);
 
-  const iconMap: Record<TopbarNavKey, { icon: string; aria: string }> = {
-    dashboard: { icon: dashboardIcon, aria: 'Dashboard' },
-    analytics: { icon: analyticsIcon, aria: 'Analytics' },
-    'ai-insights': { icon: insightsIcon, aria: 'Insights' },
-    settings: { icon: settingsIcon, aria: 'Settings' }
-  };
-
   return (
     <div className={"user-setting-bar" + (atTop ? '' : ' is-hidden')} role="banner" aria-hidden={atTop ? undefined : true}>
       <div className="topbar-actions">
         {TOPBAR_NAV_ITEMS.map((item) => {
-          const { icon, aria } = iconMap[item.key];
           const isActive = activeKey === item.key;
           return (
             <button
               key={item.key}
               type="button"
               className={`icon-button${isActive ? ' is-active' : ''}`}
-              aria-label={aria}
+              aria-label={item.aria}
               aria-pressed={isActive}
               onClick={() => {
                 if (window.location.pathname !== item.path) {
@@ -73,7 +61,7 @@ const UserSettingBar: React.FC<UserSettingBarProps> = ({ name, photoURL }) => {
                 }
               }}
             >
-              <img src={icon} alt="" aria-hidden="true" />
+              <img src={item.icon} alt="" aria-hidden="true" />
             </button>
           );
         })}
