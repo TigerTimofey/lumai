@@ -684,6 +684,72 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
     };
   }, [combinedSeries]);
 
+  const progressChartSeries = useMemo(() => {
+    if (combinedSeries.length === 0) {
+      return null;
+    }
+
+    const formatter = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
+    const labels = combinedSeries.map((point, index) =>
+      point.createdAt
+        ? formatter.format(point.createdAt)
+        : index === 0
+        ? 'Latest'
+        : `Snapshot ${index + 1}`
+    );
+
+    // Weight data (left Y-axis)
+    const weightData = combinedSeries.map((point) => point.weightKg ?? NaN);
+
+    // Wellness score data (right Y-axis)
+    const wellnessData = combinedSeries.map((point) => point.wellnessScore ?? NaN);
+
+    // Activity level data (converted to numeric scores, secondary right Y-axis)
+    const activityData = combinedSeries.map((point) => {
+      if (!point.activityLevel) return NaN;
+      return activityToScore(point.activityLevel);
+    });
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Weight (kg)',
+          data: weightData,
+          borderColor: 'rgba(54, 162, 235, 0.9)',
+          backgroundColor: 'rgba(54, 162, 235, 0.1)',
+          yAxisID: 'weight',
+          tension: 0.3,
+          spanGaps: true,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        },
+        {
+          label: 'Wellness Score',
+          data: wellnessData,
+          borderColor: 'rgba(99, 181, 125, 0.9)',
+          backgroundColor: 'rgba(99, 181, 125, 0.1)',
+          yAxisID: 'wellness',
+          tension: 0.3,
+          spanGaps: true,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        },
+        {
+          label: 'Activity Level',
+          data: activityData,
+          borderColor: 'rgba(255, 159, 64, 0.9)',
+          backgroundColor: 'rgba(255, 159, 64, 0.1)',
+          yAxisID: 'activity',
+          tension: 0.3,
+          spanGaps: true,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        }
+      ]
+    };
+  }, [combinedSeries]);
+
   const baseLatestMetrics = combinedSeries[0] ?? null;
 
   const latestWeightKg = useMemo(() => {
@@ -1308,6 +1374,91 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
                         beginAtZero: true,
                         suggestedMax: 100
                       }
+                    }
+                  }}
+                />
+              </div>
+            </article>
+          )}
+
+          {progressChartSeries && (
+            <article className="analytics-panel analytics-panel--wide">
+              <header>
+                <h2>Progress Overview</h2>
+                <p>Combined view of weight trend, wellness score evolution, and activity level changes.</p>
+              </header>
+              <div className="analytics-chart">
+                <Line
+                  data={progressChartSeries}
+                  options={{
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                        labels: {
+                          usePointStyle: true,
+                          padding: 20
+                        }
+                      }
+                    },
+                    scales: {
+                      weight: {
+                        type: 'linear',
+                        position: 'left',
+                        title: {
+                          display: true,
+                          text: 'Weight (kg)'
+                        },
+                        grid: {
+                          drawOnChartArea: false
+                        }
+                      },
+                      wellness: {
+                        type: 'linear',
+                        position: 'right',
+                        title: {
+                          display: true,
+                          text: 'Wellness Score'
+                        },
+                        min: 0,
+                        max: 100,
+                        grid: {
+                          drawOnChartArea: false
+                        }
+                      },
+                      activity: {
+                        type: 'linear',
+                        position: 'right',
+                        title: {
+                          display: true,
+                          text: 'Activity Score'
+                        },
+                        min: 0,
+                        max: 100,
+                        grid: {
+                          drawOnChartArea: false
+                        },
+                        ticks: {
+                          callback: function(value) {
+                            if (value === 20) return 'Sedentary';
+                            if (value === 40) return 'Light';
+                            if (value === 55) return 'Lightly Active';
+                            if (value === 70) return 'Moderate';
+                            if (value === 80) return 'Active';
+                            if (value === 90) return 'Very Active';
+                            if (value === 95) return 'Extra Active';
+                            return '';
+                          }
+                        }
+                      }
+                    },
+                    interaction: {
+                      mode: 'index',
+                      intersect: false
+                    },
+                    hover: {
+                      mode: 'index',
+                      intersect: false
                     }
                   }}
                 />
