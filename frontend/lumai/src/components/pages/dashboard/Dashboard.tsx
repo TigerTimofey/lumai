@@ -13,6 +13,7 @@ import AiInsightsWidget from './profile/AiInsightsWidget';
 import DashboardWorkoutWidget from './workouts/DashboardWorkoutWidget';
 import DashboardTasksWidget from './tasks/DashboardTasksWidget';
 import DashboardStreakWidget from './streak/DashboardStreakWidget';
+import HealthSummaryWidget from './health-summary/HealthSummaryWidget';
 
 interface DashboardProps {
   user: User;
@@ -43,6 +44,7 @@ const Dashboard = ({ user }: DashboardProps) => {
             </header>
 
             <DashboardWorkoutWidget uid={user.uid} registeredAt={userRegisteredAt} />
+            <HealthSummaryWidget uid={user.uid} />
             <ProfileCompletionWidget uid={user.uid} />
             <ProfileAnalyticsWidget uid={user.uid} />
             <AiInsightsWidget />

@@ -1,6 +1,212 @@
-import { Timestamp } from "firebase-admin/firestore";
-import type { HealthSummary, HealthSummaryMetrics, HealthProgress, ProcessedMetricsDocument } from "../domain/types.js";
+import type {
+  HealthSummary,
+  HealthSummaryMetrics,
+  HealthProgress,
+  ProcessedMetricsDocument,
+  UserDocument
+} from "../domain/types.js";
 import { getProcessedMetricsByDateRange } from "../repositories/processed-metrics.repo.js";
+import { getWorkoutsByDateRange, type WorkoutEntry } from "../repositories/workout.repo.js";
+import { getUserById } from "../repositories/user.repo.js";
+
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+const toNumber = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const sessionDurationToMinutes = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value !== "string") {
+    return null;
+  }
+  switch (value) {
+    case "15-30":
+      return 25;
+    case "30-60":
+      return 45;
+    case "60+":
+      return 70;
+    default:
+      return null;
+  }
+};
+
+const stressToScore = (stress: unknown): number => {
+  if (typeof stress !== "string") return 5;
+  const key = stress.toLowerCase();
+  if (key === "low") return 9;
+  if (key === "moderate") return 6;
+  if (key === "high") return 3;
+  return 5;
+};
+
+const activityToScore = (activity: unknown): number => {
+  if (typeof activity !== "string") return 45;
+  const map: Record<string, number> = {
+    sedentary: 20,
+    light: 40,
+    lightly_active: 55,
+    moderate: 70,
+    active: 80,
+    very_active: 90,
+    extra_active: 95
+  };
+  return map[activity] ?? 55;
+};
+
+const activityToTargetDays = (activity: string | null): number | null => {
+  if (!activity) return null;
+  const map: Record<string, number> = {
+    sedentary: 2,
+    light: 3,
+    lightly_active: 3,
+    moderate: 4,
+    active: 5,
+    very_active: 6,
+    extra_active: 6
+  };
+  return map[activity] ?? null;
+};
+
+const bmiScore = (bmi: number | null): number => {
+  if (bmi == null) return 50;
+  const diff = Math.abs(bmi - 22);
+  const penalty = Math.min(diff * 8, 70);
+  return Math.max(100 - penalty, 20);
+};
+
+const trainingScore = (trainingDays: number | null, targetDays: number | null): number => {
+  if (trainingDays == null) return 40;
+  const goal = Math.max(targetDays ?? 5, 1);
+  const ratio = Math.min(trainingDays / goal, 1);
+  return Math.round(50 + ratio * 50);
+};
+
+const habitScore = (sleepHours: number | null, waterLiters: number | null, stressLevel: string | null): number => {
+  let score = 55;
+  if (sleepHours != null) {
+    const diff = Math.abs(7 - sleepHours);
+    score += Math.max(0, 10 - diff * 3);
+  }
+  if (waterLiters != null) {
+    score += Math.min(waterLiters * 2, 15);
+  }
+  score += stressToScore(stressLevel) - 5;
+  return Math.max(30, Math.min(score, 100));
+};
+
+const calculateSnapshotWellnessScore = (metrics: Record<string, unknown> | undefined): number | null => {
+  if (!metrics) {
+    return null;
+  }
+
+  const current = (metrics as any)?.current_state ?? {};
+  const habits = (metrics as any)?.habits ?? {};
+  const target = (metrics as any)?.target_state ?? {};
+  const goals = (metrics as any)?.goals ?? {};
+  const normalized = current?.normalized ?? (metrics as any)?.normalized ?? {};
+  const strength = current?.strength ?? {};
+
+  const bmi =
+    toNumber(current?.bmi) ??
+    toNumber(normalized?.bmi);
+
+  const activityLevel =
+    typeof current?.activity_level === "string"
+      ? current.activity_level
+      : typeof current?.activityLevel === "string"
+        ? current.activityLevel
+        : null;
+
+  const trainingDays =
+    toNumber(strength?.trainingDaysPerWeek) ??
+    toNumber(current?.weekly_activity_frequency);
+
+  const targetTraining =
+    toNumber(target?.training_days_per_week) ??
+    toNumber(target?.trainingDaysPerWeek) ??
+    toNumber(goals?.trainingDaysPerWeek) ??
+    activityToTargetDays(
+      typeof target?.activity_level === "string"
+        ? target.activity_level
+        : typeof target?.activityLevel === "string"
+          ? target.activityLevel
+          : activityLevel
+    );
+
+  const sleepHours = toNumber(habits?.sleep_hours ?? habits?.sleepHours);
+  const waterIntake = toNumber(habits?.water_intake_liters ?? habits?.waterIntakeLiters);
+  const stressLevel =
+    typeof habits?.stress_level === "string"
+      ? habits.stress_level
+      : typeof habits?.stressLevel === "string"
+        ? habits.stressLevel
+        : null;
+
+  const bmiComponent = bmiScore(bmi);
+  const activityComponent = activityToScore(activityLevel);
+  const trainingComponent = trainingScore(trainingDays, targetTraining);
+  const habitComponent = habitScore(sleepHours, waterIntake, stressLevel);
+
+  const combined = Math.round(
+    bmiComponent * 0.3 +
+      activityComponent * 0.3 +
+      trainingComponent * 0.2 +
+      habitComponent * 0.2
+  );
+
+  return Math.max(0, Math.min(100, combined));
+};
+
+const roundToSingleDecimal = (value: number | null): number | null => {
+  if (value === null) return null;
+  return Math.round(value * 10) / 10;
+};
+
+const countDaysInRange = (start: Date, end: Date): number => {
+  const startAtMidnight = new Date(start);
+  const endAtMidnight = new Date(end);
+  startAtMidnight.setHours(0, 0, 0, 0);
+  endAtMidnight.setHours(0, 0, 0, 0);
+  const diffMs = endAtMidnight.getTime() - startAtMidnight.getTime();
+  return Math.max(1, Math.round(diffMs / DAY_IN_MS) + 1);
+};
+
+const getUserHeightCm = (user: UserDocument | null): number | null => {
+  if (!user) return null;
+  const required = (user.requiredProfile ?? {}) as Record<string, unknown>;
+  const additional = (user.additionalProfile ?? {}) as Record<string, unknown>;
+  return (
+    toNumber(required.height) ??
+    toNumber(additional.height) ??
+    null
+  );
+};
+
+const getUserActivityLevel = (user: UserDocument | null): string | null => {
+  if (!user) return null;
+  const required = (user.requiredProfile ?? {}) as Record<string, unknown>;
+  const additional = (user.additionalProfile ?? {}) as Record<string, unknown>;
+  const desired = typeof additional.desiredActivityLevel === "string" ? additional.desiredActivityLevel : null;
+  return (typeof required.activityLevel === "string" ? required.activityLevel : null) ?? desired;
+};
+
+const computeBmiFromWeight = (weightKg: number | null | undefined, heightCm: number | null): number | null => {
+  if (weightKg == null || !Number.isFinite(weightKg)) return null;
+  if (!heightCm || !Number.isFinite(heightCm) || heightCm <= 0) return null;
+  const heightMeters = heightCm / 100;
+  return weightKg / (heightMeters * heightMeters);
+};
 
 // Helper function to get start of week (Monday)
 const getStartOfWeek = (date: Date): Date => {
@@ -35,8 +241,14 @@ const getEndOfMonth = (date: Date): Date => {
 };
 
 // Calculate metrics from processed snapshots
-const calculateMetrics = (snapshots: ProcessedMetricsDocument[]): HealthSummaryMetrics => {
-  if (snapshots.length === 0) {
+const calculateMetrics = (
+  snapshots: ProcessedMetricsDocument[],
+  workouts: WorkoutEntry[],
+  user: UserDocument | null,
+  daysInPeriod: number,
+  workoutsPerWeek: number | null
+): HealthSummaryMetrics => {
+  if (snapshots.length === 0 && workouts.length === 0) {
     return {
       averageWeight: null,
       averageBmi: null,
@@ -50,6 +262,9 @@ const calculateMetrics = (snapshots: ProcessedMetricsDocument[]): HealthSummaryM
     };
   }
 
+  const heightCm = getUserHeightCm(user);
+  const fallbackActivityLevel = getUserActivityLevel(user);
+
   let totalWeight = 0;
   let weightCount = 0;
   let totalBmi = 0;
@@ -60,56 +275,119 @@ const calculateMetrics = (snapshots: ProcessedMetricsDocument[]): HealthSummaryM
   let sleepCount = 0;
   let totalWater = 0;
   let waterCount = 0;
-  let totalWorkouts = 0;
-  let totalWorkoutDuration = 0;
+  let totalWorkoutDurationMinutes = 0;
   let workoutDurationCount = 0;
+  let totalWeeklyActivity = 0;
+  let weeklyActivitySamples = 0;
 
   const dayActivity: Record<string, number> = {};
+  const entryDays = new Set<string>();
 
   snapshots.forEach(snapshot => {
     const metrics = snapshot.userMetrics as any;
+    const current = metrics?.current_state ?? {};
+    const habits = metrics?.habits ?? {};
+    const preferences = metrics?.preferences ?? {};
+    const entryDate = snapshot.createdAt.toDate();
+    entryDays.add(entryDate.toISOString().slice(0, 10));
 
     // Weight and BMI
-    if (metrics?.current_state?.weight_kg) {
-      totalWeight += metrics.current_state.weight_kg;
+    const weight = toNumber(current?.weight_kg);
+    if (weight !== null) {
+      totalWeight += weight;
       weightCount++;
     }
-    if (metrics?.current_state?.bmi) {
-      totalBmi += metrics.current_state.bmi;
+    const bmi = toNumber(current?.bmi);
+    if (bmi !== null) {
+      totalBmi += bmi;
       bmiCount++;
     }
 
-    // Wellness score (if available in metrics)
-    if (metrics?.wellness_score) {
-      totalWellnessScore += metrics.wellness_score;
+    const wellnessScore = calculateSnapshotWellnessScore(metrics);
+    if (wellnessScore !== null) {
+      totalWellnessScore += wellnessScore;
       wellnessCount++;
     }
 
     // Habits
-    if (metrics?.habits?.sleep_hours) {
-      totalSleep += metrics.habits.sleep_hours;
+    const sleep = toNumber(habits?.sleep_hours);
+    if (sleep !== null) {
+      totalSleep += sleep;
       sleepCount++;
     }
-    if (metrics?.habits?.water_intake_liters) {
-      totalWater += metrics.habits.water_intake_liters;
+    const water = toNumber(habits?.water_intake_liters);
+    if (water !== null) {
+      totalWater += water;
       waterCount++;
     }
 
-    // Workouts (if tracked in metrics)
-    if (metrics?.workouts) {
-      const workouts = Array.isArray(metrics.workouts) ? metrics.workouts : [];
-      totalWorkouts += workouts.length;
-      workouts.forEach((workout: any) => {
-        if (workout.duration_minutes) {
-          totalWorkoutDuration += workout.duration_minutes;
-          workoutDurationCount++;
+    const weeklyActivity = toNumber(current?.weekly_activity_frequency);
+    if (weeklyActivity !== null) {
+      totalWeeklyActivity += weeklyActivity;
+      weeklyActivitySamples++;
+      const dayKey = entryDate.toLocaleDateString("en-US", { weekday: "long" });
+      dayActivity[dayKey] = (dayActivity[dayKey] || 0) + weeklyActivity;
+    }
+
+    const sessionDuration = sessionDurationToMinutes(preferences?.session_duration);
+    if (sessionDuration !== null) {
+      totalWorkoutDurationMinutes += sessionDuration;
+      workoutDurationCount++;
+    }
+  });
+
+  workouts.forEach((workout) => {
+    entryDays.add(workout.createdAt.toISOString().slice(0, 10));
+    const dayKey = workout.createdAt.toLocaleDateString("en-US", { weekday: "long" });
+    dayActivity[dayKey] = (dayActivity[dayKey] || 0) + 1;
+
+    if (workout.weightKg != null) {
+      totalWeight += workout.weightKg;
+      weightCount++;
+    }
+
+    const workoutBmi = computeBmiFromWeight(workout.weightKg, heightCm);
+    if (workoutBmi != null) {
+      totalBmi += workoutBmi;
+      bmiCount++;
+    }
+
+    if (workout.sleepHours != null) {
+      totalSleep += workout.sleepHours;
+      sleepCount++;
+    }
+    if (workout.waterLiters != null) {
+      totalWater += workout.waterLiters;
+      waterCount++;
+    }
+
+    if (workout.durationMinutes != null) {
+      totalWorkoutDurationMinutes += workout.durationMinutes;
+      workoutDurationCount++;
+    }
+
+    const workoutMetrics = {
+      current_state: {
+        bmi: workoutBmi,
+        activity_level: workout.activityLevel ?? fallbackActivityLevel ?? null,
+        weekly_activity_frequency: workoutsPerWeek ?? null,
+        strength: {
+          trainingDaysPerWeek: workoutsPerWeek ?? null
         }
-        if (workout.created_at) {
-          const date = new Date(workout.created_at);
-          const dayKey = date.toLocaleDateString('en-US', { weekday: 'long' });
-          dayActivity[dayKey] = (dayActivity[dayKey] || 0) + 1;
-        }
-      });
+      },
+      habits: {
+        sleep_hours: workout.sleepHours ?? null,
+        water_intake_liters: workout.waterLiters ?? null,
+        stress_level: workout.stressLevel ?? null
+      },
+      target_state: {},
+      goals: {}
+    } as Record<string, unknown>;
+
+    const workoutWellness = calculateSnapshotWellnessScore(workoutMetrics);
+    if (workoutWellness !== null) {
+      totalWellnessScore += workoutWellness;
+      wellnessCount++;
     }
   });
 
@@ -124,74 +402,146 @@ const calculateMetrics = (snapshots: ProcessedMetricsDocument[]): HealthSummaryM
   });
 
   // Calculate consistency score based on regular data entries
-  const totalDays = snapshots.length;
-  const expectedEntries = Math.max(totalDays, 1); // At least 1 expected
-  const consistencyScore = Math.min((totalDays / expectedEntries) * 100, 100);
+  const uniqueEntryDays = entryDays.size;
+  const consistencyScore = Math.min(
+    100,
+    Math.round((uniqueEntryDays / Math.max(daysInPeriod, 1)) * 100)
+  );
+
+  const averageWeeklyActivity =
+    weeklyActivitySamples > 0 ? totalWeeklyActivity / weeklyActivitySamples : null;
+  const scaledTotalWorkouts =
+    workouts.length > 0
+      ? workouts.length
+      : averageWeeklyActivity !== null
+        ? Math.round(averageWeeklyActivity * (daysInPeriod / 7))
+        : 0;
 
   return {
-    averageWeight: weightCount > 0 ? totalWeight / weightCount : null,
-    averageBmi: bmiCount > 0 ? totalBmi / bmiCount : null,
-    averageWellnessScore: wellnessCount > 0 ? totalWellnessScore / wellnessCount : null,
-    averageSleepHours: sleepCount > 0 ? totalSleep / sleepCount : null,
-    averageWaterIntake: waterCount > 0 ? totalWater / waterCount : null,
-    totalWorkouts,
-    averageWorkoutDuration: workoutDurationCount > 0 ? totalWorkoutDuration / workoutDurationCount : null,
+    averageWeight: weightCount > 0 ? roundToSingleDecimal(totalWeight / weightCount) : null,
+    averageBmi: bmiCount > 0 ? roundToSingleDecimal(totalBmi / bmiCount) : null,
+    averageWellnessScore: wellnessCount > 0 ? roundToSingleDecimal(totalWellnessScore / wellnessCount) : null,
+    averageSleepHours: sleepCount > 0 ? roundToSingleDecimal(totalSleep / sleepCount) : null,
+    averageWaterIntake: waterCount > 0 ? roundToSingleDecimal(totalWater / waterCount) : null,
+    totalWorkouts: scaledTotalWorkouts,
+    averageWorkoutDuration:
+      workoutDurationCount > 0 ? roundToSingleDecimal(totalWorkoutDurationMinutes / workoutDurationCount) : null,
     mostActiveDay,
     consistencyScore: Math.round(consistencyScore)
   };
 };
 
 // Calculate progress from start to end of period
-const calculateProgress = (snapshots: ProcessedMetricsDocument[]): HealthProgress => {
-  if (snapshots.length < 2) {
-    return {
-      weightChange: null,
-      bmiChange: null,
-      wellnessScoreChange: null,
-      sleepImprovement: null,
-      waterIntakeImprovement: null,
-      activityIncrease: null
-    };
+const calculateProgress = (
+  snapshots: ProcessedMetricsDocument[],
+  workouts: WorkoutEntry[],
+  user: UserDocument | null,
+  workoutsPerWeek: number | null,
+  periodStart: Date,
+  periodEnd: Date
+): HealthProgress => {
+  const heightCm = getUserHeightCm(user);
+  const fallbackActivityLevel = getUserActivityLevel(user);
+
+  type CombinedPoint = {
+    date: Date;
+    weight: number | null;
+    bmi: number | null;
+    wellness: number | null;
+    sleep: number | null;
+    water: number | null;
+    weeklyActivity: number | null;
+  };
+
+  const combined: CombinedPoint[] = [];
+
+  snapshots.forEach((snapshot) => {
+    const metrics = snapshot.userMetrics as any;
+    const current = metrics?.current_state ?? {};
+    const habits = metrics?.habits ?? {};
+    const createdAt = snapshot.createdAt.toDate();
+
+    combined.push({
+      date: createdAt,
+      weight: toNumber(current?.weight_kg),
+      bmi: toNumber(current?.bmi),
+      wellness: calculateSnapshotWellnessScore(metrics),
+      sleep: toNumber(habits?.sleep_hours),
+      water: toNumber(habits?.water_intake_liters),
+      weeklyActivity: toNumber(current?.weekly_activity_frequency)
+    });
+  });
+
+  workouts.forEach((workout) => {
+    const bmi = computeBmiFromWeight(workout.weightKg, heightCm);
+    const workoutMetrics = {
+      current_state: {
+        bmi,
+        activity_level: workout.activityLevel ?? fallbackActivityLevel ?? null,
+        weekly_activity_frequency: workoutsPerWeek ?? null,
+        strength: {
+          trainingDaysPerWeek: workoutsPerWeek ?? null
+        }
+      },
+      habits: {
+        sleep_hours: workout.sleepHours ?? null,
+        water_intake_liters: workout.waterLiters ?? null,
+        stress_level: workout.stressLevel ?? null
+      },
+      target_state: {},
+      goals: {}
+    } as Record<string, unknown>;
+
+    combined.push({
+      date: workout.createdAt,
+      weight: workout.weightKg ?? null,
+      bmi,
+      wellness: calculateSnapshotWellnessScore(workoutMetrics),
+      sleep: workout.sleepHours ?? null,
+      water: workout.waterLiters ?? null,
+      weeklyActivity: null
+    });
+  });
+
+  const sorted = combined
+    .filter((entry) => entry.date instanceof Date && !Number.isNaN(entry.date.getTime()))
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  const computeChange = (selector: (point: CombinedPoint) => number | null): number | null => {
+    const series = sorted.filter((point) => selector(point) != null);
+    if (series.length === 0) return null;
+    const startValue = selector(series[0]);
+    const endValue = selector(series[series.length - 1]);
+    if (startValue == null || endValue == null) return null;
+    return endValue - startValue;
+  };
+
+  const weightChange = computeChange((point) => point.weight);
+  const bmiChange = computeChange((point) => point.bmi);
+  const wellnessChange = computeChange((point) => point.wellness);
+  const sleepImprovement = computeChange((point) => point.sleep);
+  const waterImprovement = computeChange((point) => point.water);
+
+  let activityIncrease = computeChange((point) => point.weeklyActivity);
+  if (activityIncrease === null && workouts.length > 0) {
+    const periodMidpoint =
+      periodStart.getTime() + (periodEnd.getTime() - periodStart.getTime()) / 2;
+    const firstHalf = workouts.filter((workout) => workout.createdAt.getTime() <= periodMidpoint).length;
+    const secondHalf = workouts.length - firstHalf;
+    if (firstHalf === 0) {
+      activityIncrease = secondHalf > 0 ? 100 : 0;
+    } else {
+      activityIncrease = ((secondHalf - firstHalf) / firstHalf) * 100;
+    }
   }
 
-  // Sort by creation date
-  const sortedSnapshots = snapshots.sort((a, b) =>
-    a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime()
-  );
-
-  const first = sortedSnapshots[0].userMetrics as any;
-  const last = sortedSnapshots[sortedSnapshots.length - 1].userMetrics as any;
-
-  const weightStart = first?.current_state?.weight_kg;
-  const weightEnd = last?.current_state?.weight_kg;
-  const weightChange = (weightStart && weightEnd) ? weightEnd - weightStart : null;
-
-  const bmiStart = first?.current_state?.bmi;
-  const bmiEnd = last?.current_state?.bmi;
-  const bmiChange = (bmiStart && bmiEnd) ? bmiEnd - bmiStart : null;
-
-  const wellnessStart = first?.wellness_score;
-  const wellnessEnd = last?.wellness_score;
-  const wellnessChange = (wellnessStart && wellnessEnd) ? wellnessEnd - wellnessStart : null;
-
-  const sleepStart = first?.habits?.sleep_hours;
-  const sleepEnd = last?.habits?.sleep_hours;
-  const sleepImprovement = (sleepStart && sleepEnd) ? sleepEnd - sleepStart : null;
-
-  const waterStart = first?.habits?.water_intake_liters;
-  const waterEnd = last?.habits?.water_intake_liters;
-  const waterImprovement = (waterStart && waterEnd) ? waterEnd - waterStart : null;
-
-  // Activity increase (simplified - could be enhanced with workout data)
-  const activityIncrease = wellnessChange ? Math.max(0, wellnessChange) : null;
-
   return {
-    weightChange,
-    bmiChange,
-    wellnessScoreChange: wellnessChange,
-    sleepImprovement,
-    waterIntakeImprovement: waterImprovement,
-    activityIncrease
+    weightChange: roundToSingleDecimal(weightChange),
+    bmiChange: roundToSingleDecimal(bmiChange),
+    wellnessScoreChange: roundToSingleDecimal(wellnessChange),
+    sleepImprovement: roundToSingleDecimal(sleepImprovement),
+    waterIntakeImprovement: roundToSingleDecimal(waterImprovement),
+    activityIncrease: roundToSingleDecimal(activityIncrease)
   };
 };
 
@@ -274,10 +624,25 @@ export const generateWeeklySummary = async (userId: string, referenceDate: Date 
   const weekStart = getStartOfWeek(referenceDate);
   const weekEnd = getEndOfWeek(referenceDate);
 
-  const snapshots = await getProcessedMetricsByDateRange(userId, weekStart, weekEnd);
+  const [snapshots, user, workouts] = await Promise.all([
+    getProcessedMetricsByDateRange(userId, weekStart, weekEnd),
+    getUserById(userId),
+    getWorkoutsByDateRange(userId, weekStart, weekEnd)
+  ]);
 
-  const metrics = calculateMetrics(snapshots);
-  const progress = calculateProgress(snapshots);
+  const daysInPeriod = countDaysInRange(weekStart, weekEnd);
+  const workoutsPerWeek =
+    workouts.length > 0 ? (workouts.length / Math.max(daysInPeriod, 1)) * 7 : null;
+
+  const metrics = calculateMetrics(snapshots, workouts, user, daysInPeriod, workoutsPerWeek);
+  const progress = calculateProgress(
+    snapshots,
+    workouts,
+    user,
+    workoutsPerWeek,
+    weekStart,
+    weekEnd
+  );
   const insights = generateInsights(metrics, progress);
   const recommendations = generateRecommendations(metrics, progress);
 
@@ -298,10 +663,25 @@ export const generateMonthlySummary = async (userId: string, referenceDate: Date
   const monthStart = getStartOfMonth(referenceDate);
   const monthEnd = getEndOfMonth(referenceDate);
 
-  const snapshots = await getProcessedMetricsByDateRange(userId, monthStart, monthEnd);
+  const [snapshots, user, workouts] = await Promise.all([
+    getProcessedMetricsByDateRange(userId, monthStart, monthEnd),
+    getUserById(userId),
+    getWorkoutsByDateRange(userId, monthStart, monthEnd)
+  ]);
 
-  const metrics = calculateMetrics(snapshots);
-  const progress = calculateProgress(snapshots);
+  const daysInPeriod = countDaysInRange(monthStart, monthEnd);
+  const workoutsPerWeek =
+    workouts.length > 0 ? (workouts.length / Math.max(daysInPeriod, 1)) * 7 : null;
+
+  const metrics = calculateMetrics(snapshots, workouts, user, daysInPeriod, workoutsPerWeek);
+  const progress = calculateProgress(
+    snapshots,
+    workouts,
+    user,
+    workoutsPerWeek,
+    monthStart,
+    monthEnd
+  );
   const insights = generateInsights(metrics, progress);
   const recommendations = generateRecommendations(metrics, progress);
 
