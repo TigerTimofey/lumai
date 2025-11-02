@@ -25,7 +25,14 @@ export const authContext: RequestHandler = async (req, _res, next) => {
       const nowMs = Date.now();
       const lastActivityMs = user.lastActivityAt ? (user.lastActivityAt as any).toMillis?.() ?? 0 : 0;
       const idleMs = env.SESSION_IDLE_MINUTES * 60 * 1000;
-      if (lastActivityMs && nowMs - lastActivityMs > idleMs) {
+      const authTimeMs =
+        typeof decoded.auth_time === "number" && decoded.auth_time > 0
+          ? decoded.auth_time * 1000
+          : 0;
+      const sessionExpired = lastActivityMs && nowMs - lastActivityMs > idleMs;
+      const hasRecentReauth =
+        authTimeMs && (!lastActivityMs || authTimeMs > lastActivityMs);
+      if (sessionExpired && !hasRecentReauth) {
         return next(unauthorized("Session expired due to inactivity"));
       }
       // Update last activity asynchronously (do not block request)
