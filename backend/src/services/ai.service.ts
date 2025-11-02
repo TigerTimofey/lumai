@@ -13,6 +13,82 @@ import { logger } from "../utils/logger.js";
 
 const AI_CONSENT = "ai_insights" satisfies (typeof CONSENT_TYPES)[number];
 
+const validateRecommendations = (content: string, restrictions: string[] = []) => {
+  if (!restrictions.length) return content;
+
+  // Parse recommendations section
+  const lines = content.split('\n');
+  const recommendationsStart = lines.findIndex(line => line.includes('**Three actionable recommendations**'));
+  
+  if (recommendationsStart === -1) return content;
+
+  const recommendationsEnd = lines.findIndex((line, index) => 
+    index > recommendationsStart && line.includes('**') && !line.includes('recommendations')
+  );
+
+  const recommendationsSection = recommendationsEnd === -1 
+    ? lines.slice(recommendationsStart + 1)
+    : lines.slice(recommendationsStart + 1, recommendationsEnd);
+
+  // Filter recommendations that don't violate restrictions
+  const validatedRecommendations = recommendationsSection
+    .filter(line => {
+      if (!line.trim() || !line.match(/^\d+\./)) return true; // Keep non-recommendation lines
+      
+      const recommendation = line.toLowerCase();
+      const violatesRestriction = restrictions.some(restriction => {
+        const restrictionLower = restriction.toLowerCase();
+        // Check for common dietary restriction violations
+        if (restrictionLower.includes('vegetarian') && 
+            (recommendation.includes('meat') || recommendation.includes('chicken') || 
+             recommendation.includes('beef') || recommendation.includes('fish'))) {
+          return true;
+        }
+        if (restrictionLower.includes('vegan') && 
+            (recommendation.includes('meat') || recommendation.includes('dairy') || 
+             recommendation.includes('milk') || recommendation.includes('cheese') || 
+             recommendation.includes('yogurt') || recommendation.includes('butter') ||
+             recommendation.includes('eggs') || recommendation.includes('honey'))) {
+          return true;
+        }
+        if (restrictionLower.includes('gluten') && 
+            recommendation.includes('wheat') || recommendation.includes('bread') || 
+            recommendation.includes('pasta')) {
+          return true;
+        }
+        if (restrictionLower.includes('dairy') && 
+            recommendation.includes('milk') || recommendation.includes('cheese') || 
+            recommendation.includes('yogurt') || recommendation.includes('butter') ||
+            recommendation.includes('cream')) {
+          return true;
+        }
+        return false;
+      });
+      
+      return !violatesRestriction;
+    });
+
+  // If we filtered out recommendations, replace the section
+  if (validatedRecommendations.length !== recommendationsSection.length) {
+    const beforeRecommendations = lines.slice(0, recommendationsStart + 1);
+    const afterRecommendations = recommendationsEnd === -1 ? [] : lines.slice(recommendationsEnd);
+    
+    // Add fallback recommendations if all were filtered out
+    let finalRecommendations = validatedRecommendations;
+    if (validatedRecommendations.filter(line => line.match(/^\d+\./)).length === 0) {
+      finalRecommendations = [
+        '1. Focus on maintaining a consistent daily routine with adequate sleep and hydration.',
+        '2. Incorporate gentle daily movement like walking or stretching.',
+        '3. Track your progress and celebrate small achievements in your wellness journey.'
+      ];
+    }
+    
+    return [...beforeRecommendations, ...finalRecommendations, ...afterRecommendations].join('\n');
+  }
+
+  return content;
+};
+
 export const prepareAiMetrics = async (userId: string) => {
   const consents = await getConsents(userId);
   const consentStatus = consents?.agreements?.[AI_CONSENT]?.status ?? "pending";
@@ -134,6 +210,22 @@ export const generateAiInsights = async (userId: string) => {
     const content: string = data?.choices?.[0]?.message?.content ?? "";
     console.info('[ai-insights] generated content', { userId, model, length: content.length, preview: content.slice(0, 120) });
 
+    // Get user restrictions for validation
+    const latestProfile = await getLatestProfileVersion(userId);
+    const userRestrictions = latestProfile?.lifestyle?.dietaryRestrictions ?? [];
+
+    // Validate recommendations against health restrictions
+    const validatedContent = validateRecommendations(content, userRestrictions);
+
+    if (validatedContent !== content) {
+      console.info('[ai-insights] content validated', { 
+        userId, 
+        originalLength: content.length, 
+        validatedLength: validatedContent.length,
+        restrictions: userRestrictions 
+      });
+    }
+
     const log = await logAiInsight(userId, {
       promptContext: {
         reason: "ai_health_insight",
@@ -142,13 +234,13 @@ export const generateAiInsights = async (userId: string) => {
       model,
       status: "success",
       response: {
-        content,
+        content: validatedContent,
         usage: data?.usage ?? null
       }
     });
 
     const savedVersion = await saveAiInsightVersion(userId, {
-      content,
+      content: validatedContent,
       model,
       status: "success",
       usage: data?.usage ?? null,
@@ -159,7 +251,7 @@ export const generateAiInsights = async (userId: string) => {
     });
 
     return {
-      content,
+      content: validatedContent,
       model,
       version: savedVersion.version,
       createdAt: savedVersion.createdAt.toDate().toISOString()
