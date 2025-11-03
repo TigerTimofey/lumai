@@ -16,6 +16,12 @@ const ensureApp = async () => {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const app = await ensureApp();
+  if (req.url && !req.url.startsWith('/api')) {
+    const original = req.url;
+    const nextPath = original === '/' ? '/api' : `/api${original}`;
+    req.url = nextPath;
+    (req as unknown as { originalUrl?: string }).originalUrl = nextPath;
+  }
   return app(req, res);
 }
 
