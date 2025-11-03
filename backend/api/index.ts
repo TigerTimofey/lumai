@@ -7,6 +7,7 @@ let cachedApp: Express | null = null;
 
 const ensureApp = async () => {
   if (!cachedApp) {
+    // @ts-ignore -- dist/app.js is generated at build time
     const mod = await import('../dist/app.js');
     cachedApp = (mod as { default: Express }).default;
   }
