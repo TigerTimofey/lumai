@@ -2,7 +2,7 @@ import { auth } from '../config/firebase';
 
 export async function apiFetch<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
   const baseUrl = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '') ?? '';
-  const url = `${baseUrl}/api${path.startsWith('/') ? path : `/${path}`}`;
+  const url = `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
 
   const token = await auth.currentUser?.getIdToken();
   const headers: HeadersInit = {
