@@ -1,3 +1,4 @@
+/// <reference path="./types.d.ts" />
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // The compiled Express application lives in dist/app.js after `npm run build`.
