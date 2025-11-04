@@ -1,12 +1,11 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/index.ts",
-      "use": "@vercel/node"
-    }
-  ],
+  "outputDirectory": "dist",
   "routes": [
+    {
+      "src": "/status",
+      "dest": "/api/index.ts"
+    },
     {
       "src": "/api/(.*)",
       "dest": "/api/index.ts"

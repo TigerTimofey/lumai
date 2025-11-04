@@ -4,3 +4,4 @@ dist/
 firebase-service-account.json
 coverage/
 env
+.vercel
