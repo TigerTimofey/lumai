@@ -16,9 +16,11 @@ const ensureApp = async () => {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const app = await ensureApp();
+  const basePath = process.env.API_BASE_PATH || '/api';
 
-  // Strip /api prefix from the URL for Express routing
-  if (req.url && req.url.startsWith('/api')) {
+  if (basePath !== '/' && req.url && !req.url.startsWith(basePath)) {
+    const original = req.url;
+    const nextPath = original === '/' ? basePath : `${basePath}${original}`;
     const mutableReq = req as unknown as {
       url?: string;
       originalUrl?: string;
@@ -26,8 +28,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       baseUrl?: string;
       _parsedUrl?: unknown;
     };
-    mutableReq.url = req.url.replace(/^\/api/, '') || '/';
-    mutableReq.originalUrl = req.url;
+    mutableReq.url = nextPath;
+    mutableReq.originalUrl = nextPath;
     if (mutableReq.path) mutableReq.path = undefined;
     if (mutableReq.baseUrl) mutableReq.baseUrl = undefined;
     if (mutableReq._parsedUrl) delete mutableReq._parsedUrl;

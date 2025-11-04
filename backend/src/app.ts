@@ -14,7 +14,8 @@ app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(pinoHttpMiddleware({ logger }));
 
-app.use("/api", router);
+const apiBasePath = process.env.API_BASE_PATH || "/api";
+app.use(apiBasePath, router);
 
 app.use((req, res) => {
   res.status(404).json({ message: "Not Found", path: req.path });
