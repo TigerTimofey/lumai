@@ -16,7 +16,7 @@ app.use(pinoHttpMiddleware({ logger }));
 
 app.get("/status", (req, res) => res.json({ status: "ok" }));
 
-app.use("/api", router);
+app.use("/", router);
 
 app.use((req, res) => {
   res.status(404).json({ message: "Not Found", path: req.path });

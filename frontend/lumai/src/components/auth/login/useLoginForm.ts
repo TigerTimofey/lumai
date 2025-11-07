@@ -236,13 +236,13 @@ export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn 
 
     try {
       // Call backend login to enforce email verification and optional MFA
-      const res = await apiFetch<{ uid: string; idToken: string; refreshToken: string; user?: unknown }>(
-        '/auth/login',
-        {
-          method: 'POST',
-          body: JSON.stringify({ email: formData.email, password: formData.password, mfaCode: mfaCode || undefined })
-        }
-      );
+      // const res = await apiFetch<{ uid: string; idToken: string; refreshToken: string; user?: unknown }>(
+      //   '/auth/login',
+      //   {
+      //     method: 'POST',
+      //     body: JSON.stringify({ email: formData.email, password: formData.password, mfaCode: mfaCode || undefined })
+      //   }
+      // );
 
       // After server-side checks pass, sign in the Firebase client to establish session in the app
       const credential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
@@ -253,11 +253,11 @@ export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn 
         throw new Error('Email is not verified yet. We just re-sent the confirmation link.');
       }
 
-      const idToken = await credential.user.getIdToken();
+      // const idToken = await credential.user.getIdToken();
       console.group('LOGIN SUCCESS');
-      console.log('Backend tokens', { idToken: res.idToken, refreshToken: res.refreshToken });
-      console.log('Firebase user', credential.user);
-      console.log('Firebase ID token', idToken);
+      // console.log('Backend tokens', { idToken: res.idToken, refreshToken: res.refreshToken });
+      // console.log('Firebase user', credential.user);
+      // console.log('Firebase ID token', idToken);
       console.groupEnd();
 
       setMfaRequired(false);

@@ -2,3 +2,5 @@
 *.env.local
 frontend/lumai/.env.local
 .vercel
+explanation-tasks.md
+task-status-evidence.md
