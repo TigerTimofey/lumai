@@ -230,19 +230,29 @@ export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn 
       await completePendingOAuth(pendingOAuth);
       return;
     }
+
+    if (mfaRequired && !mfaCode) {
+      setError('Enter the 6-digit 2FA code to continue.');
+      return;
+    }
+
     setEmailLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
-      // Call backend login to enforce email verification and optional MFA
-      // const res = await apiFetch<{ uid: string; idToken: string; refreshToken: string; user?: unknown }>(
-      //   '/auth/login',
-      //   {
-      //     method: 'POST',
-      //     body: JSON.stringify({ email: formData.email, password: formData.password, mfaCode: mfaCode || undefined })
-      //   }
-      // );
+      // Call backend login to enforce email verification and optional MFA before establishing Firebase session
+      await apiFetch<{ uid: string; idToken: string }>(
+        '/auth/login',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+            ...(mfaCode ? { mfaCode } : {})
+          })
+        }
+      );
 
       // After server-side checks pass, sign in the Firebase client to establish session in the app
       const credential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
@@ -260,8 +270,7 @@ export const useLoginForm = (options?: UseLoginFormOptions): UseLoginFormReturn 
       // console.log('Firebase ID token', idToken);
       console.groupEnd();
 
-      setMfaRequired(false);
-      setMfaCode('');
+      resetMfaFlow();
       setSuccess('Signed in. 2FA checks passed.');
       options?.onAuthenticated?.(credential.user);
     } catch (err) {
