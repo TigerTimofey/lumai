@@ -203,6 +203,7 @@ export interface RecipeIngredient {
   originalUnit?: string;
   originalQuantity?: number;
   nutrition: IngredientDocument["nutritionPer100g"];
+  category?: string;
 }
 
 export interface RecipeDocument {
@@ -269,4 +270,114 @@ export interface RecipeReviewDocument {
   comment?: string;
   createdAt: Timestamp;
   moderationStatus: "pending" | "approved" | "rejected";
+}
+
+export interface NutritionPreferencesDocument {
+  userId: string;
+  timezone: string;
+  dietaryPreferences: string[];
+  dietaryRestrictions: string[];
+  allergies: string[];
+  dislikedIngredients: string[];
+  cuisinePreferences: string[];
+  calorieTarget: number;
+  macronutrientTargets: {
+    protein: number;
+    carbs: number;
+    fats: number;
+  };
+  micronutrientTargets?: Record<string, number>;
+  mealsPerDay: number;
+  preferredMealTimes: Record<string, string>; // ISO 8601 strings
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface MealPlanMeal {
+  id: string;
+  type: string; // breakfast, lunch, etc.
+  title: string;
+  recipeId?: string;
+  servings: number;
+  scheduledAt: string; // ISO string
+  macros: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+  };
+  micronutrients?: Record<string, number>;
+  notes?: string;
+  aiContext?: {
+    strategyStep?: string;
+    structureStep?: string;
+    recipeStep?: string;
+  };
+}
+
+export interface MealPlanDay {
+  date: string; // YYYY-MM-DD
+  meals: MealPlanMeal[];
+}
+
+export interface MealPlanDocument {
+  id: string;
+  userId: string;
+  duration: "daily" | "weekly";
+  startDate: string;
+  endDate: string;
+  timezone: string;
+  version: number;
+  status: "draft" | "active" | "archived";
+  strategySummary: string;
+  ragReferences: string[];
+  days: MealPlanDay[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface ShoppingListItem {
+  id: string;
+  ingredientId: string;
+  name: string;
+  quantity: number;
+  unit: "g" | "ml" | "count";
+  category: string;
+  checked: boolean;
+}
+
+export interface ShoppingListDocument {
+  id: string;
+  userId: string;
+  mealPlanId: string;
+  items: ShoppingListItem[];
+  generatedAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface NutritionalSnapshotDocument {
+  id: string;
+  userId: string;
+  date: string; // YYYY-MM-DD
+  timezone: string;
+  totals: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+    fiber: number;
+    vitaminD: number;
+    vitaminB12: number;
+    iron: number;
+    magnesium: number;
+  };
+  goalComparison: {
+    calorieDelta: number;
+    proteinDelta: number;
+    carbsDelta: number;
+    fatsDelta: number;
+  };
+  wellnessImpactScore: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
