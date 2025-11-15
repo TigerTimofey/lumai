@@ -14,6 +14,7 @@ import {
 import { fetchNutritionPreferences } from "./nutrition-preferences.service.js";
 import { searchRecipes } from "./nutrition-rag.service.js";
 import { calculateNutritionForRecipe } from "./nutrition-functions.service.js";
+import { orchestrateMealPlan } from "./meal-planning-orchestrator.service.js";
 
 interface GeneratePlanOptions {
   duration: "daily" | "weekly";
@@ -25,23 +26,26 @@ const DEFAULT_MEAL_TYPES = ["breakfast", "lunch", "dinner"];
 const buildMealPlanDocument = async (userId: string, options: GeneratePlanOptions, planId = randomUUID(), versionOverride?: number) => {
   const preferences = await fetchNutritionPreferences(userId);
   const version = versionOverride ?? Date.now();
-  const ragResults = await searchRecipes({
-    query: "balanced nutrition plan",
-    dietaryTags: preferences.dietaryPreferences,
-    excludeAllergens: preferences.allergies,
-    cuisine: preferences.cuisinePreferences,
-    limit: 30
-  });
 
-  const daysCount = options.duration === "weekly" ? 7 : 1;
-  const days = Array.from({ length: daysCount }).map((_, index) => {
-    const date = new Date(options.startDate);
-    date.setDate(date.getDate() + index);
-    return {
-      date: date.toISOString().slice(0, 10),
-      meals: buildMealsForDay(date, preferences, ragResults.map((entry) => entry.recipe))
-    };
-  });
+  let aiPlan;
+  try {
+    aiPlan = await orchestrateMealPlan(userId, options.duration, options.startDate);
+  } catch (error) {
+    console.warn("[meal-planning] AI orchestrator failed, using fallback", error);
+  }
+
+  let fallbackRecipes: Awaited<ReturnType<typeof searchRecipes>> | null = null;
+  if (!aiPlan) {
+    fallbackRecipes = await searchRecipes({
+      query: "balanced nutrition plan",
+      dietaryTags: preferences.dietaryPreferences,
+      excludeAllergens: preferences.allergies,
+      cuisine: preferences.cuisinePreferences,
+      limit: 30
+    });
+  }
+
+  const days = aiPlan?.days ?? buildFallbackDays(options, preferences, (fallbackRecipes ?? []).map((entry) => entry.recipe));
 
   return {
     id: planId,
@@ -52,12 +56,31 @@ const buildMealPlanDocument = async (userId: string, options: GeneratePlanOption
     timezone: preferences.timezone,
     version,
     status: "active",
-    strategySummary: buildStrategySummary(preferences),
-    ragReferences: ragResults.slice(0, 5).map((entry) => entry.recipe.id),
+    strategySummary: aiPlan?.strategySummary ?? buildStrategySummary(preferences),
+    analysis: aiPlan?.analysis,
+    ragReferences:
+      aiPlan?.ragReferences ??
+      (fallbackRecipes ?? []).slice(0, 5).map((entry) => entry.recipe.id),
     days,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now()
   } satisfies MealPlanDocument;
+};
+
+const buildFallbackDays = (
+  options: GeneratePlanOptions,
+  preferences: NutritionPreferencesDocument,
+  recipes: Array<Awaited<ReturnType<typeof searchRecipes>>[number]["recipe"]>
+) => {
+  const daysCount = options.duration === "weekly" ? 7 : 1;
+  return Array.from({ length: daysCount }).map((_, index) => {
+    const date = new Date(options.startDate);
+    date.setDate(date.getDate() + index);
+    return {
+      date: date.toISOString().slice(0, 10),
+      meals: buildMealsForDay(date, preferences, recipes)
+    };
+  });
 };
 
 export const generateMealPlan = async (userId: string, options: GeneratePlanOptions) => {

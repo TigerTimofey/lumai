@@ -13,6 +13,172 @@ import { logger } from "../utils/logger.js";
 
 const AI_CONSENT = "ai_insights" satisfies (typeof CONSENT_TYPES)[number];
 
+type PromptStep = "strategy" | "structure" | "recipes" | "analytics";
+
+const PROMPT_TEMPLATES: Record<PromptStep, string> = {
+  strategy: `You are a certified nutritionist. Analyze the user profile below and produce a one-paragraph strategy with macronutrient emphasis, meal frequency, and any necessary adjustments. Respond in JSON with keys strategy_summary and macro_focus.
+User data: {{userProfile}}
+Dietary preferences: {{dietaryPreferences}}
+Allergies: {{allergies}}
+Targets: {{targets}}`,
+  structure: `Using the provided strategy, design a meal structure for the requested duration starting on the provided date. Include dayOffset (0-based), meal types, ISO 8601 timestamps, and rationale. Respond in JSON with keys meal_structure (array) and notes.
+Strategy: {{strategy}}
+Duration: {{duration}}
+Start date: {{startDate}}
+Timezone: {{timezone}}`,
+  recipes: `Given the meal structure and retrieved recipe snippets, assign recipes (or short descriptions) to each meal. Ensure alignment with dietary restrictions and nutritional focus. Respond in JSON with keys meals (array) containing mealId, type, recipeId or description, and macro notes.
+Structure: {{structure}}
+Recipes: {{recipes}}
+Restrictions: {{restrictions}}`,
+  analytics: `Review the generated meal plan and provide insights: key benefits, potential risks, and improvement suggestions. Respond in JSON with keys highlights, risks, suggestions.
+Plan summary: {{planSummary}}`
+};
+
+const FEW_SHOT_EXAMPLES: Record<PromptStep, Array<{ role: "user" | "assistant"; content: string }>> = {
+  strategy: [
+    {
+      role: "user",
+      content: "User: 31yo female, vegetarian, goal: lean muscle, timezone Europe/Berlin"
+    },
+    {
+      role: "assistant",
+      content:
+        '{"strategy_summary":"Focus on high-protein vegetarian meals with moderate carbs to support training.","macro_focus":"Protein 30%, Carbs 45%, Fats 25%"}'
+    }
+  ],
+  structure: [
+    {
+      role: "user",
+      content: "Strategy: 3 meals + 2 snacks, focus on evening training"
+    },
+    {
+      role: "assistant",
+      content:
+        '{"meal_structure":[{"type":"breakfast","time":"2024-07-29T07:30:00+02:00"}],"notes":"Align meals with training windows"}'
+    }
+  ],
+  recipes: [],
+  analytics: []
+};
+
+interface PromptOptions {
+  step: PromptStep;
+  userProfile: Record<string, unknown>;
+  dietaryPreferences: string[];
+  allergies: string[];
+  targets: Record<string, unknown>;
+  strategy?: string;
+  duration?: string;
+  timezone?: string;
+  structure?: string;
+  recipes?: string;
+  restrictions?: string;
+  planSummary?: string;
+  startDate?: string;
+  temperature?: number;
+  topP?: number;
+  maxTokens?: number;
+  model?: string;
+  retryCount?: number;
+}
+
+const formatPrompt = (template: string, params: Record<string, unknown>) =>
+  Object.entries(params).reduce((acc, [key, value]) => {
+    const token = `{{${key}}}`;
+    return acc.replace(new RegExp(token, "g"), typeof value === "string" ? value : JSON.stringify(value));
+  }, template);
+
+const defaultStepParams: Record<PromptStep, { temperature: number; topP: number; maxTokens: number }> = {
+  strategy: { temperature: 0.4, topP: 0.9, maxTokens: 350 },
+  structure: { temperature: 0.3, topP: 0.85, maxTokens: 450 },
+  recipes: { temperature: 0.6, topP: 0.95, maxTokens: 600 },
+  analytics: { temperature: 0.35, topP: 0.8, maxTokens: 300 }
+};
+
+export const runPromptStep = async (options: PromptOptions) => {
+    const template = PROMPT_TEMPLATES[options.step];
+    const params = {
+      ...defaultStepParams[options.step],
+      temperature: options.temperature ?? defaultStepParams[options.step].temperature,
+      topP: options.topP ?? defaultStepParams[options.step].topP,
+      maxTokens: options.maxTokens ?? defaultStepParams[options.step].maxTokens
+    };
+    const prompt = formatPrompt(template, {
+      userProfile: options.userProfile,
+      dietaryPreferences: options.dietaryPreferences,
+      allergies: options.allergies,
+      targets: options.targets,
+      strategy: options.strategy ?? "",
+      duration: options.duration ?? "weekly",
+      timezone: options.timezone ?? "UTC",
+      startDate: options.startDate ?? new Date().toISOString().slice(0, 10),
+      structure: options.structure ?? "",
+      recipes: options.recipes ?? "",
+      restrictions: options.restrictions ?? "",
+      planSummary: options.planSummary ?? ""
+    });
+
+    const messages = [
+      ...(FEW_SHOT_EXAMPLES[options.step] ?? []),
+      { role: "user", content: prompt }
+    ];
+
+    return invokeAiModel({
+      model: options.model ?? env.HF_MODEL ?? "meta-llama/Meta-Llama-3-8B-Instruct",
+      temperature: params.temperature,
+      topP: params.topP,
+      maxTokens: params.maxTokens,
+      messages,
+      retryCount: options.retryCount ?? 2
+    });
+};
+
+interface InvokeAiModelOptions {
+  model: string;
+  temperature: number;
+  topP: number;
+  maxTokens: number;
+  messages: Array<{ role: string; content: string }>;
+  retryCount?: number;
+}
+
+const invokeAiModel = async ({ model, temperature, topP, maxTokens, messages, retryCount = 1 }: InvokeAiModelOptions) => {
+  if (!env.HF_API_URL || !env.HF_API_KEY) {
+    throw serviceUnavailable("AI provider not configured");
+  }
+
+  for (let attempt = 0; attempt <= retryCount; attempt++) {
+    try {
+      const { data } = await axios.post(
+        env.HF_API_URL,
+        {
+          model,
+          temperature,
+          top_p: topP,
+          max_tokens: maxTokens,
+          messages
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${env.HF_API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          timeout: 30_000
+        }
+      );
+      const content = data?.choices?.[0]?.message?.content ?? data?.generated_text ?? "";
+      return { content, usage: data?.usage };
+    } catch (error) {
+      if (attempt === retryCount) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+    }
+  }
+
+  throw new Error("AI invocation failed");
+};
+
 const toNumber = (value: unknown): number | null => {
   if (typeof value === "number" && Number.isFinite(value)) {
     return value;

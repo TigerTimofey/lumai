@@ -330,6 +330,11 @@ export interface MealPlanDocument {
   version: number;
   status: "draft" | "active" | "archived";
   strategySummary: string;
+  analysis?: {
+    highlights: string[];
+    risks: string[];
+    suggestions: string[];
+  };
   ragReferences: string[];
   days: MealPlanDay[];
   createdAt: Timestamp;
