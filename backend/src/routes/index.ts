@@ -7,6 +7,7 @@ import profileRoutes from "./profile.routes.js";
 import analyticsRoutes from "./analytics.routes.js";
 import healthSummaryRoutes from "./health-summary.routes.js";
 import goalProgressRoutes from "./goal-progress.routes.js";
+import nutritionRoutes from "./nutrition.routes.js";
 import { apiRateLimit } from "../middleware/api-rate-limit.js";
 
 const router = Router();
@@ -25,5 +26,6 @@ router.use("/ai", aiRoutes);
 router.use("/export", exportRoutes);
 router.use("/health-summary", healthSummaryRoutes);
 router.use("/goal-progress", goalProgressRoutes);
+router.use("/nutrition", nutritionRoutes);
 
 export default router;

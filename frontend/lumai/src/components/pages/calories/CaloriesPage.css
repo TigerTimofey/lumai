@@ -1,0 +1,110 @@
+.calories-main {
+  gap: 24px;
+}
+
+.calories-hero {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  align-items: center;
+  background: linear-gradient(120deg, rgba(220, 245, 232, 0.9), rgba(190, 228, 255, 0.85));
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.15);
+}
+
+.calories-eyebrow {
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(15, 23, 42, 0.65);
+  margin-bottom: 8px;
+}
+
+.calories-title {
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  margin: 0;
+  color: #0f172a;
+}
+
+.calories-subtitle {
+  margin: 12px 0 24px;
+  color: rgba(15, 23, 42, 0.85);
+  line-height: 1.5;
+  max-width: 48ch;
+}
+
+.calories-cta {
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: #0f172a;
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.calories-cta:hover {
+  opacity: 0.9;
+}
+
+.calories-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.calories-stats article {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.calories-stat-label {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(15, 23, 42, 0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.calories-stat-value {
+  font-size: 2.2rem;
+  margin: 8px 0;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.calories-stat-meta {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(15, 23, 42, 0.65);
+}
+
+.calories-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.calories-card {
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 20px;
+  background: #fff;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.calories-card h2 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.calories-card p {
+  margin: 0;
+  color: rgba(15, 23, 42, 0.68);
+  line-height: 1.5;
+}

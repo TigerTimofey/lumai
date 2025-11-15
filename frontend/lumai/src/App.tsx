@@ -9,6 +9,7 @@ import Dashboard from './components/pages/dashboard/Dashboard';
 import Profile from './components/pages/profile/Profile';
 import AiInsightsPage from './components/pages/ai-insights/AiInsightsPage';
 import AnalyticsPage from './components/pages/analytics/AnalyticsPage';
+import CaloriesPage from './components/pages/calories/CaloriesPage';
 
 import DataUsageConsentModal from './components/privacy/DataUsageConsentModal';
 import { SESSION_TIMEOUT_MS } from './config/session';
@@ -213,6 +214,8 @@ function App() {
       content = <AnalyticsPage user={authedUser} />;
     } else if (path.startsWith('/ai-insights')) {
       content = <AiInsightsPage user={authedUser} />;
+    } else if (path.startsWith('/nutrition')) {
+      content = <CaloriesPage user={authedUser} />;
     } else {
       content = <Dashboard user={authedUser} />;
     }

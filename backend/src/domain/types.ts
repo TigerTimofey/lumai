@@ -169,3 +169,104 @@ export interface GoalProgress {
   totalMilestones: number;
   estimatedCompletion?: Date;
 }
+
+export interface IngredientDocument {
+  id: string;
+  name: string;
+  category: string;
+  nutritionPer100g: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+    fiber: number;
+    vitaminD: number;
+    vitaminB12: number;
+    iron: number;
+    magnesium: number;
+  };
+  allergenTags: string[];
+  sustainability: {
+    carbonFootprint: "low" | "medium" | "high";
+    waterUsage: "low" | "medium" | "high";
+    processingLevel: "minimal" | "processed" | "highly_processed";
+  };
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface RecipeIngredient {
+  id: string;
+  name: string;
+  quantity: number; // grams/ml standardized
+  unit: "g" | "ml";
+  originalUnit?: string;
+  originalQuantity?: number;
+  nutrition: IngredientDocument["nutritionPer100g"];
+}
+
+export interface RecipeDocument {
+  id: string;
+  title: string;
+  cuisine: string;
+  meal: string;
+  servings: number;
+  prepTimeMin: number;
+  cookTimeMin: number;
+  instructions: string;
+  summary: string;
+  dietaryTags: string[];
+  allergenTags: string[];
+  ingredients: RecipeIngredient[];
+  macrosPerServing: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+    fiber: number;
+  };
+  micronutrientsPerServing: {
+    vitaminD: number;
+    vitaminB12: number;
+    iron: number;
+    magnesium: number;
+  };
+  sustainability: {
+    glycemicIndex: number;
+    nutrientDensityScore: number;
+    satietyIndex: number;
+    antioxidantProfile: {
+      polyphenols: "low" | "medium" | "high";
+      flavonoids: "low" | "medium" | "high";
+      carotenoids: "low" | "medium" | "high";
+    };
+    environmentalImpact: {
+      carbonFootprint: "low" | "medium" | "high";
+      waterUsage: "low" | "medium" | "high";
+    };
+  };
+  ratingAverage: number;
+  ratingCount: number;
+  ratingSum: number;
+  embeddingId?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface RecipeEmbeddingDocument {
+  id: string;
+  recipeId: string;
+  vector: number[];
+  model: string;
+  createdAt: Timestamp;
+}
+
+export interface RecipeReviewDocument {
+  id: string;
+  recipeId: string;
+  userId: string;
+  rating: number;
+  comment?: string;
+  createdAt: Timestamp;
+  moderationStatus: "pending" | "approved" | "rejected";
+}

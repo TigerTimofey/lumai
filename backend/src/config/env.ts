@@ -13,6 +13,8 @@ const envSchema = z.object({
   HF_API_URL: z.string().url().optional(),
   HF_API_KEY: z.string().optional(),
   HF_MODEL: z.string().optional(),
+  HF_EMBEDDING_URL: z.string().url().optional(),
+  HF_EMBEDDING_MODEL: z.string().optional(),
   AI_RATE_LIMIT_MAX: z
     .string()
     .optional()
