@@ -164,3 +164,12 @@ export const listSnapshots = async (userId: string, limit = 14) => {
     .get();
   return snapshot.docs.map((doc) => doc.data() as NutritionalSnapshotDocument);
 };
+
+export const listSnapshotsInRange = async (userId: string, startDate: string, endDate: string) => {
+  const snapshot = await snapshotsCollection(userId)
+    .orderBy("date")
+    .startAt(startDate)
+    .endAt(endDate)
+    .get();
+  return snapshot.docs.map((doc) => doc.data() as NutritionalSnapshotDocument);
+};

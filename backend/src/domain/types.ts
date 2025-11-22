@@ -111,6 +111,14 @@ export interface HealthSummaryMetrics {
   averageWeight: number | null;
   averageBmi: number | null;
   averageWellnessScore: number | null;
+  nutritionScore: number | null;
+  averageCalorieIntake: number | null;
+  averageCalorieDelta: number | null;
+  macronutrientDelta: {
+    protein: number | null;
+    carbs: number | null;
+    fats: number | null;
+  } | null;
   averageSleepHours: number | null;
   averageWaterIntake: number | null;
   totalWorkouts: number;

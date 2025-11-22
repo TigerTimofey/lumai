@@ -18,6 +18,8 @@ import { calculateNutritionForRecipe } from "./nutrition-functions.service.js";
 import { orchestrateMealPlan } from "./meal-planning-orchestrator.service.js";
 import { FALLBACK_RECIPES } from "../data/fallback-recipes.js";
 import { badRequest, notFound, serviceUnavailable } from "../utils/api-error.js";
+import { getProfile } from "../repositories/profile.repo.js";
+import { buildHealthAwareRecipeFilters } from "../utils/recipe-filters.js";
 
 interface GeneratePlanOptions {
   duration: "daily" | "weekly";
@@ -32,7 +34,10 @@ const buildMealPlanDocument = async (
   planId: string = randomUUID(),
   versionOverride?: number
 ) => {
-  const preferences = await fetchNutritionPreferences(userId);
+  const [preferences, profile] = await Promise.all([
+    fetchNutritionPreferences(userId),
+    getProfile(userId)
+  ]);
   const version = versionOverride ?? Date.now();
 
   let aiPlan;
@@ -44,13 +49,12 @@ const buildMealPlanDocument = async (
 
   let fallbackRecipes: RecipeDocument[] = [];
   if (!aiPlan) {
-    const searchResults = await searchRecipes({
-      query: "balanced nutrition plan",
-      dietaryTags: preferences.dietaryPreferences,
-      excludeAllergens: preferences.allergies,
-      cuisine: preferences.cuisinePreferences,
-      limit: 30
-    });
+    const searchResults = await searchRecipes(
+      buildHealthAwareRecipeFilters(preferences, profile, {
+        query: "balanced nutrition plan",
+        limit: 30
+      })
+    );
     fallbackRecipes = searchResults.map((entry) => entry.recipe);
     if (!fallbackRecipes.length) {
       fallbackRecipes = FALLBACK_RECIPES;
@@ -201,14 +205,16 @@ export const addManualMeal = async (
 };
 
 export const generateMealAlternatives = async (userId: string, query: string) => {
-  const preferences = await fetchNutritionPreferences(userId);
-  const results = await searchRecipes({
-    query,
-    dietaryTags: preferences.dietaryPreferences,
-    excludeAllergens: preferences.allergies,
-    cuisine: preferences.cuisinePreferences,
-    limit: 5
-  });
+  const [preferences, profile] = await Promise.all([
+    fetchNutritionPreferences(userId),
+    getProfile(userId)
+  ]);
+  const results = await searchRecipes(
+    buildHealthAwareRecipeFilters(preferences, profile, {
+      query,
+      limit: 5
+    })
+  );
   return results.map((entry) => entry.recipe);
 };
 

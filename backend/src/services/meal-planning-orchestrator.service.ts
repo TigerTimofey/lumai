@@ -3,10 +3,12 @@ import env from "../config/env.js";
 import { runPromptStep } from "./ai.service.js";
 import { fetchNutritionPreferences } from "./nutrition-preferences.service.js";
 import { getUserById } from "../repositories/user.repo.js";
+import { getProfile } from "../repositories/profile.repo.js";
 import { searchRecipes } from "./nutrition-rag.service.js";
 import { calculateNutritionByRecipeId } from "./nutrition-functions.service.js";
 import type { MealPlanDay, MealPlanMeal } from "../domain/types.js";
 import { logAiInsight } from "../repositories/ai-insight.repo.js";
+import { buildHealthAwareRecipeFilters } from "../utils/recipe-filters.js";
 
 const parseJson = <T>(payload: string): T => {
   try {
@@ -35,15 +37,17 @@ export interface AiMealPlanResult {
 }
 
 export const orchestrateMealPlan = async (userId: string, duration: "daily" | "weekly", startDate: string) => {
-  const preferences = await fetchNutritionPreferences(userId);
-  const user = await getUserById(userId);
-  const ragResults = await searchRecipes({
-    query: "nutritious meals",
-    dietaryTags: preferences.dietaryPreferences,
-    excludeAllergens: preferences.allergies,
-    cuisine: preferences.cuisinePreferences,
-    limit: 12
-  });
+  const [preferences, user, profile] = await Promise.all([
+    fetchNutritionPreferences(userId),
+    getUserById(userId),
+    getProfile(userId)
+  ]);
+  const ragResults = await searchRecipes(
+    buildHealthAwareRecipeFilters(preferences, profile, {
+      query: "nutritious meals",
+      limit: 12
+    })
+  );
   const ragContext = ragResults.map((entry) => ({
     id: entry.recipe.id,
     title: entry.recipe.title,

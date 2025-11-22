@@ -1,7 +1,8 @@
 import { Timestamp } from "firebase-admin/firestore";
-import type { NutritionPreferencesDocument } from "../domain/types.js";
+import type { HealthProfileDocument, NutritionPreferencesDocument, UserDocument } from "../domain/types.js";
 import { getNutritionPreferences, upsertNutritionPreferences } from "../repositories/calories.repo.js";
 import { getUserById } from "../repositories/user.repo.js";
+import { getProfile } from "../repositories/profile.repo.js";
 
 const DEFAULT_TIMEZONE = "UTC";
 
@@ -11,11 +12,28 @@ const DEFAULT_MACROS = {
   fats: 60
 };
 
-export const fetchNutritionPreferences = async (userId: string) => {
-  const existing = await getNutritionPreferences(userId);
-  if (existing) return existing;
+const toNumber = (value: unknown, fallback?: number): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback ?? 0;
+};
 
-  const user = await getUserById(userId);
+export const fetchNutritionPreferences = async (userId: string) => {
+  const [existing, user, profile] = await Promise.all([
+    getNutritionPreferences(userId),
+    getUserById(userId),
+    getProfile(userId)
+  ]);
+  const derivedTarget = deriveCalorieTarget(user, profile);
+  if (existing) {
+    if (Math.abs(existing.calorieTarget - derivedTarget) >= 50) {
+      return upsertNutritionPreferences(userId, {
+        ...existing,
+        calorieTarget: derivedTarget
+      });
+    }
+    return existing;
+  }
+
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone ?? DEFAULT_TIMEZONE;
 
   const fallback: Omit<NutritionPreferencesDocument, "userId" | "createdAt" | "updatedAt"> = {
@@ -25,7 +43,7 @@ export const fetchNutritionPreferences = async (userId: string) => {
     allergies: [],
     dislikedIngredients: [],
     cuisinePreferences: [],
-    calorieTarget: deriveCalorieTarget(user?.requiredProfile ?? null),
+    calorieTarget: derivedTarget,
     macronutrientTargets: DEFAULT_MACROS,
     micronutrientTargets: {
       vitaminD: 20,
@@ -66,15 +84,51 @@ export const updateNutritionPreferences = async (userId: string, updates: Partia
   return upsertNutritionPreferences(userId, merged);
 };
 
-const deriveCalorieTarget = (requiredProfile: Record<string, unknown> | null | undefined) => {
-  const weight = Number(requiredProfile?.weight ?? 70);
-  const heightCm = Number(requiredProfile?.height ?? 170);
-  const heightM = heightCm / 100;
-  const bmi = heightM > 0 ? weight / (heightM * heightM) : 22;
-  const activity = (requiredProfile?.activityLevel as string) ?? "moderate";
+const resolveActivityLevel = (user: UserDocument | null, profile: HealthProfileDocument | null) => {
+  const required = (user?.requiredProfile ?? {}) as Record<string, unknown>;
+  const lifestyle = profile?.current?.lifestyle ?? {};
+  const activity =
+    (typeof required.activityLevel === "string" ? required.activityLevel : null) ??
+    (typeof lifestyle.activityLevel === "string" ? lifestyle.activityLevel : null) ??
+    "moderate";
+  return activity;
+};
+
+const deriveCalorieTarget = (user: UserDocument | null, profile: HealthProfileDocument | null) => {
+  const required = (user?.requiredProfile ?? {}) as Record<string, unknown>;
+  const normalized = profile?.current?.normalized ?? {};
+  const goals = profile?.current?.goals ?? {};
+  const activity = resolveActivityLevel(user, profile);
+  const weight = toNumber(normalized.weightKg ?? required.weight, 70);
+  const heightCm = toNumber(normalized.heightCm ?? required.height, 170);
+  const heightM = heightCm / 100 || 1.7;
+  const bmi = normalized.bmi ?? weight / (heightM * heightM);
   let multiplier = 13;
-  if (activity === "high") multiplier = 15;
-  if (activity === "low") multiplier = 11;
-  const bmiAdjustment = bmi > 25 ? -150 : bmi < 20 ? 200 : 0;
-  return Math.max(1200, Math.round(weight * multiplier + bmiAdjustment));
+  if (["high", "active", "very_active", "extra_active"].includes(activity)) {
+    multiplier = 15;
+  } else if (["sedentary", "low", "light"].includes(activity)) {
+    multiplier = 11;
+  }
+  let target = weight * multiplier;
+  const bmiAdjustment = bmi >= 27 ? -225 : bmi <= 19 ? 180 : 0;
+  target += bmiAdjustment;
+
+  const rawTargetWeight =
+    typeof goals.targetWeightKg === "number"
+      ? goals.targetWeightKg
+      : toNumber(
+          (required as Record<string, unknown>).targetWeight ??
+            (user?.additionalProfile as Record<string, unknown> | undefined)?.targetWeight,
+          NaN
+        );
+  if (Number.isFinite(rawTargetWeight) && weight) {
+    const diff = rawTargetWeight - weight;
+    if (Math.abs(diff) > 1) {
+      const direction = diff > 0 ? 1 : -1;
+      const magnitude = Math.min(Math.abs(diff) * 12, 300);
+      target += direction * magnitude;
+    }
+  }
+
+  return Math.max(1200, Math.round(target));
 };

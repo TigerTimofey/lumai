@@ -3,11 +3,13 @@ import type {
   HealthSummaryMetrics,
   HealthProgress,
   ProcessedMetricsDocument,
-  UserDocument
+  UserDocument,
+  NutritionalSnapshotDocument
 } from "../domain/types.js";
 import { getProcessedMetricsByDateRange } from "../repositories/processed-metrics.repo.js";
 import { getWorkoutsByDateRange, type WorkoutEntry } from "../repositories/workout.repo.js";
 import { getUserById } from "../repositories/user.repo.js";
+import { listSnapshotsInRange } from "../repositories/calories.repo.js";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
@@ -168,6 +170,48 @@ const calculateSnapshotWellnessScore = (metrics: Record<string, unknown> | undef
   return Math.max(0, Math.min(100, combined));
 };
 
+const aggregateNutritionSnapshots = (snapshots: NutritionalSnapshotDocument[]) => {
+  if (!snapshots.length) {
+    return {
+      avgCalories: null,
+      avgCalorieDelta: null,
+      macroDelta: null,
+      nutritionScore: null
+    };
+  }
+  let calories = 0;
+  let calorieDelta = 0;
+  let proteinDelta = 0;
+  let carbsDelta = 0;
+  let fatsDelta = 0;
+  let nutritionScoreTotal = 0;
+  let scoreCount = 0;
+
+  snapshots.forEach((snapshot) => {
+    calories += snapshot.totals.calories;
+    calorieDelta += snapshot.goalComparison.calorieDelta;
+    proteinDelta += Math.abs(snapshot.goalComparison.proteinDelta);
+    carbsDelta += Math.abs(snapshot.goalComparison.carbsDelta);
+    fatsDelta += Math.abs(snapshot.goalComparison.fatsDelta);
+    if (typeof snapshot.wellnessImpactScore === "number") {
+      nutritionScoreTotal += snapshot.wellnessImpactScore;
+      scoreCount++;
+    }
+  });
+
+  const sampleCount = snapshots.length;
+  return {
+    avgCalories: calories / sampleCount,
+    avgCalorieDelta: calorieDelta / sampleCount,
+    macroDelta: {
+      protein: proteinDelta / sampleCount,
+      carbs: carbsDelta / sampleCount,
+      fats: fatsDelta / sampleCount
+    },
+    nutritionScore: scoreCount > 0 ? nutritionScoreTotal / scoreCount : null
+  };
+};
+
 const roundToSingleDecimal = (value: number | null): number | null => {
   if (value === null) return null;
   return Math.round(value * 10) / 10;
@@ -240,19 +284,26 @@ const getEndOfMonth = (date: Date): Date => {
   return d;
 };
 
+const formatDateKey = (date: Date) => date.toISOString().slice(0, 10);
+
 // Calculate metrics from processed snapshots
 const calculateMetrics = (
   snapshots: ProcessedMetricsDocument[],
   workouts: WorkoutEntry[],
   user: UserDocument | null,
   daysInPeriod: number,
-  workoutsPerWeek: number | null
+  workoutsPerWeek: number | null,
+  nutritionSnapshots: NutritionalSnapshotDocument[]
 ): HealthSummaryMetrics => {
-  if (snapshots.length === 0 && workouts.length === 0) {
+  if (snapshots.length === 0 && workouts.length === 0 && nutritionSnapshots.length === 0) {
     return {
       averageWeight: null,
       averageBmi: null,
       averageWellnessScore: null,
+      nutritionScore: null,
+      averageCalorieIntake: null,
+      averageCalorieDelta: null,
+      macronutrientDelta: null,
       averageSleepHours: null,
       averageWaterIntake: null,
       totalWorkouts: 0,
@@ -391,6 +442,10 @@ const calculateMetrics = (
     }
   });
 
+  nutritionSnapshots.forEach((snapshot) => {
+    entryDays.add(snapshot.date);
+  });
+
   // Find most active day
   let mostActiveDay: string | null = null;
   let maxActivity = 0;
@@ -417,10 +472,41 @@ const calculateMetrics = (
         ? Math.round(averageWeeklyActivity * (daysInPeriod / 7))
         : 0;
 
+  const nutritionAggregation = aggregateNutritionSnapshots(nutritionSnapshots);
+  let averageWellnessScore =
+    wellnessCount > 0 ? roundToSingleDecimal(totalWellnessScore / wellnessCount) : null;
+  if (nutritionAggregation.nutritionScore != null) {
+    averageWellnessScore =
+      averageWellnessScore != null
+        ? roundToSingleDecimal(
+            averageWellnessScore * 0.8 + nutritionAggregation.nutritionScore * 0.2
+          )
+        : roundToSingleDecimal(nutritionAggregation.nutritionScore);
+  }
+
   return {
     averageWeight: weightCount > 0 ? roundToSingleDecimal(totalWeight / weightCount) : null,
     averageBmi: bmiCount > 0 ? roundToSingleDecimal(totalBmi / bmiCount) : null,
-    averageWellnessScore: wellnessCount > 0 ? roundToSingleDecimal(totalWellnessScore / wellnessCount) : null,
+    averageWellnessScore,
+    nutritionScore:
+      nutritionAggregation.nutritionScore != null
+        ? roundToSingleDecimal(nutritionAggregation.nutritionScore)
+        : null,
+    averageCalorieIntake:
+      nutritionAggregation.avgCalories != null
+        ? roundToSingleDecimal(nutritionAggregation.avgCalories)
+        : null,
+    averageCalorieDelta:
+      nutritionAggregation.avgCalorieDelta != null
+        ? roundToSingleDecimal(nutritionAggregation.avgCalorieDelta)
+        : null,
+    macronutrientDelta: nutritionAggregation.macroDelta
+      ? {
+          protein: roundToSingleDecimal(Math.abs(nutritionAggregation.macroDelta.protein)),
+          carbs: roundToSingleDecimal(Math.abs(nutritionAggregation.macroDelta.carbs)),
+          fats: roundToSingleDecimal(Math.abs(nutritionAggregation.macroDelta.fats))
+        }
+      : null,
     averageSleepHours: sleepCount > 0 ? roundToSingleDecimal(totalSleep / sleepCount) : null,
     averageWaterIntake: waterCount > 0 ? roundToSingleDecimal(totalWater / waterCount) : null,
     totalWorkouts: scaledTotalWorkouts,
@@ -559,6 +645,38 @@ const generateInsights = (metrics: HealthSummaryMetrics, progress: HealthProgres
     }
   }
 
+  if (metrics.nutritionScore != null) {
+    insights.push(`Nutrition adherence score averaged ${Math.round(metrics.nutritionScore)} points.`);
+  }
+
+  if (metrics.averageCalorieIntake !== null) {
+    insights.push(`Average calorie intake was ${metrics.averageCalorieIntake.toFixed(0)} kcal per day.`);
+  }
+
+  if (metrics.averageCalorieDelta !== null) {
+    if (metrics.averageCalorieDelta > 150) {
+      insights.push(`Calorie intake exceeded targets by roughly ${metrics.averageCalorieDelta.toFixed(0)} kcal.`);
+    } else if (metrics.averageCalorieDelta < -150) {
+      insights.push(`Calorie intake was about ${Math.abs(metrics.averageCalorieDelta).toFixed(0)} kcal under target.`);
+    }
+  }
+
+  if (metrics.macronutrientDelta) {
+    const macroFlags: string[] = [];
+    if (metrics.macronutrientDelta.protein && metrics.macronutrientDelta.protein > 10) {
+      macroFlags.push("protein");
+    }
+    if (metrics.macronutrientDelta.carbs && metrics.macronutrientDelta.carbs > 15) {
+      macroFlags.push("carbs");
+    }
+    if (metrics.macronutrientDelta.fats && metrics.macronutrientDelta.fats > 10) {
+      macroFlags.push("fats");
+    }
+    if (macroFlags.length) {
+      insights.push(`Macro intake fluctuated for ${macroFlags.join(", ")} compared to goals.`);
+    }
+  }
+
   if (progress.weightChange !== null) {
     if (Math.abs(progress.weightChange) < 0.5) {
       insights.push("Weight remained stable throughout the period.");
@@ -604,6 +722,22 @@ const generateRecommendations = (metrics: HealthSummaryMetrics, progress: Health
     recommendations.push("Increase daily water intake to at least 2 liters for better hydration.");
   }
 
+  if (metrics.averageCalorieDelta !== null) {
+    if (metrics.averageCalorieDelta > 150) {
+      recommendations.push("Favor lighter meals or reduce portion sizes to stay within calorie targets.");
+    } else if (metrics.averageCalorieDelta < -150) {
+      recommendations.push("Add a nutrient-dense snack to avoid dipping too far below your calorie plan.");
+    }
+  }
+
+  if (metrics.macronutrientDelta?.protein && metrics.macronutrientDelta.protein > 12) {
+    recommendations.push("Include lean protein (fish, legumes, yogurt) to stabilise protein intake.");
+  }
+
+  if (metrics.nutritionScore != null && metrics.nutritionScore < 70) {
+    recommendations.push("Log meals consistently so nutrition data can refine your plan in real time.");
+  }
+
   if (metrics.consistencyScore < 70) {
     recommendations.push("Try to maintain more consistent health tracking for better insights.");
   }
@@ -632,7 +766,12 @@ const ensureSummaryRelevance = (
   const hasWorkouts = metrics.totalWorkouts > 0;
   const hasSleep = metrics.averageSleepHours != null;
   const hasHydration = metrics.averageWaterIntake != null;
-  const hasAnyMetric = hasWeight || hasWellness || hasWorkouts || hasSleep || hasHydration;
+  const hasNutrition =
+    metrics.averageCalorieIntake != null ||
+    metrics.averageCalorieDelta != null ||
+    (metrics.macronutrientDelta != null && metrics.macronutrientDelta.protein != null);
+  const hasAnyMetric =
+    hasWeight || hasWellness || hasWorkouts || hasSleep || hasHydration || hasNutrition;
 
   const pushInsight = (message: string) => {
     if (!insights.includes(message)) insights.push(message);
@@ -659,6 +798,9 @@ const ensureSummaryRelevance = (
       }
       if (hasSleep) {
         pushInsight(`Sleep averaged ${metrics.averageSleepHours?.toFixed(1)} hours per night.`);
+      }
+      if (hasNutrition && metrics.averageCalorieIntake != null) {
+        pushInsight(`Nutrition logging shows ~${metrics.averageCalorieIntake.toFixed(0)} kcal per day.`);
       }
       if (!insights.length) {
         pushInsight('Your logging is up to date—keep capturing weight, sleep, and hydration to reveal deeper trends.');
@@ -697,17 +839,25 @@ export const generateWeeklySummary = async (userId: string, referenceDate: Date 
   const weekStart = getStartOfWeek(referenceDate);
   const weekEnd = getEndOfWeek(referenceDate);
 
-  const [snapshots, user, workouts] = await Promise.all([
+  const [snapshots, user, workouts, nutritionSnapshots] = await Promise.all([
     getProcessedMetricsByDateRange(userId, weekStart, weekEnd),
     getUserById(userId),
-    getWorkoutsByDateRange(userId, weekStart, weekEnd)
+    getWorkoutsByDateRange(userId, weekStart, weekEnd),
+    listSnapshotsInRange(userId, formatDateKey(weekStart), formatDateKey(weekEnd))
   ]);
 
   const daysInPeriod = countDaysInRange(weekStart, weekEnd);
   const workoutsPerWeek =
     workouts.length > 0 ? (workouts.length / Math.max(daysInPeriod, 1)) * 7 : null;
 
-  const metrics = calculateMetrics(snapshots, workouts, user, daysInPeriod, workoutsPerWeek);
+  const metrics = calculateMetrics(
+    snapshots,
+    workouts,
+    user,
+    daysInPeriod,
+    workoutsPerWeek,
+    nutritionSnapshots
+  );
   const progress = calculateProgress(
     snapshots,
     workouts,
@@ -736,17 +886,25 @@ export const generateMonthlySummary = async (userId: string, referenceDate: Date
   const monthStart = getStartOfMonth(referenceDate);
   const monthEnd = getEndOfMonth(referenceDate);
 
-  const [snapshots, user, workouts] = await Promise.all([
+  const [snapshots, user, workouts, nutritionSnapshots] = await Promise.all([
     getProcessedMetricsByDateRange(userId, monthStart, monthEnd),
     getUserById(userId),
-    getWorkoutsByDateRange(userId, monthStart, monthEnd)
+    getWorkoutsByDateRange(userId, monthStart, monthEnd),
+    listSnapshotsInRange(userId, formatDateKey(monthStart), formatDateKey(monthEnd))
   ]);
 
   const daysInPeriod = countDaysInRange(monthStart, monthEnd);
   const workoutsPerWeek =
     workouts.length > 0 ? (workouts.length / Math.max(daysInPeriod, 1)) * 7 : null;
 
-  const metrics = calculateMetrics(snapshots, workouts, user, daysInPeriod, workoutsPerWeek);
+  const metrics = calculateMetrics(
+    snapshots,
+    workouts,
+    user,
+    daysInPeriod,
+    workoutsPerWeek,
+    nutritionSnapshots
+  );
   const progress = calculateProgress(
     snapshots,
     workouts,
