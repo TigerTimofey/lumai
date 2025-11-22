@@ -45,6 +45,29 @@ type RecipeFromJson = {
 
 const typedRecipes = recipesData as RecipeFromJson[];
 
+const SHOPPING_CATEGORIES = [
+  { key: 'produce', label: 'Fresh produce', hints: ['produce', 'vegetable', 'fruit', 'greens'], icon: '🥬' },
+  { key: 'proteins', label: 'Proteins & legumes', hints: ['protein', 'meat', 'legume', 'beans', 'seafood'], icon: '🥩' },
+  { key: 'pantry', label: 'Grains & pantry', hints: ['pantry', 'grain', 'baking', 'staple', 'carb'], icon: '🧺' },
+  { key: 'dairy', label: 'Dairy & eggs', hints: ['dairy', 'egg', 'cheese', 'milk'], icon: '🥛' },
+  { key: 'frozen', label: 'Frozen & convenience', hints: ['frozen', 'convenience'], icon: '🧊' },
+  { key: 'beverages', label: 'Beverages & snacks', hints: ['drink', 'beverage', 'snack', 'condiment'], icon: '🥤' },
+  { key: 'other', label: 'Extras & misc', hints: [], icon: '🛒' }
+] as const;
+
+type ShoppingCategoryKey = (typeof SHOPPING_CATEGORIES)[number]['key'];
+
+const SHOPPING_CATEGORY_KEYS = SHOPPING_CATEGORIES.map((category) => category.key);
+
+const resolveShoppingCategory = (raw: string): ShoppingCategoryKey => {
+  const normalized = raw?.toLowerCase() ?? '';
+  const match = SHOPPING_CATEGORIES.find((schema) =>
+    schema.hints.some((hint) => normalized.includes(hint))
+  );
+  if (match) return match.key;
+  return SHOPPING_CATEGORY_KEYS.includes(normalized as ShoppingCategoryKey) ? (normalized as ShoppingCategoryKey) : 'other';
+};
+
 type NutritionPreferences = {
   timezone: string;
   dietaryPreferences: string[];
@@ -229,6 +252,33 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
       ingredients: ingredients.size
     };
   }, []);
+
+  const planShoppingLists = useMemo(() => {
+    if (!selectedPlanId) return [];
+    return shoppingLists.filter((list) => list.mealPlanId === selectedPlanId);
+  }, [shoppingLists, selectedPlanId]);
+
+  useEffect(() => {
+    if (!selectedPlanId) {
+      setSelectedListId(null);
+      return;
+    }
+    if (!planShoppingLists.length) {
+      setSelectedListId(null);
+      return;
+    }
+    setSelectedListId((prev) =>
+      prev && planShoppingLists.some((list) => list.id === prev) ? prev : planShoppingLists[0]?.id ?? null
+    );
+  }, [selectedPlanId, planShoppingLists]);
+
+  const planLabel = useMemo(() => {
+    if (!selectedPlan) return null;
+    const start = formatDate(selectedPlan.startDate, selectedPlan.timezone);
+    const end = formatDate(selectedPlan.endDate, selectedPlan.timezone);
+    const prefix = selectedPlan.duration === 'weekly' ? 'Weekly plan' : 'Daily plan';
+    return start === end ? `${prefix} • ${start}` : `${prefix} • ${start} – ${end}`;
+  }, [selectedPlan]);
 
   useEffect(() => {
     let active = true;
@@ -893,9 +943,9 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
             </button>
             </header>
             <ShoppingListPanel
-              shoppingLists={shoppingLists}
+              shoppingLists={planShoppingLists}
               selectedListId={selectedListId}
-              onSelectList={setSelectedListId}
+              planLabel={planLabel}
               onRefresh={fetchShoppingListsData}
               onQuantityChange={handleUpdateListItem}
               onRemoveItem={handleRemoveListItem}
@@ -1301,7 +1351,7 @@ const MealCalendar: React.FC<MealCalendarProps> = ({
 interface ShoppingListPanelProps {
   shoppingLists: ShoppingList[];
   selectedListId: string | null;
-  onSelectList: (id: string | null) => void;
+  planLabel: string | null;
   onRefresh: () => void;
   onQuantityChange: (listId: string, itemId: string, updates: Partial<{ quantity: number; checked: boolean }>) => void;
   onRemoveItem: (listId: string, itemId: string) => void;
@@ -1310,62 +1360,135 @@ interface ShoppingListPanelProps {
 const ShoppingListPanel: React.FC<ShoppingListPanelProps> = ({
   shoppingLists,
   selectedListId,
-  onSelectList,
+  planLabel,
   onRefresh,
   onQuantityChange,
   onRemoveItem
 }) => {
-  const list = shoppingLists.find((entry) => entry.id === selectedListId) ?? null;
+  const list = shoppingLists.find((entry) => entry.id === selectedListId) ?? shoppingLists[0] ?? null;
   const grouped = useMemo(() => {
-    if (!list) return {};
+    if (!list) return {} as Record<string, ShoppingList['items']>;
     return list.items.reduce<Record<string, ShoppingList['items']>>((acc, item) => {
-      acc[item.category] = acc[item.category] ? [...acc[item.category], item] : [item];
+      const key = resolveShoppingCategory(item.category);
+      acc[key] = acc[key] ? [...acc[key], item] : [item];
       return acc;
     }, {});
   }, [list]);
 
+  const orderedCategories = SHOPPING_CATEGORIES.map((schema) => ({
+    ...schema,
+    items: grouped[schema.key] ?? []
+  }));
+
+  const listMeta = useMemo(() => {
+    if (!list) return null;
+    const totalItems = list.items.length;
+    const checkedItems = list.items.filter((item) => item.checked).length;
+    const totalCategories = Object.values(grouped).filter((items) => items.length > 0).length;
+    return { totalItems, checkedItems, totalCategories };
+  }, [list, grouped]);
+
+  const handleQuantityStep = (item: ShoppingList['items'][number], delta: number) => {
+    if (!list) return;
+    const nextQuantity = Math.max(0, item.quantity + delta);
+    onQuantityChange(list.id, item.id, { quantity: nextQuantity });
+  };
+
   return (
     <div className="shopping-panel">
       <div className="shopping-header">
-        <select value={selectedListId ?? ''} onChange={(e) => onSelectList(e.target.value || null)}>
-          {shoppingLists.map((entry) => (
-            <option key={entry.id} value={entry.id}>List {entry.id.slice(0, 6)}</option>
-          ))}
-        </select>
+        <div>
+          <p className="shopping-plan-label">{planLabel ?? 'Select a meal plan to view its shopping list.'}</p>
+          {list && shoppingLists.length > 1 && (
+            <p className="shopping-list-details">
+              Showing list {shoppingLists.findIndex((entry) => entry.id === list.id) + 1} of {shoppingLists.length}
+            </p>
+          )}
+        </div>
         <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={onRefresh}>Refresh</button>
       </div>
-      {!list && <p className="calories-empty">No shopping list generated yet.</p>}
+      {!list && <p className="calories-empty">No shopping list generated for this plan yet.</p>}
       {list && (
-        <div className="shopping-categories">
-          {Object.entries(grouped).map(([category, items]) => (
-            <article key={category} className="shopping-category">
-              <h4>{category}</h4>
-              <ul>
-                {items.map((item) => (
-                  <li key={item.id}>
-                    <div>
-                      <input
-                        type="checkbox"
-                        checked={item.checked}
-                        onChange={(e) => onQuantityChange(list.id, item.id, { checked: e.target.checked })}
-                      />
-                      <span>{item.name}</span>
-                    </div>
-                    <div className="shopping-controls">
-                      <input
-                        type="number"
-                        value={Math.round(item.quantity)}
-                        onChange={(e) => onQuantityChange(list.id, item.id, { quantity: Number(e.target.value) })}
-                      />
-                      <span>{item.unit}</span>
-                      <button type="button" className="dashboard-hero-action dashboard-hero-action--ghost" onClick={() => onRemoveItem(list.id, item.id)}>×</button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
+        <>
+          <div className="shopping-meta">
+            <p><strong>{listMeta?.totalItems ?? 0}</strong> items</p>
+            <p><strong>{listMeta?.checkedItems ?? 0}</strong> checked</p>
+            <p><strong>{listMeta?.totalCategories ?? 0}</strong> categories</p>
+          </div>
+          <div className="shopping-categories">
+            {orderedCategories.map((category) => (
+              <article key={category.key} className="shopping-category">
+                <header>
+                  <span className="shopping-category-icon" aria-hidden>{category.icon}</span>
+                  <div>
+                    <h4>{category.label}</h4>
+                    <p>{category.items.length ? `${category.items.length} ingredient${category.items.length === 1 ? '' : 's'}` : 'No items'}</p>
+                  </div>
+                </header>
+                {category.items.length ? (
+                  <ul>
+                    {category.items.map((item) => (
+                      <li key={item.id}>
+                        {(() => {
+                          const checkboxId = `shopping-${list.id}-${item.id}`;
+                          return (
+                            <div className="shopping-item">
+                              <input
+                                id={checkboxId}
+                                type="checkbox"
+                                checked={item.checked}
+                                onChange={(e) => onQuantityChange(list.id, item.id, { checked: e.target.checked })}
+                              />
+                              <label className="shopping-item-name" htmlFor={checkboxId}>
+                                {item.name}
+                              </label>
+                            </div>
+                          );
+                        })()}
+                        <div className="shopping-controls">
+                          <button
+                            type="button"
+                            className="shopping-step"
+                            onClick={() => handleQuantityStep(item, -5)}
+                            aria-label={`Decrease ${item.name} quantity`}
+                          >
+                            –
+                          </button>
+                          <input
+                            type="number"
+                            value={Number(item.quantity.toFixed(0))}
+                            onChange={(e) =>
+                              onQuantityChange(list.id, item.id, { quantity: Number(e.target.value) })
+                            }
+                          />
+                          <button
+                            type="button"
+                            className="shopping-step"
+                            onClick={() => handleQuantityStep(item, 5)}
+                            aria-label={`Increase ${item.name} quantity`}
+                          >
+                            +
+                          </button>
+                          <span className="shopping-unit">{item.unit}</span>
+                          <button
+                            type="button"
+                            className="dashboard-hero-action dashboard-hero-action--ghost shopping-remove"
+                            onClick={() => onRemoveItem(list.id, item.id)}
+                            aria-label={`Remove ${item.name} from list`}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="shopping-empty-category">Nothing needed here.</p>
+                )}
+              </article>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

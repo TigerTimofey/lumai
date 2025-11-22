@@ -3,13 +3,20 @@ import type { RecipeDocument } from "../domain/types.js";
 
 const now = Timestamp.now();
 
-const createIngredient = (id: string, name: string, quantity: number, unit: "g" | "ml" = "g") => ({
+const createIngredient = (
+  id: string,
+  name: string,
+  quantity: number,
+  unit: "g" | "ml" = "g",
+  category: string = "pantry"
+) => ({
   id,
   name,
   quantity,
   unit,
   originalUnit: unit,
   originalQuantity: quantity,
+  category,
   nutrition: {
     calories: 0,
     protein: 0,
@@ -96,11 +103,11 @@ export const FALLBACK_RECIPES: RecipeDocument[] = [
     55,
     12,
     [
-      createIngredient("fallback-ing-1", "Rolled oats", 80),
-      createIngredient("fallback-ing-2", "Greek yogurt", 100),
-      createIngredient("fallback-ing-3", "Blueberries", 60),
-      createIngredient("fallback-ing-4", "Almond butter", 20),
-      createIngredient("fallback-ing-5", "Chia seeds", 10)
+      createIngredient("fallback-ing-1", "Rolled oats", 80, "g", "pantry"),
+      createIngredient("fallback-ing-2", "Greek yogurt", 100, "g", "dairy"),
+      createIngredient("fallback-ing-3", "Blueberries", 60, "g", "produce"),
+      createIngredient("fallback-ing-4", "Almond butter", 20, "g", "pantry"),
+      createIngredient("fallback-ing-5", "Chia seeds", 10, "g", "pantry")
     ],
     "Creamy oats layered with yogurt, berries, and healthy fats for a satiating start.",
     [
@@ -118,12 +125,12 @@ export const FALLBACK_RECIPES: RecipeDocument[] = [
     48,
     20,
     [
-      createIngredient("fallback-ing-6", "Cooked quinoa", 150),
-      createIngredient("fallback-ing-7", "Baby spinach", 60),
-      createIngredient("fallback-ing-8", "Cherry tomatoes", 80),
-      createIngredient("fallback-ing-9", "Chickpeas", 100),
-      createIngredient("fallback-ing-10", "Olive oil", 15),
-      createIngredient("fallback-ing-11", "Feta cheese", 30)
+      createIngredient("fallback-ing-6", "Cooked quinoa", 150, "g", "pantry"),
+      createIngredient("fallback-ing-7", "Baby spinach", 60, "g", "produce"),
+      createIngredient("fallback-ing-8", "Cherry tomatoes", 80, "g", "produce"),
+      createIngredient("fallback-ing-9", "Chickpeas", 100, "g", "proteins"),
+      createIngredient("fallback-ing-10", "Olive oil", 15, "g", "pantry"),
+      createIngredient("fallback-ing-11", "Feta cheese", 30, "g", "dairy")
     ],
     "Protein-packed quinoa bowl with greens, legumes, and a light dressing.",
     [
@@ -141,10 +148,10 @@ export const FALLBACK_RECIPES: RecipeDocument[] = [
     35,
     24,
     [
-      createIngredient("fallback-ing-12", "Grilled chicken breast", 150),
-      createIngredient("fallback-ing-13", "Roasted sweet potato", 180),
-      createIngredient("fallback-ing-14", "Steamed broccoli", 100),
-      createIngredient("fallback-ing-15", "Olive oil", 10)
+      createIngredient("fallback-ing-12", "Grilled chicken breast", 150, "g", "proteins"),
+      createIngredient("fallback-ing-13", "Roasted sweet potato", 180, "g", "produce"),
+      createIngredient("fallback-ing-14", "Steamed broccoli", 100, "g", "produce"),
+      createIngredient("fallback-ing-15", "Olive oil", 10, "g", "pantry")
     ],
     "Balanced dinner featuring grilled protein, complex carbs, and fiber-rich greens.",
     [
@@ -162,10 +169,10 @@ export const FALLBACK_RECIPES: RecipeDocument[] = [
     18,
     16,
     [
-      createIngredient("fallback-ing-16", "Whole grain rice cakes", 50),
-      createIngredient("fallback-ing-17", "Peanut butter", 30),
-      createIngredient("fallback-ing-18", "Sliced banana", 50),
-      createIngredient("fallback-ing-19", "Ground flaxseed", 5)
+      createIngredient("fallback-ing-16", "Whole grain rice cakes", 50, "g", "pantry"),
+      createIngredient("fallback-ing-17", "Peanut butter", 30, "g", "pantry"),
+      createIngredient("fallback-ing-18", "Sliced banana", 50, "g", "produce"),
+      createIngredient("fallback-ing-19", "Ground flaxseed", 5, "g", "pantry")
     ],
     "Crunchy rice cakes topped with nut butter, banana, and flax for a quick energy boost.",
     [

@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import type { ShoppingListDocument, ShoppingListItem } from "../domain/types.js";
+import type { RecipeDocument, ShoppingListDocument, ShoppingListItem } from "../domain/types.js";
 import {
   getMealPlan,
   saveShoppingList,
@@ -8,21 +8,10 @@ import {
   listShoppingLists as repoListShoppingLists
 } from "../repositories/calories.repo.js";
 import { listRecipesByIds } from "../repositories/nutrition.repo.js";
+import { FALLBACK_RECIPES } from "../data/fallback-recipes.js";
 import { notFound } from "../utils/api-error.js";
+import { resolveShoppingCategory } from "../utils/shopping-categories.js";
 
-const CATEGORY_MAP: Record<string, string> = {
-  meat: "Protein",
-  fish: "Protein",
-  dairy: "Dairy",
-  grain: "Grains",
-  vegetable: "Produce",
-  fruit: "Produce",
-  legume: "Pantry",
-  nuts: "Pantry",
-  oils: "Pantry",
-  spice: "Pantry",
-  sweetener: "Pantry"
-};
 
 export const generateShoppingList = async (userId: string, planId: string) => {
   const plan = await getMealPlan(userId, planId);
@@ -34,13 +23,19 @@ export const generateShoppingList = async (userId: string, planId: string) => {
         .filter((id): id is string => Boolean(id))
     )
   );
-  const recipes = await listRecipesByIds(recipeIds);
+  const persistedRecipes = await listRecipesByIds(recipeIds);
+  const fallbackRecipeMap = new Map(FALLBACK_RECIPES.map((recipe) => [recipe.id, recipe]));
+  const fallbackRecipes = recipeIds
+    .filter((id) => !persistedRecipes.some((recipe) => recipe.id === id))
+    .map((id) => fallbackRecipeMap.get(id))
+    .filter((recipe): recipe is RecipeDocument => Boolean(recipe));
+  const recipes = [...persistedRecipes, ...fallbackRecipes];
   const itemsMap = new Map<string, ShoppingListItem>();
 
   recipes.forEach((recipe) => {
     recipe.ingredients.forEach((ingredient) => {
       const key = ingredient.id;
-      const category = CATEGORY_MAP[ingredient.category as keyof typeof CATEGORY_MAP] ?? "Other";
+      const category = resolveShoppingCategory(ingredient.category, ingredient.name);
       const existing = itemsMap.get(key);
       if (existing) {
         existing.quantity += ingredient.quantity;

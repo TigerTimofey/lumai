@@ -68,8 +68,15 @@ export const getRecipeById = async (recipeId: string) => {
 
 export const listRecipesByIds = async (ids: string[]) => {
   if (ids.length === 0) return [];
-  const snapshots = await recipeCollection().where("id", "in", ids).get();
-  return snapshots.docs.map((doc) => doc.data() as RecipeDocument);
+  const chunkSize = 10;
+  const chunks: string[][] = [];
+  for (let index = 0; index < ids.length; index += chunkSize) {
+    chunks.push(ids.slice(index, index + chunkSize));
+  }
+  const snapshots = await Promise.all(
+    chunks.map((chunk) => recipeCollection().where("id", "in", chunk).get())
+  );
+  return snapshots.flatMap((snapshot) => snapshot.docs.map((doc) => doc.data() as RecipeDocument));
 };
 
 export const listRecipeEmbeddings = async () => {
