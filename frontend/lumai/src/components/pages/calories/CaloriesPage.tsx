@@ -470,7 +470,25 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     ];
   }, [analysis]);
 
-  const riskAdvice = useMemo(() => analysis?.risks ?? [], [analysis]);
+  const riskAdvice = useMemo(() => {
+    if (analysis?.risks?.length) return analysis.risks;
+    if (!latestSnapshot || !preferences) return [];
+    const items: string[] = [];
+    const calorieDelta = latestSnapshot.goalComparison.calorieDelta;
+    if (calorieDelta > 200) {
+      items.push(`You exceeded calorie target by ${Math.round(calorieDelta)} kcal. Focus on lighter dinners.`);
+    } else if (calorieDelta < -200) {
+      items.push(`You were ${Math.abs(Math.round(calorieDelta))} kcal under target. Consider adding a snack.`);
+    }
+    (['protein', 'carbs', 'fats'] as const).forEach((macro) => {
+      const actual = latestSnapshot.totals[macro];
+      const target = preferences.macronutrientTargets[macro];
+      if (actual < target * 0.8) {
+        items.push(`Low ${macro}: ${Math.round(actual)}g vs ${target}g target.`);
+      }
+    });
+    return items;
+  }, [analysis, latestSnapshot, preferences]);
 
   const flattenedMeals = useMemo(() => {
     if (!selectedPlan) return [];
@@ -974,29 +992,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                 </article>
               </div>
             )}
-          </section>
-
-          <section className="calories-shopping">
-            <header className="section-header">
-              <div>
-                <p className="calories-section-label">Shopping lists</p>
-                <h2>Plan groceries by meal plan</h2>
-              </div>
-            <button type="button" className="dashboard-hero-action" onClick={handleGenerateShoppingList} disabled={!selectedPlanId || shoppingLoading}>
-              Generate from plan
-            </button>
-            </header>
-            <ShoppingListPanel
-              shoppingLists={planShoppingLists}
-              selectedListId={selectedListId}
-              planLabel={planLabel}
-              onRefresh={fetchShoppingListsData}
-              onQuantityChange={handleUpdateListItem}
-              onRemoveItem={handleRemoveListItem}
-            />
-          </section>
-
-          <section className="calories-history">
+                 <section className="calories-history">
             <header className="section-header">
               <div>
                 <p className="calories-section-label">Historical insights</p>
@@ -1043,6 +1039,75 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
               <p className="calories-empty">No historical snapshots yet.</p>
             )}
           </section>
+          </section>
+
+          <section className="calories-shopping">
+            <header className="section-header">
+              <div>
+                <p className="calories-section-label">Shopping lists</p>
+                <h2>Plan groceries by meal plan</h2>
+              </div>
+            <button type="button" className="dashboard-hero-action" onClick={handleGenerateShoppingList} disabled={!selectedPlanId || shoppingLoading}>
+              Generate from plan
+            </button>
+            </header>
+            <ShoppingListPanel
+              shoppingLists={planShoppingLists}
+              selectedListId={selectedListId}
+              planLabel={planLabel}
+              onRefresh={fetchShoppingListsData}
+              onQuantityChange={handleUpdateListItem}
+              onRemoveItem={handleRemoveListItem}
+            />
+          </section>
+
+          {/* <section className="calories-history">
+            <header className="section-header">
+              <div>
+                <p className="calories-section-label">Historical insights</p>
+                <h2>Track deficit/surplus over time</h2>
+              </div>
+            </header>
+            {historyChart ? (
+              <div className="history-grid">
+                <div className="history-card">
+                  <h3>Calorie trend</h3>
+                  <Line data={historyChart.planLine} />
+                </div>
+                <div className="history-card">
+                  <h3>Macro totals</h3>
+                  <Bar
+                    data={{
+                        labels: ['Protein', 'Carbs', 'Fats'],
+                        datasets: [
+                          {
+                            label: 'Actual',
+                            data: [
+                            latestSnapshot?.totals.protein ?? 0,
+                            latestSnapshot?.totals.carbs ?? 0,
+                            latestSnapshot?.totals.fats ?? 0
+                          ],
+                          backgroundColor: 'rgba(59, 130, 246, 0.6)'
+                        },
+                        {
+                          label: 'Target',
+                          data: [
+                            preferences?.macronutrientTargets.protein ?? 0,
+                            preferences?.macronutrientTargets.carbs ?? 0,
+                            preferences?.macronutrientTargets.fats ?? 0
+                          ],
+                          backgroundColor: 'rgba(203, 213, 225, 0.7)'
+                        }
+                      ]
+                    }}
+                    options={{ responsive: true, plugins: { legend: { position: 'bottom' } } }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="calories-empty">No historical snapshots yet.</p>
+            )}
+          </section> */}
         </main>
       </div>
       {recipeModal.open && recipeModal.recipe && (
@@ -1471,60 +1536,60 @@ const ShoppingListPanel: React.FC<ShoppingListPanelProps> = ({
                 </header>
                 {category.items.length ? (
                   <ul>
-                    {category.items.map((item) => (
-                      <li key={item.id}>
-                        {(() => {
-                          const checkboxId = `shopping-${list.id}-${item.id}`;
-                          return (
-                            <div className="shopping-item">
+                    {category.items.map((item) => {
+                      const checkboxId = `shopping-${list.id}-${item.id}`;
+                      return (
+                        <li key={item.id} className="shopping-row">
+                          <div className="shopping-item">
+                            <input
+                              id={checkboxId}
+                              type="checkbox"
+                              checked={item.checked}
+                              onChange={(e) => onQuantityChange(list.id, item.id, { checked: e.target.checked })}
+                            />
+                            <label className="shopping-item-name" htmlFor={checkboxId}>
+                              {item.name}
+                            </label>
+                          </div>
+                          <div className="shopping-controls">
+                            <div className="shopping-stepper">
+                              <button
+                                type="button"
+                                className="shopping-step"
+                                onClick={() => handleQuantityStep(item, -5)}
+                                aria-label={`Decrease ${item.name} quantity`}
+                              >
+                                –
+                              </button>
                               <input
-                                id={checkboxId}
-                                type="checkbox"
-                                checked={item.checked}
-                                onChange={(e) => onQuantityChange(list.id, item.id, { checked: e.target.checked })}
+                                type="number"
+                                value={Number(item.quantity.toFixed(0))}
+                                onChange={(e) =>
+                                  onQuantityChange(list.id, item.id, { quantity: Number(e.target.value) })
+                                }
                               />
-                              <label className="shopping-item-name" htmlFor={checkboxId}>
-                                {item.name}
-                              </label>
+                              <button
+                                type="button"
+                                className="shopping-step"
+                                onClick={() => handleQuantityStep(item, 5)}
+                                aria-label={`Increase ${item.name} quantity`}
+                              >
+                                +
+                              </button>
+                              <span className="shopping-unit">{item.unit}</span>
                             </div>
-                          );
-                        })()}
-                        <div className="shopping-controls">
-                          <button
-                            type="button"
-                            className="shopping-step"
-                            onClick={() => handleQuantityStep(item, -5)}
-                            aria-label={`Decrease ${item.name} quantity`}
-                          >
-                            –
-                          </button>
-                          <input
-                            type="number"
-                            value={Number(item.quantity.toFixed(0))}
-                            onChange={(e) =>
-                              onQuantityChange(list.id, item.id, { quantity: Number(e.target.value) })
-                            }
-                          />
-                          <button
-                            type="button"
-                            className="shopping-step"
-                            onClick={() => handleQuantityStep(item, 5)}
-                            aria-label={`Increase ${item.name} quantity`}
-                          >
-                            +
-                          </button>
-                          <span className="shopping-unit">{item.unit}</span>
-                          <button
-                            type="button"
-                            className="dashboard-hero-action dashboard-hero-action--ghost shopping-remove"
-                            onClick={() => onRemoveItem(list.id, item.id)}
-                            aria-label={`Remove ${item.name} from list`}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      </li>
-                    ))}
+                            <button
+                              type="button"
+                              className="dashboard-hero-action dashboard-hero-action--ghost shopping-remove"
+                              onClick={() => onRemoveItem(list.id, item.id)}
+                              aria-label={`Remove ${item.name} from list`}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <p className="shopping-empty-category">Nothing needed here.</p>
