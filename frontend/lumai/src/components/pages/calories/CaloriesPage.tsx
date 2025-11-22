@@ -253,10 +253,67 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     };
   }, []);
 
+  const latestSnapshot = snapshot ?? snapshots[0] ?? null;
+
+  const totalMealsScheduled = useMemo(
+    () =>
+      mealPlans.reduce(
+        (sum, plan) => sum + plan.days.reduce((count, day) => count + day.meals.length, 0),
+        0
+      ),
+    [mealPlans]
+  );
+
+  const microCoverage = useMemo(() => {
+    if (!preferences || !latestSnapshot) return null;
+    const keys: Array<keyof NutritionSnapshot['totals']> = ['vitaminD', 'vitaminB12', 'iron', 'magnesium'];
+    const achieved = keys.filter((key) => {
+      const target = preferences.micronutrientTargets?.[key] ?? 0;
+      if (!target) return false;
+      return (latestSnapshot.totals[key] ?? 0) >= target * 0.8;
+    }).length;
+    return { achieved, total: keys.length };
+  }, [preferences, latestSnapshot]);
+
   const planShoppingLists = useMemo(() => {
     if (!selectedPlanId) return [];
     return shoppingLists.filter((list) => list.mealPlanId === selectedPlanId);
   }, [shoppingLists, selectedPlanId]);
+
+  const featureHighlights = useMemo(() => {
+    const latestPlan = mealPlans[0];
+    const planRange = latestPlan
+      ? `${formatDate(latestPlan.startDate, latestPlan.timezone)} – ${formatDate(latestPlan.endDate, latestPlan.timezone)}`
+      : null;
+    const recipeSummary = `${stats.recipes.toLocaleString()} curated recipes using ${stats.ingredients.toLocaleString()} unique ingredients`;
+    const shoppingSummary =
+      planShoppingLists.length > 0
+        ? `${planShoppingLists.length} shopping list${planShoppingLists.length > 1 ? 's' : ''} for this plan`
+        : 'Generate a list from your current plan to organize your groceries.';
+    const microSummary = microCoverage
+      ? `${microCoverage.achieved} of ${microCoverage.total} micronutrient targets met this week`
+      : 'Track vitamins & minerals alongside your macros.';
+    return [
+      {
+        title: 'AI meal plans',
+        description: latestPlan
+          ? `${mealPlans.length} plans scheduled (${planRange}), covering ${totalMealsScheduled} meals.`
+          : 'Generate a weekly plan tailored to your goals, dietary rules, and timezone.'
+      },
+      {
+        title: 'RAG-powered recipes',
+        description: recipeSummary
+      },
+      {
+        title: 'Shopping lists',
+        description: shoppingSummary
+      },
+      {
+        title: 'Micronutrient tracking',
+        description: microSummary
+      }
+    ];
+  }, [mealPlans, stats, planShoppingLists.length, microCoverage, totalMealsScheduled]);
 
   useEffect(() => {
     if (!selectedPlanId) {
@@ -329,8 +386,6 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     window.history.pushState({}, '', '/nutrition');
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
-
-  const latestSnapshot = snapshot ?? snapshots[0] ?? null;
 
   const calorieProgress = useMemo(() => {
     if (!preferences || !latestSnapshot) return 0;
@@ -709,22 +764,12 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
           </section>
 
           <section className="calories-features" aria-label="Nutrition features overview">
-            <article className="calories-card">
-              <h2>AI meal plans</h2>
-              <p>Daily & weekly plans tuned to your goals, dietary rules, and timezone.</p>
-            </article>
-            <article className="calories-card">
-              <h2>RAG-powered recipes</h2>
-              <p>Retrieval-augmented generation keeps every recipe grounded in real nutritional data.</p>
-            </article>
-            <article className="calories-card">
-              <h2>Shopping lists</h2>
-              <p>Automatic ingredient grouping with quantities, categories, and quick adjustments.</p>
-            </article>
-            <article className="calories-card">
-              <h2>Micronutrient tracking</h2>
-              <p>Monitor vitamins & minerals alongside macros for a complete health snapshot.</p>
-            </article>
+            {featureHighlights.map((card) => (
+              <article key={card.title} className="calories-card">
+                <h2>{card.title}</h2>
+                <p>{card.description}</p>
+              </article>
+            ))}
           </section>
 
           <section className="calories-metrics">
