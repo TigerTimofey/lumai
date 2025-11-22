@@ -632,9 +632,6 @@
   gap: 6px;
 }
 
-.shopping-item input[type="checkbox"] {
-}
-
 .shopping-item-name {
   font-weight: 600;
   cursor: pointer;

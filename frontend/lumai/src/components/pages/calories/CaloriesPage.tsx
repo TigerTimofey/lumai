@@ -864,23 +864,22 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                 <h2>Create and manage meal plans</h2>
               </div>
               <div className="planner-actions">
-                {!selectedPlanId ? (
-                  <button
-                    type="button"
-                    className="dashboard-hero-action"
-                    onClick={handleGeneratePlan}
-                    disabled={plannerLoading}
-                  >
-                    Generate weekly plan
-                  </button>
-                ) : (
+                <button
+                  type="button"
+                  className="dashboard-hero-action"
+                  onClick={handleGeneratePlan}
+                  disabled={plannerLoading}
+                >
+                  Generate weekly plan
+                </button>
+                {selectedPlanId && (
                   <button
                     type="button"
                     className="dashboard-hero-action"
                     onClick={() => handleRegeneratePlan(selectedPlanId)}
                     disabled={plannerLoading}
                   >
-                    Regenerate plan
+                    Regenerate selected plan
                   </button>
                 )}
               </div>
