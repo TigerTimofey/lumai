@@ -22,7 +22,9 @@ import {
 import {
   generateShoppingList,
   updateShoppingListItem,
-  removeShoppingListItem
+  removeShoppingListItem,
+  listShoppingLists,
+  getShoppingList
 } from "../services/shopping-list.service.js";
 import { createSnapshotFromPlan, getSnapshots } from "../services/nutrition-snapshot.service.js";
 import { badRequest, notFound } from "../utils/api-error.js";
@@ -174,6 +176,29 @@ router.post("/shopping-lists", async (req, res, next) => {
     if (!mealPlanId) throw badRequest("mealPlanId is required");
     const list = await generateShoppingList(userId, mealPlanId);
     return res.status(201).json(list);
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get("/shopping-lists", async (req, res, next) => {
+  try {
+    const userId = req.authToken?.uid;
+    if (!userId) throw badRequest("Missing user context");
+    const lists = await listShoppingLists(userId, Number(req.query.limit) || 5);
+    return res.json({ lists });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get("/shopping-lists/:listId", async (req, res, next) => {
+  try {
+    const userId = req.authToken?.uid;
+    if (!userId) throw badRequest("Missing user context");
+    const list = await getShoppingList(userId, req.params.listId);
+    if (!list) throw notFound("Shopping list not found");
+    return res.json(list);
   } catch (error) {
     return next(error);
   }

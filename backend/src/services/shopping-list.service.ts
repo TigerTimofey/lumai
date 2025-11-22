@@ -4,9 +4,11 @@ import {
   getMealPlan,
   saveShoppingList,
   updateShoppingList,
-  getShoppingList
+  getShoppingList as repoGetShoppingList,
+  listShoppingLists as repoListShoppingLists
 } from "../repositories/calories.repo.js";
 import { listRecipesByIds } from "../repositories/nutrition.repo.js";
+import { notFound } from "../utils/api-error.js";
 
 const CATEGORY_MAP: Record<string, string> = {
   meat: "Protein",
@@ -24,7 +26,7 @@ const CATEGORY_MAP: Record<string, string> = {
 
 export const generateShoppingList = async (userId: string, planId: string) => {
   const plan = await getMealPlan(userId, planId);
-  if (!plan) throw new Error("Meal plan not found");
+  if (!plan) throw notFound("Meal plan not found");
   const recipeIds = Array.from(
     new Set(
       plan.days
@@ -64,7 +66,7 @@ export const generateShoppingList = async (userId: string, planId: string) => {
   };
 
   await saveShoppingList(userId, list);
-  return getShoppingList(userId, list.id);
+  return repoGetShoppingList(userId, list.id);
 };
 
 export const updateShoppingListItem = async (
@@ -73,17 +75,21 @@ export const updateShoppingListItem = async (
   itemId: string,
   updates: Partial<ShoppingListItem>
 ) => {
-  const list = await getShoppingList(userId, listId);
-  if (!list) throw new Error("Shopping list not found");
+  const list = await repoGetShoppingList(userId, listId);
+  if (!list) throw notFound("Shopping list not found");
   list.items = list.items.map((item) => (item.id === itemId ? { ...item, ...updates } : item));
   await updateShoppingList(userId, listId, { items: list.items });
-  return getShoppingList(userId, listId);
+  return repoGetShoppingList(userId, listId);
 };
 
 export const removeShoppingListItem = async (userId: string, listId: string, itemId: string) => {
-  const list = await getShoppingList(userId, listId);
-  if (!list) throw new Error("Shopping list not found");
+  const list = await repoGetShoppingList(userId, listId);
+  if (!list) throw notFound("Shopping list not found");
   list.items = list.items.filter((item) => item.id !== itemId);
   await updateShoppingList(userId, listId, { items: list.items });
-  return getShoppingList(userId, listId);
+  return repoGetShoppingList(userId, listId);
 };
+
+export const listShoppingLists = (userId: string, limit = 5) => repoListShoppingLists(userId, limit);
+
+export const getShoppingList = (userId: string, listId: string) => repoGetShoppingList(userId, listId);

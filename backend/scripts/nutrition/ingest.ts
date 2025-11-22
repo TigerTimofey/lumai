@@ -135,7 +135,9 @@ const resolveCategory = (category: string) => {
   return "vegetable";
 };
 
-const determineSustainability = (category: string) => {
+const determineSustainability = (
+  category: string
+): { carbonFootprint: "low" | "medium" | "high"; waterUsage: "low" | "medium" | "high" } => {
   switch (category) {
     case "meat":
     case "dairy":
@@ -200,7 +202,7 @@ const main = async () => {
     }
   >();
 
-  const db = initializeFirebase();
+  const db = initializeFirebase(); 
 
   for (const ingredient of ingredientsRaw) {
     const category = resolveCategory(ingredient.category);

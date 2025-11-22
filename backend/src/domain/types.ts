@@ -216,6 +216,11 @@ export interface RecipeDocument {
   cookTimeMin: number;
   instructions: string;
   summary: string;
+  preparation?: Array<{
+    step: string;
+    description: string;
+    ingredients: string[];
+  }>;
   dietaryTags: string[];
   allergenTags: string[];
   ingredients: RecipeIngredient[];

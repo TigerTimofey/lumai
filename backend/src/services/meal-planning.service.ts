@@ -3,7 +3,8 @@ import { Timestamp } from "firebase-admin/firestore";
 import type {
   MealPlanDocument,
   MealPlanMeal,
-  NutritionPreferencesDocument
+  NutritionPreferencesDocument,
+  RecipeDocument
 } from "../domain/types.js";
 import {
   createMealPlan,
@@ -15,6 +16,8 @@ import { fetchNutritionPreferences } from "./nutrition-preferences.service.js";
 import { searchRecipes } from "./nutrition-rag.service.js";
 import { calculateNutritionForRecipe } from "./nutrition-functions.service.js";
 import { orchestrateMealPlan } from "./meal-planning-orchestrator.service.js";
+import { FALLBACK_RECIPES } from "../data/fallback-recipes.js";
+import { badRequest, notFound, serviceUnavailable } from "../utils/api-error.js";
 
 interface GeneratePlanOptions {
   duration: "daily" | "weekly";
@@ -23,7 +26,12 @@ interface GeneratePlanOptions {
 
 const DEFAULT_MEAL_TYPES = ["breakfast", "lunch", "dinner"];
 
-const buildMealPlanDocument = async (userId: string, options: GeneratePlanOptions, planId = randomUUID(), versionOverride?: number) => {
+const buildMealPlanDocument = async (
+  userId: string,
+  options: GeneratePlanOptions,
+  planId: string = randomUUID(),
+  versionOverride?: number
+) => {
   const preferences = await fetchNutritionPreferences(userId);
   const version = versionOverride ?? Date.now();
 
@@ -34,18 +42,28 @@ const buildMealPlanDocument = async (userId: string, options: GeneratePlanOption
     console.warn("[meal-planning] AI orchestrator failed, using fallback", error);
   }
 
-  let fallbackRecipes: Awaited<ReturnType<typeof searchRecipes>> | null = null;
+  let fallbackRecipes: RecipeDocument[] = [];
   if (!aiPlan) {
-    fallbackRecipes = await searchRecipes({
+    const searchResults = await searchRecipes({
       query: "balanced nutrition plan",
       dietaryTags: preferences.dietaryPreferences,
       excludeAllergens: preferences.allergies,
       cuisine: preferences.cuisinePreferences,
       limit: 30
     });
+    fallbackRecipes = searchResults.map((entry) => entry.recipe);
+    if (!fallbackRecipes.length) {
+      fallbackRecipes = FALLBACK_RECIPES;
+    }
   }
 
-  const days = aiPlan?.days ?? buildFallbackDays(options, preferences, (fallbackRecipes ?? []).map((entry) => entry.recipe));
+  const fallbackRecipeDocs = fallbackRecipes.length ? fallbackRecipes : FALLBACK_RECIPES;
+
+  const days = aiPlan?.days ?? buildFallbackDays(options, preferences, fallbackRecipeDocs);
+
+  if (!days.length) {
+    throw serviceUnavailable("Failed to build meal plan days");
+  }
 
   return {
     id: planId,
@@ -60,7 +78,7 @@ const buildMealPlanDocument = async (userId: string, options: GeneratePlanOption
     analysis: aiPlan?.analysis,
     ragReferences:
       aiPlan?.ragReferences ??
-      (fallbackRecipes ?? []).slice(0, 5).map((entry) => entry.recipe.id),
+      fallbackRecipeDocs.slice(0, 5).map((recipe) => recipe.id),
     days,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now()
@@ -70,7 +88,7 @@ const buildMealPlanDocument = async (userId: string, options: GeneratePlanOption
 const buildFallbackDays = (
   options: GeneratePlanOptions,
   preferences: NutritionPreferencesDocument,
-  recipes: Array<Awaited<ReturnType<typeof searchRecipes>>[number]["recipe"]>
+  recipes: RecipeDocument[]
 ) => {
   const daysCount = options.duration === "weekly" ? 7 : 1;
   return Array.from({ length: daysCount }).map((_, index) => {
@@ -94,7 +112,7 @@ export const listUserMealPlans = (userId: string, limit = 5) => listMealPlans(us
 export const regenerateMealPlan = async (userId: string, planId: string) => {
   const existing = await getMealPlan(userId, planId);
   if (!existing) {
-    throw new Error("Meal plan not found");
+    throw notFound("Meal plan not found");
   }
   const regenerated = await buildMealPlanDocument(userId, {
     duration: existing.duration,
@@ -110,7 +128,7 @@ export const regenerateMealPlan = async (userId: string, planId: string) => {
 
 export const regenerateMeal = async (userId: string, planId: string, date: string, mealId: string) => {
   const plan = await getMealPlan(userId, planId);
-  if (!plan) throw new Error("Meal plan not found");
+  if (!plan) throw notFound("Meal plan not found");
   const preferences = await fetchNutritionPreferences(userId);
   const ragResults = await searchRecipes({
     query: "healthy meal substitution",
@@ -120,11 +138,11 @@ export const regenerateMeal = async (userId: string, planId: string, date: strin
     limit: 5
   });
   const day = plan.days.find((entry) => entry.date === date);
-  if (!day) throw new Error("Day not found");
+  if (!day) throw badRequest("Day not found in plan");
   const mealIndex = day.meals.findIndex((meal) => meal.id === mealId);
-  if (mealIndex === -1) throw new Error("Meal not found");
-  const replacementRecipe = ragResults[0]?.recipe;
-  if (!replacementRecipe) throw new Error("No alternative found");
+  if (mealIndex === -1) throw badRequest("Meal not found");
+  const replacementRecipe = ragResults[0]?.recipe ?? FALLBACK_RECIPES[0];
+  if (!replacementRecipe) throw serviceUnavailable("Unable to find alternative recipe");
   const nutrition = calculateNutritionForRecipe(replacementRecipe, replacementRecipe.servings);
   day.meals[mealIndex] = {
     ...day.meals[mealIndex],
@@ -148,13 +166,13 @@ export const regenerateMeal = async (userId: string, planId: string, date: strin
 
 export const swapMeals = async (userId: string, planId: string, sourceDate: string, sourceMealId: string, targetDate: string, targetMealId: string) => {
   const plan = await getMealPlan(userId, planId);
-  if (!plan) throw new Error("Meal plan not found");
+  if (!plan) throw notFound("Meal plan not found");
   const sourceDay = plan.days.find((entry) => entry.date === sourceDate);
   const targetDay = plan.days.find((entry) => entry.date === targetDate);
-  if (!sourceDay || !targetDay) throw new Error("Day not found");
+  if (!sourceDay || !targetDay) throw badRequest("Day not found in selected plan");
   const sourceIndex = sourceDay.meals.findIndex((meal) => meal.id === sourceMealId);
   const targetIndex = targetDay.meals.findIndex((meal) => meal.id === targetMealId);
-  if (sourceIndex === -1 || targetIndex === -1) throw new Error("Meal not found");
+  if (sourceIndex === -1 || targetIndex === -1) throw badRequest("Meal not found");
   const temp = sourceDay.meals[sourceIndex];
   sourceDay.meals[sourceIndex] = targetDay.meals[targetIndex];
   targetDay.meals[targetIndex] = temp;
@@ -169,9 +187,9 @@ export const addManualMeal = async (
   payload: Pick<MealPlanMeal, "title" | "type" | "scheduledAt" | "macros" | "micronutrients">
 ) => {
   const plan = await getMealPlan(userId, planId);
-  if (!plan) throw new Error("Meal plan not found");
+  if (!plan) throw notFound("Meal plan not found");
   const day = plan.days.find((entry) => entry.date === date);
-  if (!day) throw new Error("Day not found");
+  if (!day) throw badRequest("Selected date is outside of the meal plan range");
   day.meals.push({
     id: randomUUID(),
     recipeId: undefined,
@@ -194,7 +212,10 @@ export const generateMealAlternatives = async (userId: string, query: string) =>
   return results.map((entry) => entry.recipe);
 };
 
-const buildMealsForDay = (date: Date, preferences: NutritionPreferencesDocument, recipes: Array<Awaited<ReturnType<typeof searchRecipes>>[number]["recipe"]>) => {
+const buildMealsForDay = (date: Date, preferences: NutritionPreferencesDocument, recipes: RecipeDocument[]) => {
+  if (!recipes.length) {
+    return [];
+  }
   const mealTypes =
     preferences.mealsPerDay > DEFAULT_MEAL_TYPES.length
       ? [...DEFAULT_MEAL_TYPES, "snack"]

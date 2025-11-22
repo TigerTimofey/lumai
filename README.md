@@ -132,6 +132,19 @@ Open http://localhost:5173 in your browser. Authentication, dashboards, analytic
 
 ---
 
+## 6.1 Frontend Experience Checklist
+
+- [x] **5.1 Dashboard enhancements** – Calorie/macro progress bars, micronutrient radar, highlight cards, and AI advice blocks surface live data from `/nutrition/preferences`, `/nutrition/snapshots`, and the latest meal-plan analysis.
+- [x] **5.2 Meal planner UI** – Preferences form, weekly calendar view, meal cards with swap/regeneration/manual-add controls, and a recipe modal (steps, nutrients, substitutions, portion scaling) built atop `/nutrition/meal-plans`.
+- [x] **5.3 Shopping list UI** – Category grouping, quantity inputs, and removal toggles synced with `/nutrition/shopping-lists`.
+- [x] **5.4 Historical analytics** – Daily deficit/surplus, macro/micro comparisons, and trend lines rendered from `/nutrition/snapshots`.
+- [x] **5.5 Timezone & ISO-8601 support** – Planner and snapshots respect the user’s timezone while storing ISO timestamps; SessionContext resets timers when nutrition routes are hit.
+- [x] **5.6 Design system alignment** – All new components reuse dashboard shells, button styles, typography, and spacing conventions for a consistent look.
+
+> When a weekly plan is generated, the `/nutrition` calendar immediately renders each day’s meals (with times, macros, and actions). Users can edit the generated plan via swap/regenerate/manual-add, so the AI-produced baseline is always readable and modifiable.
+
+---
+
 ## 7. Testing & Manual Verification
 
 Automated tests are minimal today, so rely on manual verification:

@@ -12,5 +12,8 @@ const app = getApps()[0]
       projectId: env.FIREBASE_PROJECT_ID
     });
 
+const db = getFirestore(app);
+db.settings({ ignoreUndefinedProperties: true });
+
 export const firebaseAuth = () => getAuth(app);
-export const firestore = () => getFirestore(app);
+export const firestore = () => db;

@@ -2,6 +2,7 @@ import { firestore } from "../config/firebase.js";
 import type { RecipeDocument } from "../domain/types.js";
 import { listRecipeEmbeddings, listRecipeReviews, addRecipeReview } from "../repositories/nutrition.repo.js";
 import { cosineSimilarity, generateEmbedding } from "../utils/embedding.js";
+import { FALLBACK_RECIPES } from "../data/fallback-recipes.js";
 
 type MacroRange = {
   min?: number;
@@ -94,14 +95,26 @@ export const searchRecipes = async (filters: RecipeSearchFilters) => {
     })
   );
 
-  return (scored.filter(Boolean) as Array<{ recipe: RecipeDocument; similarity: number; score: number }>)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
+  let ranked = (scored.filter(Boolean) as Array<{ recipe: RecipeDocument; similarity: number; score: number }>);
+
+  if (!ranked.length) {
+    const fallbackMatches = FALLBACK_RECIPES.filter((recipe) => matchesFilters(recipe, filters));
+    ranked = fallbackMatches.map((recipe, index) => ({
+      recipe,
+      similarity: 0.4 - index * 0.01,
+      score: 0.4 - index * 0.01
+    }));
+  }
+
+  return ranked.sort((a, b) => b.score - a.score).slice(0, limit);
 };
 
 export const getRecipe = async (recipeId: string) => {
   const snapshot = await firestore().collection("recipes_master").doc(recipeId).get();
-  return snapshot.exists ? (snapshot.data() as RecipeDocument) : null;
+  if (snapshot.exists) {
+    return snapshot.data() as RecipeDocument;
+  }
+  return FALLBACK_RECIPES.find((recipe) => recipe.id === recipeId) ?? null;
 };
 
 export const listReviews = async (recipeId: string, limit = 20) => {

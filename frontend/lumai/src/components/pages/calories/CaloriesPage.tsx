@@ -1,10 +1,35 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { User } from 'firebase/auth';
-
+import {
+  Chart as ChartJS,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement
+} from 'chart.js';
+import { Radar, Line, Bar } from 'react-chartjs-2';
 import SideNav from '../../navigation/SideNav';
 import UserSettingBar from '../dashboard/user-settings/userSettingBar';
 import './CaloriesPage.css';
 import recipesData from './receipts/recipes_with_ingredients.json';
+import { apiFetch } from '../../../utils/api';
+
+ChartJS.register(
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement
+);
 
 type RecipeFromJson = {
   recipe_id: number | string;
@@ -20,8 +45,154 @@ type RecipeFromJson = {
 
 const typedRecipes = recipesData as RecipeFromJson[];
 
+type NutritionPreferences = {
+  timezone: string;
+  dietaryPreferences: string[];
+  allergies: string[];
+  dislikedIngredients: string[];
+  calorieTarget: number;
+  macronutrientTargets: {
+    protein: number;
+    carbs: number;
+    fats: number;
+  };
+  micronutrientTargets?: Record<string, number>;
+  mealsPerDay: number;
+};
+
+type PreferencesUpdatePayload = Partial<Omit<NutritionPreferences, 'dietaryPreferences' | 'allergies' | 'dislikedIngredients'>> & {
+  dietaryPreferences?: string[];
+  allergies?: string[];
+  dislikedIngredients?: string[];
+};
+
+type NutritionSnapshot = {
+  date: string;
+  totals: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+    fiber?: number;
+    vitaminD?: number;
+    vitaminB12?: number;
+    iron?: number;
+    magnesium?: number;
+  };
+  goalComparison: {
+    calorieDelta: number;
+    proteinDelta: number;
+    carbsDelta: number;
+    fatsDelta: number;
+  };
+  wellnessImpactScore: number;
+};
+
+type MealPlanAnalysis = {
+  highlights?: string[];
+  risks?: string[];
+  suggestions?: string[];
+};
+
+type MealPlan = {
+  id: string;
+  duration: 'daily' | 'weekly';
+  startDate: string;
+  endDate: string;
+  timezone: string;
+  strategySummary: string;
+  analysis?: MealPlanAnalysis;
+  days: {
+    date: string;
+    meals: MealPlanMeal[];
+  }[];
+};
+
+type MealPlanMeal = {
+  id: string;
+  type: string;
+  title?: string;
+  recipeId?: string;
+  servings: number;
+  scheduledAt: string;
+  macros: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+  };
+  micronutrients?: Record<string, number>;
+};
+
+type ShoppingList = {
+  id: string;
+  mealPlanId: string;
+  items: Array<{
+    id: string;
+    ingredientId: string;
+    name: string;
+    quantity: number;
+    unit: string;
+    category: string;
+    checked: boolean;
+  }>;
+};
+
+type RecipeDetail = {
+  id: string;
+  title: string;
+  cuisine: string;
+  summary: string;
+  ingredients: Array<{ id: string; name: string; quantity: number; unit: string; originalUnit?: string; originalQuantity?: number }>;
+  preparation: Array<{ step: string; description: string; ingredients: string[] }>;
+  instructions: string;
+  servings: number;
+  macrosPerServing: { calories: number; protein: number; carbs: number; fats: number; fiber?: number };
+};
+
+type ManualMealForm = {
+  title: string;
+  type: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+};
+
+const createManualMealForm = (): ManualMealForm => ({
+  title: '',
+  type: 'snack',
+  calories: 200,
+  protein: 10,
+  carbs: 20,
+  fats: 8
+});
+
 const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   const displayName = user.displayName ?? user.email ?? 'friend';
+  const [preferences, setPreferences] = useState<NutritionPreferences | null>(null);
+  const [snapshot, setSnapshot] = useState<NutritionSnapshot | null>(null);
+  const [snapshots, setSnapshots] = useState<NutritionSnapshot[]>([]);
+  const [analysis, setAnalysis] = useState<MealPlanAnalysis | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [plannerLoading, setPlannerLoading] = useState(false);
+  const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>([]);
+  const [selectedListId, setSelectedListId] = useState<string | null>(null);
+  const [shoppingLoading, setShoppingLoading] = useState(false);
+  const [recipeModal, setRecipeModal] = useState<{ open: boolean; recipe: RecipeDetail | null; servings: number }>({
+    open: false,
+    recipe: null,
+    servings: 1
+  });
+  const [swapSource, setSwapSource] = useState<string>('');
+  const [swapTarget, setSwapTarget] = useState<string>('');
+  const [manualMeals, setManualMeals] = useState<Record<string, ManualMealForm>>({});
+  const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
+
+  const selectedPlan = mealPlans.find((plan) => plan.id === selectedPlanId) ?? null;
 
   const stats = useMemo(() => {
     const ingredients = new Set<string>();
@@ -38,10 +209,344 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [prefs, snapshotResponse, planResponse, listResponse] = await Promise.all([
+          apiFetch<NutritionPreferences>('/nutrition/preferences'),
+          apiFetch<{ snapshots: NutritionSnapshot[] }>('/nutrition/snapshots?limit=7'),
+          apiFetch<{ plans: MealPlan[] }>('/nutrition/meal-plans?limit=3'),
+          apiFetch<{ lists: ShoppingList[] }>('/nutrition/shopping-lists?limit=3')
+        ]);
+        if (!active) return;
+        setPreferences(prefs);
+        setSnapshot(snapshotResponse.snapshots?.[0] ?? null);
+        setSnapshots(snapshotResponse.snapshots ?? []);
+        setAnalysis(planResponse.plans?.[0]?.analysis ?? null);
+        setMealPlans(planResponse.plans ?? []);
+        setSelectedPlanId(planResponse.plans?.[0]?.id ?? null);
+        setShoppingLists(listResponse.lists ?? []);
+        setSelectedListId(listResponse.lists?.[0]?.id ?? null);
+      } catch (err) {
+        if (!active) return;
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    void load();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedPlan) {
+      setExpandedDays({});
+      return;
+    }
+    const defaults: Record<string, boolean> = {};
+    selectedPlan.days.forEach((day, index) => {
+      defaults[day.date] = index === 0;
+    });
+    setExpandedDays(defaults);
+  }, [selectedPlanId, selectedPlan]);
+
   const handleGoToNutrition = () => {
     window.history.pushState({}, '', '/nutrition');
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
+
+  const latestSnapshot = snapshot ?? snapshots[0] ?? null;
+
+  const calorieProgress = useMemo(() => {
+    if (!preferences || !latestSnapshot) return 0;
+    return Math.min(120, Math.round((latestSnapshot.totals.calories / preferences.calorieTarget) * 100));
+  }, [preferences, latestSnapshot]);
+
+  const macroProgress = useMemo(() => {
+    if (!preferences || !latestSnapshot) return null;
+    return [
+      {
+        label: 'Protein',
+        value: latestSnapshot.totals.protein,
+        target: preferences.macronutrientTargets.protein,
+        unit: 'g'
+      },
+      {
+        label: 'Carbs',
+        value: latestSnapshot.totals.carbs,
+        target: preferences.macronutrientTargets.carbs,
+        unit: 'g'
+      },
+      {
+        label: 'Fats',
+        value: latestSnapshot.totals.fats,
+        target: preferences.macronutrientTargets.fats,
+        unit: 'g'
+      }
+    ];
+  }, [preferences, latestSnapshot]);
+
+  const micronutrientChart = useMemo(() => {
+    if (!preferences || !latestSnapshot) return null;
+    const labels = ['Vitamin D', 'Vitamin B12', 'Iron', 'Magnesium'];
+    const keyMap: Record<string, keyof NutritionSnapshot['totals']> = {
+      'Vitamin D': 'vitaminD',
+      'Vitamin B12': 'vitaminB12',
+      Iron: 'iron',
+      Magnesium: 'magnesium'
+    };
+    const targetDefaults: Record<string, number> = {
+      'Vitamin D': 20,
+      'Vitamin B12': 2.4,
+      Iron: 18,
+      Magnesium: 420
+    };
+    const totals = labels.map((label) => latestSnapshot.totals[keyMap[label]] ?? 0);
+    const targets = labels.map((label) => preferences.micronutrientTargets?.[keyMap[label]] ?? targetDefaults[label]);
+    return {
+      labels,
+      totals,
+      targets
+    };
+  }, [preferences, latestSnapshot]);
+
+  const highlightCards = useMemo(() => {
+    if (!preferences || !latestSnapshot) return [];
+    return [
+      {
+        title: 'Wellness impact',
+        value: `${Math.round(latestSnapshot.wellnessImpactScore)} / 100`,
+        detail: 'Composite score from daily intake'
+      },
+      {
+        title: 'Calorie delta',
+        value: `${latestSnapshot.goalComparison.calorieDelta > 0 ? '+' : ''}${Math.round(latestSnapshot.goalComparison.calorieDelta)} kcal`,
+        detail: 'vs. your target'
+      },
+      {
+        title: 'Macro focus',
+        value: `${preferences.macronutrientTargets.protein}/${preferences.macronutrientTargets.carbs}/${preferences.macronutrientTargets.fats} g`,
+        detail: 'Protein / Carbs / Fats targets'
+      }
+    ];
+  }, [preferences, latestSnapshot]);
+
+  const aiAdvice = useMemo(() => {
+    if (analysis?.suggestions?.length) return analysis.suggestions;
+    return [
+      'Keep logging meals to refine calorie insights.',
+      'Plan hydration checkpoints alongside meals.',
+      'Schedule a short reflection after dinner to adjust tomorrow’s plan.'
+    ];
+  }, [analysis]);
+
+  const riskAdvice = useMemo(() => analysis?.risks ?? [], [analysis]);
+
+  const flattenedMeals = useMemo(() => {
+    if (!selectedPlan) return [];
+    return selectedPlan.days.flatMap((day) =>
+      day.meals.map((meal) => ({
+        id: meal.id,
+        label: `${formatDate(day.date, selectedPlan.timezone)} – ${meal.type}`,
+        value: { day: day.date, mealId: meal.id }
+      }))
+    );
+  }, [selectedPlan]);
+
+  const fetchMealPlans = useCallback(async () => {
+    const response = await apiFetch<{ plans: MealPlan[] }>('/nutrition/meal-plans?limit=3');
+    setMealPlans(response.plans ?? []);
+    setSelectedPlanId((prev) => prev ?? response.plans?.[0]?.id ?? null);
+    setAnalysis(response.plans?.[0]?.analysis ?? null);
+  }, []);
+
+  const fetchShoppingListsData = useCallback(async () => {
+    const response = await apiFetch<{ lists: ShoppingList[] }>('/nutrition/shopping-lists?limit=3');
+    setShoppingLists(response.lists ?? []);
+    setSelectedListId((prev) => prev ?? response.lists?.[0]?.id ?? null);
+  }, []);
+
+  const handleSavePreferences = async (payload: PreferencesUpdatePayload) => {
+    const updated = await apiFetch<NutritionPreferences>('/nutrition/preferences', {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+    setPreferences(updated);
+  };
+
+  const handleGeneratePlan = async () => {
+    setPlannerLoading(true);
+    try {
+      await apiFetch('/nutrition/meal-plans', {
+        method: 'POST',
+        body: JSON.stringify({ duration: 'weekly', startDate: new Date().toISOString().slice(0, 10) })
+      });
+      await fetchMealPlans();
+    } finally {
+      setPlannerLoading(false);
+    }
+  };
+
+  const handleRegeneratePlan = async (planId: string) => {
+    setPlannerLoading(true);
+    try {
+      await apiFetch(`/nutrition/meal-plans/${planId}/regenerate`, { method: 'POST' });
+      await fetchMealPlans();
+    } finally {
+      setPlannerLoading(false);
+    }
+  };
+
+  const handleRegenerateMeal = async (planId: string, date: string, mealId: string) => {
+    setPlannerLoading(true);
+    try {
+      await apiFetch(`/nutrition/meal-plans/${planId}/days/${date}/meals/${mealId}/regenerate`, { method: 'POST' });
+      await fetchMealPlans();
+    } finally {
+      setPlannerLoading(false);
+    }
+  };
+
+  const handleSwapMeals = async (planId: string) => {
+    if (!swapSource || !swapTarget) return;
+    const [sourceDay, sourceMeal] = swapSource.split('|');
+    const [targetDay, targetMeal] = swapTarget.split('|');
+    setPlannerLoading(true);
+    try {
+      await apiFetch(`/nutrition/meal-plans/${planId}/days/${sourceDay}/meals/${sourceMeal}/swap`, {
+        method: 'POST',
+        body: JSON.stringify({ targetDate: targetDay, targetMealId: targetMeal })
+      });
+      await fetchMealPlans();
+      setSwapSource('');
+      setSwapTarget('');
+    } finally {
+      setPlannerLoading(false);
+    }
+  };
+
+  const getManualMealForDate = useCallback(
+    (date: string) => manualMeals[date] ?? createManualMealForm(),
+    [manualMeals]
+  );
+
+  const updateManualMeal = useCallback((date: string, field: keyof ManualMealForm, value: string | number) => {
+    setManualMeals((prev) => {
+      const current = prev[date] ?? createManualMealForm();
+      const updated: ManualMealForm = { ...current };
+      if (field === 'title' || field === 'type') {
+        updated[field] = String(value);
+      } else {
+        updated[field] = Number(value);
+      }
+      return {
+        ...prev,
+        [date]: updated
+      };
+    });
+  }, []);
+
+  const resetManualMeal = useCallback((date: string) => {
+    setManualMeals((prev) => {
+      if (!prev[date]) return prev;
+      const next = { ...prev };
+      delete next[date];
+      return next;
+    });
+  }, []);
+
+  const handleManualMealAdd = async (planId: string, date: string, manualData?: ManualMealForm) => {
+    const mealData = manualData ?? getManualMealForDate(date);
+    setPlannerLoading(true);
+    try {
+      await apiFetch(`/nutrition/meal-plans/${planId}/days/${date}/meals`, {
+        method: 'POST',
+        body: JSON.stringify({
+          title: mealData.title,
+          type: mealData.type,
+          scheduledAt: new Date().toISOString(),
+          macros: {
+            calories: mealData.calories,
+            protein: mealData.protein,
+            carbs: mealData.carbs,
+            fats: mealData.fats
+          }
+        })
+      });
+      await fetchMealPlans();
+      resetManualMeal(date);
+    } finally {
+      setPlannerLoading(false);
+    }
+  };
+
+  const handleLoadRecipe = async (recipeId: string | undefined) => {
+    if (!recipeId) return;
+    const recipe = await apiFetch<RecipeDetail>(`/nutrition/recipes/${recipeId}`);
+    setRecipeModal({ open: true, recipe, servings: recipe.servings ?? 1 });
+  };
+
+  const handleGenerateShoppingList = async () => {
+    if (!selectedPlanId) return;
+    setShoppingLoading(true);
+    try {
+      const list = await apiFetch<ShoppingList>('/nutrition/shopping-lists', {
+        method: 'POST',
+        body: JSON.stringify({ mealPlanId: selectedPlanId })
+      });
+      setShoppingLists((prev) => [list, ...prev]);
+      setSelectedListId(list.id);
+    } finally {
+      setShoppingLoading(false);
+    }
+  };
+
+  const handleUpdateListItem = async (listId: string, itemId: string, updates: Partial<{ quantity: number; checked: boolean }>) => {
+    const updated = await apiFetch<ShoppingList>(`/nutrition/shopping-lists/${listId}/items/${itemId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates)
+    });
+    setShoppingLists((prev) => prev.map((list) => (list.id === updated.id ? updated : list)));
+  };
+
+  const handleRemoveListItem = async (listId: string, itemId: string) => {
+    const updated = await apiFetch<ShoppingList>(`/nutrition/shopping-lists/${listId}/items/${itemId}`, {
+      method: 'DELETE'
+    });
+    setShoppingLists((prev) => prev.map((list) => (list.id === updated.id ? updated : list)));
+  };
+
+  const historyChart = useMemo(() => {
+    if (!preferences) return null;
+    const snapshotsHistory = snapshots.length ? snapshots : snapshot ? [snapshot] : [];
+    if (!snapshotsHistory.length) return null;
+    const labels = snapshotsHistory.map((item) => formatDate(item.date, preferences.timezone));
+    return {
+      labels,
+      planLine: {
+        labels,
+        datasets: [
+          {
+            label: 'Calories',
+            data: snapshotsHistory.map((item) => item.totals.calories),
+            borderColor: 'rgba(59, 130, 246, 1)',
+            backgroundColor: 'rgba(59, 130, 246, 0.15)',
+            tension: 0.3
+          },
+          {
+            label: 'Target',
+            data: snapshotsHistory.map(() => preferences.calorieTarget),
+            borderColor: 'rgba(15, 23, 42, 0.2)',
+            borderDash: [6, 6]
+          }
+        ]
+      }
+    };
+  }, [preferences, snapshot, snapshots]);
 
   return (
     <div className="dashboard-shell">
@@ -93,10 +598,735 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
               <p>Monitor vitamins & minerals alongside macros for a complete health snapshot.</p>
             </article>
           </section>
+
+          <section className="calories-metrics">
+            {loading ? (
+              <p className="calories-loading">Loading your nutrition data…</p>
+            ) : error ? (
+              <p className="calories-error" role="alert">{error}</p>
+            ) : (
+              <>
+                <div className="calories-progress">
+                  <div>
+                    <p className="calories-section-label">Daily calorie target</p>
+                    <ProgressBar
+                      label="Calories"
+                      value={snapshot?.totals.calories ?? 0}
+                      target={preferences?.calorieTarget ?? 0}
+                      percentage={calorieProgress}
+                      unit="kcal"
+                    />
+                  </div>
+                  <div className="calories-macro-grid">
+                    {macroProgress?.map((macro) => (
+                      <ProgressBar
+                        key={macro.label}
+                        label={macro.label}
+                        value={macro.value}
+                        target={macro.target}
+                        unit={macro.unit}
+                        percentage={macro.target ? Math.min(120, Math.round((macro.value / macro.target) * 100)) : 0}
+                        compact
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="calories-charts">
+                  <div className="micronutrient-card">
+                    <header>
+                      <h3>Micronutrient radar</h3>
+                      <p>Real intake vs. targets</p>
+                    </header>
+                    {micronutrientChart ? (
+                      <Radar
+                        data={{
+                          labels: micronutrientChart.labels,
+                          datasets: [
+                            {
+                              label: 'Intake',
+                              data: micronutrientChart.totals,
+                              backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                              borderColor: 'rgba(16, 185, 129, 1)',
+                              borderWidth: 2
+                            },
+                            {
+                              label: 'Target',
+                              data: micronutrientChart.targets,
+                              backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                              borderColor: 'rgba(59, 130, 246, 1)',
+                              borderWidth: 1,
+                              borderDash: [4, 4]
+                            }
+                          ]
+                        }}
+                        options={{
+                          scales: {
+                            r: {
+                              angleLines: { color: 'rgba(15, 23, 42, 0.08)' },
+                              grid: { color: 'rgba(15, 23, 42, 0.08)' },
+                              suggestedMin: 0
+                            }
+                          },
+                          plugins: {
+                            legend: { position: 'bottom' }
+                          }
+                        }}
+                      />
+                    ) : (
+                      <p className="calories-empty">No micronutrient data yet.</p>
+                    )}
+                  </div>
+                  <div className="highlight-grid">
+                    {highlightCards.map((card) => (
+                      <article key={card.title} className="highlight-card">
+                        <p className="highlight-title">{card.title}</p>
+                        <p className="highlight-value">{card.value}</p>
+                        <p className="highlight-detail">{card.detail}</p>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="calories-ai-advice">
+                  <article className="ai-advice-card">
+                    <header>
+                      <h3>AI suggestions</h3>
+                      <p>Personalized nudges from your current plan</p>
+                    </header>
+                    <ul>
+                      {aiAdvice.map((tip, index) => (
+                        <li key={`${tip}-${index}`}>{tip}</li>
+                      ))}
+                    </ul>
+                  </article>
+                  <article className="ai-advice-card secondary">
+                    <header>
+                      <h3>Watch-outs</h3>
+                      <p>Potential risks detected</p>
+                    </header>
+                    {riskAdvice.length ? (
+                      <ul>
+                        {riskAdvice.map((risk, index) => (
+                          <li key={`${risk}-${index}`}>{risk}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="calories-empty">No risks detected this week.</p>
+                    )}
+                  </article>
+                </div>
+              </>
+            )}
+          </section>
+
+          <section className="calories-preferences">
+            <PreferencesForm preferences={preferences} onSave={handleSavePreferences} />
+            {preferences && needsPreferencePrompt(preferences) && (
+              <div className="preferences-alert" role="status">
+                <strong>Heads up:</strong> fill out dietary preferences, allergies, disliked ingredients, and meals-per-day to help AI craft better plans.
+              </div>
+            )}
+          </section>
+
+          <section className="calories-planner">
+            <header className="section-header">
+              <div>
+                <p className="calories-section-label">Meal planner</p>
+                <h2>Create and manage meal plans</h2>
+              </div>
+              <div className="planner-actions">
+                {!selectedPlanId ? (
+                  <button
+                    type="button"
+                    className="dashboard-hero-action"
+                    onClick={handleGeneratePlan}
+                    disabled={plannerLoading}
+                  >
+                    Generate weekly plan
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="dashboard-hero-action"
+                    onClick={() => handleRegeneratePlan(selectedPlanId)}
+                    disabled={plannerLoading}
+                  >
+                    Regenerate plan
+                  </button>
+                )}
+              </div>
+            </header>
+            <PlannerControls
+              mealPlans={mealPlans}
+              selectedPlanId={selectedPlanId}
+              onSelectPlan={setSelectedPlanId}
+              swapSource={swapSource}
+              swapTarget={swapTarget}
+              onSwapSourceChange={setSwapSource}
+              onSwapTargetChange={setSwapTarget}
+              onSwap={() => selectedPlanId && handleSwapMeals(selectedPlanId)}
+              flattenedMeals={flattenedMeals}
+              plannerLoading={plannerLoading}
+            />
+            <MealCalendar
+              plan={selectedPlan}
+              timezone={selectedPlan?.timezone ?? preferences?.timezone ?? 'UTC'}
+              onRegenerateMeal={(date, mealId) => selectedPlanId && handleRegenerateMeal(selectedPlanId, date, mealId)}
+              onManualMealAdd={(date, manual) => selectedPlanId && handleManualMealAdd(selectedPlanId, date, manual)}
+              manualMeals={manualMeals}
+              onManualMealChange={updateManualMeal}
+              onViewRecipe={(recipeId) => handleLoadRecipe(recipeId)}
+              expandedDays={expandedDays}
+              onToggleDay={(day) =>
+                setExpandedDays((prev) => ({ ...prev, [day]: !prev[day] }))
+              }
+            />
+            {selectedPlan?.analysis && (
+              <div className="planner-analysis">
+                <article>
+                  <h3>Highlights</h3>
+                  <ul>{selectedPlan.analysis.highlights?.map((item) => <li key={item}>{item}</li>) ?? <li>No highlights recorded.</li>}</ul>
+                </article>
+                <article>
+                  <h3>Risks</h3>
+                  <ul>{selectedPlan.analysis.risks?.map((item) => <li key={item}>{item}</li>) ?? <li>None detected.</li>}</ul>
+                </article>
+                <article>
+                  <h3>Suggestions</h3>
+                  <ul>{selectedPlan.analysis.suggestions?.map((item) => <li key={item}>{item}</li>) ?? <li>No suggestions yet.</li>}</ul>
+                </article>
+              </div>
+            )}
+          </section>
+
+          <section className="calories-shopping">
+            <header className="section-header">
+              <div>
+                <p className="calories-section-label">Shopping lists</p>
+                <h2>Plan groceries by meal plan</h2>
+              </div>
+            <button type="button" className="dashboard-hero-action" onClick={handleGenerateShoppingList} disabled={!selectedPlanId || shoppingLoading}>
+              Generate from plan
+            </button>
+            </header>
+            <ShoppingListPanel
+              shoppingLists={shoppingLists}
+              selectedListId={selectedListId}
+              onSelectList={setSelectedListId}
+              onRefresh={fetchShoppingListsData}
+              onQuantityChange={handleUpdateListItem}
+              onRemoveItem={handleRemoveListItem}
+            />
+          </section>
+
+          <section className="calories-history">
+            <header className="section-header">
+              <div>
+                <p className="calories-section-label">Historical insights</p>
+                <h2>Track deficit/surplus over time</h2>
+              </div>
+            </header>
+            {historyChart ? (
+              <div className="history-grid">
+                <div className="history-card">
+                  <h3>Calorie trend</h3>
+                  <Line data={historyChart.planLine} />
+                </div>
+                <div className="history-card">
+                  <h3>Macro totals</h3>
+                  <Bar
+                    data={{
+                        labels: ['Protein', 'Carbs', 'Fats'],
+                        datasets: [
+                          {
+                            label: 'Actual',
+                            data: [
+                            latestSnapshot?.totals.protein ?? 0,
+                            latestSnapshot?.totals.carbs ?? 0,
+                            latestSnapshot?.totals.fats ?? 0
+                          ],
+                          backgroundColor: 'rgba(59, 130, 246, 0.6)'
+                        },
+                        {
+                          label: 'Target',
+                          data: [
+                            preferences?.macronutrientTargets.protein ?? 0,
+                            preferences?.macronutrientTargets.carbs ?? 0,
+                            preferences?.macronutrientTargets.fats ?? 0
+                          ],
+                          backgroundColor: 'rgba(203, 213, 225, 0.7)'
+                        }
+                      ]
+                    }}
+                    options={{ responsive: true, plugins: { legend: { position: 'bottom' } } }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="calories-empty">No historical snapshots yet.</p>
+            )}
+          </section>
         </main>
+      </div>
+      {recipeModal.open && recipeModal.recipe && (
+        <RecipeModal
+          recipe={recipeModal.recipe}
+          servings={recipeModal.servings}
+          onClose={() => setRecipeModal({ open: false, recipe: null, servings: 1 })}
+          onServingsChange={(servings) => setRecipeModal((prev) => ({ ...prev, servings }))}
+        />
+      )}
+    </div>
+  );
+};
+
+interface ProgressProps {
+  label: string;
+  value: number;
+  target: number;
+  percentage: number;
+  unit?: string;
+  compact?: boolean;
+}
+
+const ProgressBar: React.FC<ProgressProps> = ({ label, value, target, percentage, unit, compact }) => {
+  return (
+    <div className={`progress-card ${compact ? 'progress-card-compact' : ''}`}>
+      <div className="progress-card-header">
+        <span>{label}</span>
+        <span>{Math.round(value)}{unit ? ` ${unit}` : ''} / {Math.round(target)}{unit ? ` ${unit}` : ''}</span>
+      </div>
+      <div className="progress-bar-track" aria-valuemin={0} aria-valuemax={target} aria-valuenow={value}>
+        <div className="progress-bar-fill" style={{ width: `${Math.min(120, percentage)}%` }} />
       </div>
     </div>
   );
+};
+
+interface PreferencesFormProps {
+  preferences: NutritionPreferences | null;
+  onSave: (payload: PreferencesUpdatePayload) => Promise<void>;
+}
+
+const PreferencesForm: React.FC<PreferencesFormProps> = ({ preferences, onSave }) => {
+  const [form, setForm] = useState({
+    timezone: preferences?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+    dietaryPreferences: preferences?.dietaryPreferences.join(', ') ?? '',
+    allergies: preferences?.allergies.join(', ') ?? '',
+    dislikedIngredients: preferences?.dislikedIngredients.join(', ') ?? '',
+    mealsPerDay: preferences?.mealsPerDay ?? 3
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!preferences) return;
+    setForm({
+      timezone: preferences.timezone,
+      dietaryPreferences: preferences.dietaryPreferences.join(', '),
+      allergies: preferences.allergies.join(', '),
+      dislikedIngredients: preferences.dislikedIngredients.join(', '),
+      mealsPerDay: preferences.mealsPerDay
+    });
+  }, [preferences]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const parseList = (value: string) =>
+        value
+          .split(',')
+          .map((item: string) => item.trim())
+          .filter(Boolean);
+      await onSave({
+        timezone: form.timezone,
+        dietaryPreferences: parseList(form.dietaryPreferences),
+        allergies: parseList(form.allergies),
+        dislikedIngredients: parseList(form.dislikedIngredients),
+        mealsPerDay: Number(form.mealsPerDay)
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form className="preferences-form" onSubmit={handleSubmit}>
+      <div>
+        <label htmlFor="timezone">Timezone</label>
+        <input
+          id="timezone"
+          value={form.timezone}
+          onChange={(e) => setForm((prev) => ({ ...prev, timezone: e.target.value }))}
+        />
+      </div>
+      <div>
+        <label htmlFor="dietaryPrefs">Dietary preferences</label>
+        <input
+          id="dietaryPrefs"
+          value={form.dietaryPreferences}
+          onChange={(e) => setForm((prev) => ({ ...prev, dietaryPreferences: e.target.value }))}
+          placeholder="vegetarian, low-carb"
+        />
+      </div>
+      <div>
+        <label htmlFor="allergies">Allergies / intolerances</label>
+        <input
+          id="allergies"
+          value={form.allergies}
+          onChange={(e) => setForm((prev) => ({ ...prev, allergies: e.target.value }))}
+          placeholder="nuts, gluten"
+        />
+      </div>
+      <div>
+        <label htmlFor="disliked">Disliked ingredients</label>
+        <input
+          id="disliked"
+          value={form.dislikedIngredients}
+          onChange={(e) => setForm((prev) => ({ ...prev, dislikedIngredients: e.target.value }))}
+        />
+      </div>
+      <div>
+        <label htmlFor="mealsPerDay">Meals per day</label>
+        <input
+          id="mealsPerDay"
+          type="number"
+          min={2}
+          max={6}
+          value={form.mealsPerDay}
+          onChange={(e) => setForm((prev) => ({ ...prev, mealsPerDay: Number(e.target.value) }))}
+        />
+      </div>
+      <button type="submit" className="dashboard-hero-action dashboard-hero-action--small" disabled={saving}>Save preferences</button>
+    </form>
+  );
+};
+
+interface PlannerControlsProps {
+  mealPlans: MealPlan[];
+  selectedPlanId: string | null;
+  onSelectPlan: (id: string | null) => void;
+  swapSource: string;
+  swapTarget: string;
+  onSwapSourceChange: (value: string) => void;
+  onSwapTargetChange: (value: string) => void;
+  onSwap: () => void;
+  flattenedMeals: Array<{ id: string; label: string; value: { day: string; mealId: string } }>;
+  plannerLoading: boolean;
+}
+
+const PlannerControls: React.FC<PlannerControlsProps> = ({
+  mealPlans,
+  selectedPlanId,
+  onSelectPlan,
+  swapSource,
+  swapTarget,
+  onSwapSourceChange,
+  onSwapTargetChange,
+  onSwap,
+  flattenedMeals,
+  plannerLoading
+}) => {
+  const planOptions = mealPlans.map((plan) => ({
+    id: plan.id,
+    label: `${plan.duration} plan (${formatDate(plan.startDate, plan.timezone)} - ${formatDate(plan.endDate, plan.timezone)})`
+  }));
+
+  return (
+    <div className="planner-controls">
+      <div>
+        <label htmlFor="planSelect">Select plan</label>
+        <select id="planSelect" value={selectedPlanId ?? ''} onChange={(e) => onSelectPlan(e.target.value || null)}>
+          {planOptions.map((option) => (
+            <option key={option.id} value={option.id}>{option.label}</option>
+          ))}
+        </select>
+      </div>
+      <div className="swap-row">
+        <div>
+          <label>Swap source</label>
+          <select value={swapSource} onChange={(e) => onSwapSourceChange(e.target.value)}>
+            <option value="">Choose meal</option>
+            {flattenedMeals.map((meal) => (
+              <option key={meal.id} value={formatSwapValue(meal)}>{meal.label}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label>Swap target</label>
+          <select value={swapTarget} onChange={(e) => onSwapTargetChange(e.target.value)}>
+            <option value="">Choose target</option>
+            {flattenedMeals.map((meal) => (
+              <option key={meal.id} value={formatSwapValue(meal)}>{meal.label}</option>
+            ))}
+          </select>
+        </div>
+        <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={onSwap} disabled={!swapSource || !swapTarget || plannerLoading}>
+          Swap
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const formatSwapValue = (meal: { value: { day: string; mealId: string } }) =>
+  `${meal.value.day}|${meal.value.mealId}`;
+
+interface MealCalendarProps {
+  plan: MealPlan | null;
+  timezone: string;
+  onRegenerateMeal: (date: string, mealId: string) => void;
+  onManualMealAdd: (date: string, manualMeal: ManualMealForm) => void;
+  manualMeals: Record<string, ManualMealForm>;
+  onManualMealChange: (date: string, field: keyof ManualMealForm, value: string | number) => void;
+  onViewRecipe: (recipeId?: string) => void;
+  expandedDays: Record<string, boolean>;
+  onToggleDay: (day: string) => void;
+}
+
+const MealCalendar: React.FC<MealCalendarProps> = ({
+  plan,
+  timezone,
+  onRegenerateMeal,
+  onManualMealAdd,
+  manualMeals,
+  onManualMealChange,
+  onViewRecipe,
+  expandedDays,
+  onToggleDay
+}) => {
+  if (!plan) {
+    return <p className="calories-empty">No meal plan generated yet.</p>;
+  }
+
+  return (
+    <div className="meal-calendar">
+      {plan.days.map((day) => (
+        <article key={day.date} className={`day-accordion ${expandedDays[day.date] ? 'is-open' : ''}`}>
+          <header className="day-accordion-header">
+            <div>
+              <h3>{formatDate(day.date, timezone)}</h3>
+              <p>{new Intl.DateTimeFormat(undefined, { weekday: 'long' }).format(new Date(day.date))}</p>
+            </div>
+            <div className="day-accordion-meta">
+              <span>{Math.round(sumDayCalories(day))} kcal planned</span>
+              <button
+                type="button"
+                className="day-accordion-toggle dashboard-hero-action dashboard-hero-action--ghost"
+                aria-expanded={expandedDays[day.date] ?? false}
+                onClick={() => onToggleDay(day.date)}
+              >
+                {expandedDays[day.date] ? 'Collapse' : 'Expand'}
+              </button>
+            </div>
+          </header>
+          {expandedDays[day.date] && (
+            <>
+              <div className="meal-list">
+                {day.meals.map((meal) => (
+                  <div key={meal.id} className="meal-card">
+                    <div>
+                      <p className="meal-type">{meal.type}</p>
+                      <p className="meal-title">{meal.title ?? 'AI recipe'}</p>
+                      <p className="meal-meta">
+                        {Math.round(meal.macros.calories)} kcal · {Math.round(meal.macros.protein)}g protein
+                      </p>
+                      <p className="meal-time">{formatTime(meal.scheduledAt, timezone)}</p>
+                    </div>
+                    <div className="meal-actions">
+                      {meal.recipeId && (
+                        <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={() => onViewRecipe(meal.recipeId)}>Recipe</button>
+                      )}
+                      <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={() => onRegenerateMeal(day.date, meal.id)}>Regenerate</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="manual-meal">
+                <h4>Add manual meal</h4>
+                {(() => {
+                  const manualMeal = manualMeals[day.date] ?? createManualMealForm();
+                  return (
+                    <>
+                      <input
+                        value={manualMeal.title}
+                        onChange={(e) => onManualMealChange(day.date, 'title', e.target.value)}
+                        placeholder="Meal name"
+                      />
+                      <select value={manualMeal.type} onChange={(e) => onManualMealChange(day.date, 'type', e.target.value)}>
+                        <option value="snack">Snack</option>
+                        <option value="lunch">Lunch</option>
+                        <option value="dinner">Dinner</option>
+                        <option value="breakfast">Breakfast</option>
+                      </select>
+                      <div className="manual-grid">
+                        {(['calories', 'protein', 'carbs', 'fats'] as const).map((field) => (
+                          <label key={field}>
+                            {field}
+                            <input
+                              type="number"
+                              value={manualMeal[field]}
+                              onChange={(e) => onManualMealChange(day.date, field, Number(e.target.value))}
+                            />
+                          </label>
+                        ))}
+                      </div>
+                      <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={() => onManualMealAdd(day.date, manualMeal)}>Add meal</button>
+                    </>
+                  );
+                })()}
+              </div>
+            </>
+          )}
+        </article>
+      ))}
+    </div>
+  );
+};
+
+interface ShoppingListPanelProps {
+  shoppingLists: ShoppingList[];
+  selectedListId: string | null;
+  onSelectList: (id: string | null) => void;
+  onRefresh: () => void;
+  onQuantityChange: (listId: string, itemId: string, updates: Partial<{ quantity: number; checked: boolean }>) => void;
+  onRemoveItem: (listId: string, itemId: string) => void;
+}
+
+const ShoppingListPanel: React.FC<ShoppingListPanelProps> = ({
+  shoppingLists,
+  selectedListId,
+  onSelectList,
+  onRefresh,
+  onQuantityChange,
+  onRemoveItem
+}) => {
+  const list = shoppingLists.find((entry) => entry.id === selectedListId) ?? null;
+  const grouped = useMemo(() => {
+    if (!list) return {};
+    return list.items.reduce<Record<string, ShoppingList['items']>>((acc, item) => {
+      acc[item.category] = acc[item.category] ? [...acc[item.category], item] : [item];
+      return acc;
+    }, {});
+  }, [list]);
+
+  return (
+    <div className="shopping-panel">
+      <div className="shopping-header">
+        <select value={selectedListId ?? ''} onChange={(e) => onSelectList(e.target.value || null)}>
+          {shoppingLists.map((entry) => (
+            <option key={entry.id} value={entry.id}>List {entry.id.slice(0, 6)}</option>
+          ))}
+        </select>
+        <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={onRefresh}>Refresh</button>
+      </div>
+      {!list && <p className="calories-empty">No shopping list generated yet.</p>}
+      {list && (
+        <div className="shopping-categories">
+          {Object.entries(grouped).map(([category, items]) => (
+            <article key={category} className="shopping-category">
+              <h4>{category}</h4>
+              <ul>
+                {items.map((item) => (
+                  <li key={item.id}>
+                    <div>
+                      <input
+                        type="checkbox"
+                        checked={item.checked}
+                        onChange={(e) => onQuantityChange(list.id, item.id, { checked: e.target.checked })}
+                      />
+                      <span>{item.name}</span>
+                    </div>
+                    <div className="shopping-controls">
+                      <input
+                        type="number"
+                        value={Math.round(item.quantity)}
+                        onChange={(e) => onQuantityChange(list.id, item.id, { quantity: Number(e.target.value) })}
+                      />
+                      <span>{item.unit}</span>
+                      <button type="button" className="dashboard-hero-action dashboard-hero-action--ghost" onClick={() => onRemoveItem(list.id, item.id)}>×</button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface RecipeModalProps {
+  recipe: RecipeDetail;
+  servings: number;
+  onServingsChange: (value: number) => void;
+  onClose: () => void;
+}
+
+const RecipeModal: React.FC<RecipeModalProps> = ({ recipe, servings, onServingsChange, onClose }) => {
+  const scale = servings / (recipe.servings || 1);
+  const scaledIngredients = recipe.ingredients.map((ingredient) => ({
+    ...ingredient,
+    quantity: Number((ingredient.quantity * scale).toFixed(1))
+  }));
+
+  return (
+    <div className="recipe-modal-backdrop" role="dialog" aria-modal>
+      <div className="recipe-modal">
+        <header>
+          <div>
+            <h3>{recipe.title}</h3>
+            <p>{recipe.summary}</p>
+          </div>
+          <button type="button" className="recipe-modal-close dashboard-hero-action dashboard-hero-action--ghost" aria-label="Close recipe" onClick={onClose}>×</button>
+        </header>
+        <div className="servings-row">
+          <label>
+            Servings
+            <input type="number" min={1} value={servings} onChange={(e) => onServingsChange(Number(e.target.value))} />
+          </label>
+        </div>
+        <div className="recipe-content">
+          <section>
+            <h4>Ingredients</h4>
+            <ul>
+              {scaledIngredients.map((ingredient) => (
+                <li key={ingredient.id}>{ingredient.quantity} {ingredient.unit} {ingredient.name}</li>
+              ))}
+            </ul>
+          </section>
+          <section>
+            <h4>Instructions</h4>
+            <ol>
+              {recipe.preparation?.length
+                ? recipe.preparation.map((step) => <li key={step.step}>{step.description}</li>)
+                : recipe.instructions.split('. ').map((sentence, index) => <li key={index}>{sentence}</li>)}
+            </ol>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const formatDate = (date: string, timeZone: string) =>
+  new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeZone }).format(new Date(date));
+
+const formatTime = (iso: string, timeZone: string) =>
+  new Intl.DateTimeFormat(undefined, { timeStyle: 'short', timeZone }).format(new Date(iso));
+
+const sumDayCalories = (day: MealPlan['days'][number]) =>
+  day.meals.reduce((total, meal) => total + (meal.macros.calories ?? 0), 0);
+
+const needsPreferencePrompt = (prefs: NutritionPreferences | null) => {
+  if (!prefs) return true;
+  const missingDiet = prefs.dietaryPreferences.length === 0;
+  const missingAllergies = prefs.allergies.length === 0;
+  const missingDisliked = prefs.dislikedIngredients.length === 0;
+  const mealsInvalid = !prefs.mealsPerDay || prefs.mealsPerDay < 2;
+  return missingDiet || missingAllergies || missingDisliked || mealsInvalid;
 };
 
 export default CaloriesPage;
