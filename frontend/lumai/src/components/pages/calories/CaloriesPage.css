@@ -198,6 +198,79 @@
   font-size: 0.9rem;
 }
 
+.micronutrient-summary-card {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 20px;
+  padding: 20px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+.micronutrient-summary-card header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.micronutrient-deficits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.micronutrient-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.95);
+  font-size: 0.8rem;
+  color: rgba(15, 23, 42, 0.7);
+}
+
+.micronutrient-chip.success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #065f46;
+}
+
+.micronutrient-progress-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.micronutrient-progress-row {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.micronutrient-progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.micronutrient-progress-bar div {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.85), rgba(59, 130, 246, 0.85));
+}
+
+.micronutrient-recommendations {
+  margin-top: 12px;
+  color: rgba(15, 23, 42, 0.7);
+  padding-left: 18px;
+}
+
+.micronutrient-ideas {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: rgba(15, 23, 42, 0.7);
+}
+
 .highlight-grid {
   display: grid;
   gap: 12px;
@@ -374,6 +447,12 @@
   border-radius: 12px;
   border: 1px solid rgba(15, 23, 42, 0.2);
   background: rgba(15, 23, 42, 0.02);
+}
+
+.planner-hint {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: rgba(15, 23, 42, 0.6);
 }
 
 .swap-row {
@@ -629,6 +708,9 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
+}
+.shopping-row {
+  display: contents;
 }
 
 .shopping-item {

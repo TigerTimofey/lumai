@@ -283,6 +283,9 @@ export interface RecipeReviewDocument {
   comment?: string;
   createdAt: Timestamp;
   moderationStatus: "pending" | "approved" | "rejected";
+  moderationNotes?: string;
+  moderatedBy?: string;
+  moderatedAt?: Timestamp;
 }
 
 export interface NutritionPreferencesDocument {

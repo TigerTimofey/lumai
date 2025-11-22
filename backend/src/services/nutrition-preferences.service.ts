@@ -86,7 +86,7 @@ export const updateNutritionPreferences = async (userId: string, updates: Partia
 
 const resolveActivityLevel = (user: UserDocument | null, profile: HealthProfileDocument | null) => {
   const required = (user?.requiredProfile ?? {}) as Record<string, unknown>;
-  const lifestyle = profile?.current?.lifestyle ?? {};
+  const lifestyle = (profile?.current?.lifestyle ?? {}) as Record<string, unknown>;
   const activity =
     (typeof required.activityLevel === "string" ? required.activityLevel : null) ??
     (typeof lifestyle.activityLevel === "string" ? lifestyle.activityLevel : null) ??
@@ -96,13 +96,16 @@ const resolveActivityLevel = (user: UserDocument | null, profile: HealthProfileD
 
 const deriveCalorieTarget = (user: UserDocument | null, profile: HealthProfileDocument | null) => {
   const required = (user?.requiredProfile ?? {}) as Record<string, unknown>;
-  const normalized = profile?.current?.normalized ?? {};
-  const goals = profile?.current?.goals ?? {};
+  const normalized = (profile?.current?.normalized ?? {}) as Record<string, unknown>;
+  const goals = (profile?.current?.goals ?? {}) as Record<string, unknown>;
   const activity = resolveActivityLevel(user, profile);
-  const weight = toNumber(normalized.weightKg ?? required.weight, 70);
-  const heightCm = toNumber(normalized.heightCm ?? required.height, 170);
+  const weight = toNumber((normalized as Record<string, unknown>).weightKg ?? required.weight, 70);
+  const heightCm = toNumber((normalized as Record<string, unknown>).heightCm ?? required.height, 170);
   const heightM = heightCm / 100 || 1.7;
-  const bmi = normalized.bmi ?? weight / (heightM * heightM);
+  const bmi =
+    typeof (normalized as Record<string, unknown>).bmi === "number"
+      ? ((normalized as Record<string, unknown>).bmi as number)
+      : weight / (heightM * heightM);
   let multiplier = 13;
   if (["high", "active", "very_active", "extra_active"].includes(activity)) {
     multiplier = 15;
@@ -115,7 +118,7 @@ const deriveCalorieTarget = (user: UserDocument | null, profile: HealthProfileDo
 
   const rawTargetWeight =
     typeof goals.targetWeightKg === "number"
-      ? goals.targetWeightKg
+      ? (goals.targetWeightKg as number)
       : toNumber(
           (required as Record<string, unknown>).targetWeight ??
             (user?.additionalProfile as Record<string, unknown> | undefined)?.targetWeight,

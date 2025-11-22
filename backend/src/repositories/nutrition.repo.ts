@@ -102,33 +102,57 @@ export const addRecipeReview = async (
     createdAt: now,
     moderationStatus: "pending"
   });
-  const recipeRef = recipeCollection().doc(recipeId);
-  await firestore().runTransaction(async (tx) => {
-    const snapshot = await tx.get(recipeRef);
-    const data = snapshot.data() as RecipeDocument | undefined;
-    const ratingCount = (data?.ratingCount ?? 0) + 1;
-    const ratingSum = (data?.ratingSum ?? 0) + review.rating;
-    const ratingAverage = ratingSum / ratingCount;
-    tx.set(
-      recipeRef,
-      {
-        ratingCount,
-        ratingSum,
-        ratingAverage,
-        updatedAt: now
-      },
-      { merge: true }
-    );
-  });
   return docRef.id;
 };
 
-export const listRecipeReviews = async (recipeId: string, limit = 20) => {
-  const snapshot = await recipeRatingCollection(recipeId)
-    .orderBy("createdAt", "desc")
-    .limit(limit)
-    .get();
+export const listRecipeReviews = async (recipeId: string, limit = 20, status?: RecipeReviewDocument["moderationStatus"]) => {
+  let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = recipeRatingCollection(recipeId);
+  if (status) {
+    query = query.where("moderationStatus", "==", status);
+  }
+  query = query.orderBy("createdAt", "desc").limit(limit);
+  const snapshot = await query.get();
   return snapshot.docs.map((doc) => doc.data() as RecipeReviewDocument);
+};
+
+export const updateReviewModeration = async (
+  recipeId: string,
+  reviewId: string,
+  updates: Pick<RecipeReviewDocument, "moderationStatus" | "moderationNotes" | "moderatedBy"> & { moderatedAt?: Timestamp }
+) => {
+  const docRef = recipeRatingCollection(recipeId).doc(reviewId);
+  const snapshot = await docRef.get();
+  if (!snapshot.exists) {
+    throw new Error("Review not found");
+  }
+  await docRef.set(
+    {
+      moderationStatus: updates.moderationStatus,
+      moderationNotes: updates.moderationNotes ?? null,
+      moderatedBy: updates.moderatedBy ?? null,
+      moderatedAt: updates.moderatedAt ?? Timestamp.now()
+    },
+    { merge: true }
+  );
+};
+
+export const recalcRecipeRating = async (recipeId: string) => {
+  const snapshot = await recipeRatingCollection(recipeId)
+    .where("moderationStatus", "==", "approved")
+    .get();
+  const approved = snapshot.docs.map((doc) => doc.data() as RecipeReviewDocument);
+  const ratingCount = approved.length;
+  const ratingSum = approved.reduce((sum, review) => sum + review.rating, 0);
+  const ratingAverage = ratingCount > 0 ? ratingSum / ratingCount : 0;
+  await recipeCollection().doc(recipeId).set(
+    {
+      ratingAverage,
+      ratingCount,
+      ratingSum,
+      updatedAt: Timestamp.now()
+    },
+    { merge: true }
+  );
 };
 
 export const updateRecipeRatingSummary = async (

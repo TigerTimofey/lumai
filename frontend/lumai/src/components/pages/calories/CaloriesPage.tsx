@@ -131,6 +131,16 @@ type NutritionSnapshot = {
   }>;
 };
 
+type MicronutrientSummary = {
+  date?: string;
+  totals: Record<string, number> | null;
+  targets: Record<string, number>;
+  coverage: Record<string, number> | null;
+  deficits: string[];
+  recommendations: string[];
+  recipeIdeas: string[];
+};
+
 type MealPlanAnalysis = {
   highlights?: string[];
   risks?: string[];
@@ -236,6 +246,8 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   const [manualMeals, setManualMeals] = useState<Record<string, ManualMealForm>>({});
   const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
   const [pendingMealLog, setPendingMealLog] = useState<{ key: string; action: 'log' | 'unlog' } | null>(null);
+  const [micronutrientSummary, setMicronutrientSummary] = useState<MicronutrientSummary | null>(null);
+  const [micronutrientFocus, setMicronutrientFocus] = useState<string>('');
 
   const selectedPlan = mealPlans.find((plan) => plan.id === selectedPlanId) ?? null;
 
@@ -291,7 +303,12 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
       planShoppingLists.length > 0
         ? `${planShoppingLists.length} shopping list${planShoppingLists.length > 1 ? 's' : ''} for this plan`
         : 'Generate a list from your current plan to organize your groceries.';
-    const microSummary = microCoverage
+    const deficitLabel = micronutrientSummary?.deficits?.length
+      ? `Shortfall: ${micronutrientSummary.deficits.map((item) => formatMicronutrientLabel(item)).join(', ')}`
+      : null;
+    const microSummary = deficitLabel
+      ? deficitLabel
+      : microCoverage
       ? `${microCoverage.achieved} of ${microCoverage.total} micronutrient targets met this week`
       : 'Track vitamins & minerals alongside your macros.';
     return [
@@ -314,7 +331,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
         description: microSummary
       }
     ];
-  }, [mealPlans, stats, planShoppingLists.length, microCoverage, totalMealsScheduled]);
+  }, [mealPlans, stats, planShoppingLists.length, microCoverage, totalMealsScheduled, micronutrientSummary]);
 
   useEffect(() => {
     if (!selectedPlanId) {
@@ -343,11 +360,12 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     const load = async () => {
       setLoading(true);
       try {
-        const [prefs, snapshotResponse, planResponse, listResponse] = await Promise.all([
+        const [prefs, snapshotResponse, planResponse, listResponse, micronutrientResp] = await Promise.all([
           apiFetch<NutritionPreferences>('/nutrition/preferences'),
           apiFetch<{ snapshots: NutritionSnapshot[] }>('/nutrition/snapshots?limit=7'),
           apiFetch<{ plans: MealPlan[] }>('/nutrition/meal-plans?limit=3'),
-          apiFetch<{ lists: ShoppingList[] }>('/nutrition/shopping-lists?limit=3')
+          apiFetch<{ lists: ShoppingList[] }>('/nutrition/shopping-lists?limit=3'),
+          apiFetch<MicronutrientSummary>('/nutrition/micronutrients/summary')
         ]);
         if (!active) return;
         setPreferences(prefs);
@@ -358,6 +376,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
         setSelectedPlanId(planResponse.plans?.[0]?.id ?? null);
         setShoppingLists(listResponse.lists ?? []);
         setSelectedListId(listResponse.lists?.[0]?.id ?? null);
+        setMicronutrientSummary(micronutrientResp);
       } catch (err) {
         if (!active) return;
         setError(err instanceof Error ? err.message : String(err));
@@ -463,33 +482,49 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   }, [preferences, latestSnapshot]);
 
   const aiAdvice = useMemo(() => {
-    if (analysis?.suggestions?.length) return analysis.suggestions;
-    return [
-      'Keep logging meals to refine calorie insights.',
-      'Plan hydration checkpoints alongside meals.',
-      'Schedule a short reflection after dinner to adjust tomorrow’s plan.'
-    ];
-  }, [analysis]);
+    const base =
+      analysis?.suggestions?.length
+        ? [...analysis.suggestions]
+        : [
+            'Keep logging meals to refine calorie insights.',
+            'Plan hydration checkpoints alongside meals.',
+            'Schedule a short reflection after dinner to adjust tomorrow’s plan.'
+          ];
+    if (micronutrientSummary?.recommendations?.length) {
+      micronutrientSummary.recommendations.forEach((rec) => {
+        if (!base.includes(rec)) {
+          base.push(rec);
+        }
+      });
+    }
+    return base;
+  }, [analysis, micronutrientSummary]);
 
   const riskAdvice = useMemo(() => {
-    if (analysis?.risks?.length) return analysis.risks;
-    if (!latestSnapshot || !preferences) return [];
-    const items: string[] = [];
+    const base = analysis?.risks ? [...analysis.risks] : [];
+    if (!latestSnapshot || !preferences) return base;
     const calorieDelta = latestSnapshot.goalComparison.calorieDelta;
     if (calorieDelta > 200) {
-      items.push(`You exceeded calorie target by ${Math.round(calorieDelta)} kcal. Focus on lighter dinners.`);
+      base.push(`Calories exceeded target by ${Math.round(calorieDelta)} kcal. Consider a lighter dinner.`);
     } else if (calorieDelta < -200) {
-      items.push(`You were ${Math.abs(Math.round(calorieDelta))} kcal under target. Consider adding a snack.`);
+      base.push(`You were ${Math.abs(Math.round(calorieDelta))} kcal below target. Add a balanced snack.`);
     }
     (['protein', 'carbs', 'fats'] as const).forEach((macro) => {
       const actual = latestSnapshot.totals[macro];
       const target = preferences.macronutrientTargets[macro];
-      if (actual < target * 0.8) {
-        items.push(`Low ${macro}: ${Math.round(actual)}g vs ${target}g target.`);
+      if (target && actual < target * 0.8) {
+        base.push(`Low ${macro}: ${Math.round(actual)}g vs ${target}g target.`);
       }
     });
-    return items;
-  }, [analysis, latestSnapshot, preferences]);
+    if (micronutrientSummary?.deficits?.length) {
+      base.push(
+        `Micronutrient shortfall: ${micronutrientSummary.deficits
+          .map((deficit) => formatMicronutrientLabel(deficit))
+          .join(', ')}.`
+      );
+    }
+    return base;
+  }, [analysis, latestSnapshot, preferences, micronutrientSummary]);
 
   const flattenedMeals = useMemo(() => {
     if (!selectedPlan) return [];
@@ -549,7 +584,12 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   const handleRegenerateMeal = async (planId: string, date: string, mealId: string) => {
     setPlannerLoading(true);
     try {
-      await apiFetch(`/nutrition/meal-plans/${planId}/days/${date}/meals/${mealId}/regenerate`, { method: 'POST' });
+      await apiFetch(`/nutrition/meal-plans/${planId}/days/${date}/meals/${mealId}/regenerate`, {
+        method: 'POST',
+        body: JSON.stringify({
+          micronutrientFocus: micronutrientFocus || undefined
+        })
+      });
       await fetchMealPlans();
     } finally {
       setPlannerLoading(false);
@@ -880,6 +920,57 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                   </div>
                 </div>
 
+                {micronutrientSummary?.coverage && (
+                  <article className="micronutrient-summary-card">
+                    <header>
+                      <div>
+                        <h3>Micronutrient focus</h3>
+                        <p>Daily vitamin & mineral balance</p>
+                      </div>
+                      {micronutrientSummary.deficits.length ? (
+                        <div className="micronutrient-deficits">
+                          {micronutrientSummary.deficits.map((deficit) => (
+                            <span key={deficit} className="micronutrient-chip">
+                              Shortfall: {formatMicronutrientLabel(deficit)}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="micronutrient-chip success">On target</span>
+                      )}
+                    </header>
+                    <ul className="micronutrient-progress-list">
+                      {['vitaminD', 'vitaminB12', 'iron', 'magnesium'].map((key) => {
+                        const coverage = micronutrientSummary.coverage?.[key] ?? 0;
+                        const percent = Math.min(140, Math.round(coverage * 100));
+                        return (
+                          <li key={key}>
+                            <div className="micronutrient-progress-row">
+                              <span>{formatMicronutrientLabel(key)}</span>
+                              <span>{percent}%</span>
+                            </div>
+                            <div className="micronutrient-progress-bar">
+                              <div style={{ width: `${Math.min(100, percent)}%` }} aria-valuenow={percent} aria-valuemin={0} aria-valuemax={140} />
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    {micronutrientSummary.recommendations.length > 0 && (
+                      <ul className="micronutrient-recommendations">
+                        {micronutrientSummary.recommendations.slice(0, 2).map((rec) => (
+                          <li key={rec}>{rec}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {micronutrientSummary.recipeIdeas.length > 0 && (
+                      <p className="micronutrient-ideas">
+                        Try this: {micronutrientSummary.recipeIdeas.join(', ')}
+                      </p>
+                    )}
+                  </article>
+                )}
+
                 <div className="calories-ai-advice">
                   <article className="ai-advice-card">
                     <header>
@@ -959,6 +1050,8 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
               onSwap={() => selectedPlanId && handleSwapMeals(selectedPlanId)}
               flattenedMeals={flattenedMeals}
               plannerLoading={plannerLoading}
+              micronutrientFocus={micronutrientFocus}
+              onMicronutrientFocusChange={setMicronutrientFocus}
             />
             <MealCalendar
               plan={selectedPlan}
@@ -1256,6 +1349,8 @@ interface PlannerControlsProps {
   onSwap: () => void;
   flattenedMeals: Array<{ id: string; label: string; value: { day: string; mealId: string } }>;
   plannerLoading: boolean;
+  micronutrientFocus: string;
+  onMicronutrientFocusChange: (value: string) => void;
 }
 
 const PlannerControls: React.FC<PlannerControlsProps> = ({
@@ -1268,7 +1363,9 @@ const PlannerControls: React.FC<PlannerControlsProps> = ({
   onSwapTargetChange,
   onSwap,
   flattenedMeals,
-  plannerLoading
+  plannerLoading,
+  micronutrientFocus,
+  onMicronutrientFocusChange
 }) => {
   const planOptions = mealPlans.map((plan) => ({
     id: plan.id,
@@ -1307,6 +1404,17 @@ const PlannerControls: React.FC<PlannerControlsProps> = ({
         <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={onSwap} disabled={!swapSource || !swapTarget || plannerLoading}>
           Swap
         </button>
+      </div>
+      <div>
+        <label htmlFor="micronutrientFocus">Micronutrient focus</label>
+        <select id="micronutrientFocus" value={micronutrientFocus} onChange={(e) => onMicronutrientFocusChange(e.target.value)}>
+          <option value="">Any nutrient</option>
+          <option value="vitaminD">Vitamin D</option>
+          <option value="vitaminB12">Vitamin B12</option>
+          <option value="iron">Iron</option>
+          <option value="magnesium">Magnesium</option>
+        </select>
+        <p className="planner-hint">Regenerating meals will prioritize the selected nutrient gap.</p>
       </div>
     </div>
   );
@@ -1681,6 +1789,16 @@ const needsPreferencePrompt = (prefs: NutritionPreferences | null) => {
   const missingDisliked = prefs.dislikedIngredients.length === 0;
   const mealsInvalid = !prefs.mealsPerDay || prefs.mealsPerDay < 2;
   return missingDiet || missingAllergies || missingDisliked || mealsInvalid;
+};
+
+const formatMicronutrientLabel = (key: string) => {
+  const map: Record<string, string> = {
+    vitaminD: 'Vitamin D',
+    vitaminB12: 'Vitamin B12',
+    iron: 'Iron',
+    magnesium: 'Magnesium'
+  };
+  return map[key] ?? key;
 };
 
 export default CaloriesPage;

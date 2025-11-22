@@ -15,6 +15,8 @@ const envSchema = z.object({
   HF_MODEL: z.string().optional(),
   HF_EMBEDDING_URL: z.string().url().optional(),
   HF_EMBEDDING_MODEL: z.string().optional(),
+  VECTOR_DB_URL: z.string().url().optional(),
+  VECTOR_DB_COLLECTION: z.string().optional(),
   AI_RATE_LIMIT_MAX: z
     .string()
     .optional()

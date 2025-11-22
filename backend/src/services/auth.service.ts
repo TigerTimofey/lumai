@@ -266,12 +266,12 @@ export const sendVerificationEmail = async (email: string) => {
     if (axios.isAxiosError(error)) {
       const rawMessage = error.response?.data?.error?.message;
       if (rawMessage === "TOO_MANY_ATTEMPTS_TRY_LATER") {
-        throw tooManyRequests("Слишком много попыток. Попробуйте позже.");
+        throw tooManyRequests("Too many attempts. Please try again later.");
       }
-      throw badRequest(rawMessage ?? "Не удалось создать ссылку");
+      throw badRequest(rawMessage ?? "Unable to generate verification link");
     }
 
-    throw internalError("Не удалось создать ссылку верификации", error);
+    throw internalError("Failed to generate verification link", error);
   }
 };
 
@@ -284,12 +284,12 @@ export const sendPasswordResetEmail = async (email: string) => {
     if (axios.isAxiosError(error)) {
       const rawMessage = error.response?.data?.error?.message;
       if (rawMessage === "TOO_MANY_ATTEMPTS_TRY_LATER") {
-        throw tooManyRequests("Слишком много попыток. Попробуйте позже.");
+        throw tooManyRequests("Too many attempts. Please try again later.");
       }
-      throw badRequest(rawMessage ?? "Не удалось создать ссылку");
+      throw badRequest(rawMessage ?? "Unable to generate reset link");
     }
 
-    throw internalError("Не удалось создать ссылку сброса пароля", error);
+    throw internalError("Failed to generate reset link", error);
   }
 };
 
@@ -314,7 +314,7 @@ export const enrollMfa = async (uid: string, label?: string) => {
 export const activateMfa = async (uid: string, code: string) => {
   const user = await getUserById(uid);
   if (!user?.mfa?.secret) {
-    throw badRequest("MFA не инициализировано");
+    throw badRequest("MFA not initialized");
   }
 
   ensureMfa(code, user.mfa.secret);

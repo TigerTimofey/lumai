@@ -1,10 +1,12 @@
 import { Router } from "express";
+import type { RecipeReviewDocument } from "../domain/types.js";
 import { authContext } from "../middleware/auth-context.js";
 import {
   searchRecipes,
   getRecipe,
   listReviews,
-  createReview
+  createReview,
+  moderateReview
 } from "../services/nutrition-rag.service.js";
 import {
   fetchNutritionPreferences,
@@ -32,6 +34,7 @@ import {
   logMealConsumption,
   unlogMealConsumption
 } from "../services/nutrition-snapshot.service.js";
+import { getMicronutrientSummary } from "../services/nutrition-analytics.service.js";
 import { badRequest, notFound } from "../utils/api-error.js";
 
 const router = Router();
@@ -97,6 +100,17 @@ router.get("/meal-plans", async (req, res, next) => {
   }
 });
 
+router.get("/micronutrients/summary", async (req, res, next) => {
+  try {
+    const userId = req.authToken?.uid;
+    if (!userId) throw badRequest("Missing user context");
+    const summary = await getMicronutrientSummary(userId);
+    return res.json(summary);
+  } catch (error) {
+    return next(error);
+  }
+});
+
 router.post("/meal-plans", async (req, res, next) => {
   try {
     const userId = req.authToken?.uid;
@@ -124,7 +138,13 @@ router.post("/meal-plans/:planId/days/:date/meals/:mealId/regenerate", async (re
   try {
     const userId = req.authToken?.uid;
     if (!userId) throw badRequest("Missing user context");
-    const plan = await regenerateMeal(userId, req.params.planId, req.params.date, req.params.mealId);
+    const plan = await regenerateMeal(
+      userId,
+      req.params.planId,
+      req.params.date,
+      req.params.mealId,
+      { micronutrientFocus: req.body?.micronutrientFocus }
+    );
     return res.json(plan);
   } catch (error) {
     return next(error);
@@ -188,7 +208,8 @@ router.get("/meal-plans/:planId/alternatives", async (req, res, next) => {
   try {
     const userId = req.authToken?.uid;
     if (!userId) throw badRequest("Missing user context");
-    const recipes = await generateMealAlternatives(userId, req.query.q?.toString() ?? "healthy meal");
+    const micronutrient = req.query.micronutrient?.toString();
+    const recipes = await generateMealAlternatives(userId, req.query.q?.toString() ?? "healthy meal", micronutrient as any);
     return res.json({ recipes });
   } catch (error) {
     return next(error);
@@ -290,7 +311,10 @@ router.get("/recipes/:id", async (req, res, next) => {
 
 router.get("/recipes/:id/reviews", async (req, res, next) => {
   try {
-    const reviews = await listReviews(req.params.id, Number(req.query.limit) || 20);
+    const status = req.query.status?.toString() as
+      | RecipeReviewDocument["moderationStatus"]
+      | undefined;
+    const reviews = await listReviews(req.params.id, Number(req.query.limit) || 20, status);
     return res.json({ reviews });
   } catch (error) {
     return next(error);
@@ -309,6 +333,19 @@ router.post("/recipes/:id/reviews", async (req, res, next) => {
     }
     const reviewId = await createReview(req.params.id, userId, Number(rating), comment);
     return res.status(201).json({ reviewId });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.patch("/recipes/:id/reviews/:reviewId/moderate", async (req, res, next) => {
+  try {
+    const moderatorId = req.authToken?.uid;
+    if (!moderatorId) throw badRequest("Missing user context");
+    const { status, notes } = req.body ?? {};
+    if (!status) throw badRequest("status is required");
+    await moderateReview(req.params.id, req.params.reviewId, status, moderatorId, notes);
+    return res.status(204).send();
   } catch (error) {
     return next(error);
   }

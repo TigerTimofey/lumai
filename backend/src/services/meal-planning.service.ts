@@ -130,17 +130,26 @@ export const regenerateMealPlan = async (userId: string, planId: string) => {
   return getMealPlan(userId, planId);
 };
 
-export const regenerateMeal = async (userId: string, planId: string, date: string, mealId: string) => {
+export const regenerateMeal = async (
+  userId: string,
+  planId: string,
+  date: string,
+  mealId: string,
+  options?: { micronutrientFocus?: keyof RecipeDocument["micronutrientsPerServing"] }
+) => {
   const plan = await getMealPlan(userId, planId);
   if (!plan) throw notFound("Meal plan not found");
-  const preferences = await fetchNutritionPreferences(userId);
-  const ragResults = await searchRecipes({
-    query: "healthy meal substitution",
-    dietaryTags: preferences.dietaryPreferences,
-    excludeAllergens: preferences.allergies,
-    cuisine: preferences.cuisinePreferences,
-    limit: 5
-  });
+  const [preferences, profile] = await Promise.all([
+    fetchNutritionPreferences(userId),
+    getProfile(userId)
+  ]);
+  const ragResults = await searchRecipes(
+    buildHealthAwareRecipeFilters(preferences, profile, {
+      query: "healthy meal substitution",
+      limit: 5,
+      micronutrientFocus: options?.micronutrientFocus
+    })
+  );
   const day = plan.days.find((entry) => entry.date === date);
   if (!day) throw badRequest("Day not found in plan");
   const mealIndex = day.meals.findIndex((meal) => meal.id === mealId);
@@ -204,7 +213,11 @@ export const addManualMeal = async (
   return getMealPlan(userId, planId);
 };
 
-export const generateMealAlternatives = async (userId: string, query: string) => {
+export const generateMealAlternatives = async (
+  userId: string,
+  query: string,
+  micronutrientFocus?: keyof RecipeDocument["micronutrientsPerServing"]
+) => {
   const [preferences, profile] = await Promise.all([
     fetchNutritionPreferences(userId),
     getProfile(userId)
@@ -212,7 +225,8 @@ export const generateMealAlternatives = async (userId: string, query: string) =>
   const results = await searchRecipes(
     buildHealthAwareRecipeFilters(preferences, profile, {
       query,
-      limit: 5
+      limit: 5,
+      micronutrientFocus
     })
   );
   return results.map((entry) => entry.recipe);

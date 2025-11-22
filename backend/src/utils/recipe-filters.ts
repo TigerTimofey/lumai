@@ -24,10 +24,11 @@ const getNormalized = (profile: HealthProfileDocument | null | undefined) =>
   profile?.current?.normalized ?? null;
 
 const getLifestyle = (profile: HealthProfileDocument | null | undefined) =>
-  profile?.current?.lifestyle ?? {};
+  profile?.current?.lifestyle ??
+  ({} as Partial<HealthProfileDocument["current"]["lifestyle"]>);
 
 const getGoals = (profile: HealthProfileDocument | null | undefined) =>
-  profile?.current?.goals ?? {};
+  profile?.current?.goals ?? ({} as Partial<HealthProfileDocument["current"]["goals"]>);
 
 export const buildHealthAwareRecipeFilters = (
   preferences: NutritionPreferencesDocument,
@@ -82,6 +83,16 @@ export const buildHealthAwareRecipeFilters = (
     if (activityLevel === "sedentary") {
       filters.calories = mergeRange(filters.calories, { max: 550 });
     }
+  }
+
+  if (overrides.micronutrientFocus) {
+    const focus = overrides.micronutrientFocus;
+    const target = preferences.micronutrientTargets?.[focus] ?? 10;
+    const minimum = Math.max(0.5, target * 0.15);
+    filters.micronutrients = {
+      ...(filters.micronutrients ?? {}),
+      [focus]: mergeRange(filters.micronutrients?.[focus], { min: minimum })
+    };
   }
 
   return filters;

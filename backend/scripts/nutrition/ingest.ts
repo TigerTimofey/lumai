@@ -6,6 +6,7 @@ import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import env from "../../src/config/env.js";
 import type { IngredientDocument } from "../../src/domain/types.js";
 import { generateEmbedding } from "../../src/utils/embedding.js";
+import { ensureVectorCollection, isVectorDbEnabled, upsertVectors } from "../../src/utils/vector-client.js";
 
 type RawIngredient = {
   ingredient_id: string;
@@ -266,6 +267,9 @@ const main = async () => {
 
   console.info("[nutrition-ingest] processing recipes");
 
+  const vectorPoints: Array<{ id: string; vector: number[]; payload: Record<string, unknown> }> = [];
+  let vectorInitialized = false;
+
   for (const recipe of recipesRaw) {
     const entries = recipeIngredientMap[recipe.recipe_id] ?? [];
     const normalizedIngredients = entries
@@ -434,6 +438,26 @@ const main = async () => {
       model: env.HF_EMBEDDING_MODEL ?? env.HF_MODEL ?? "sentence-transformers/all-MiniLM-L6-v2",
       createdAt: Timestamp.now()
     });
+
+    if (isVectorDbEnabled()) {
+      if (!vectorInitialized) {
+        await ensureVectorCollection(vector.length);
+        vectorInitialized = true;
+      }
+      vectorPoints.push({
+        id: recipe.recipe_id,
+        vector,
+        payload: {
+          title: recipe.name,
+          cuisine: recipe.cuisine,
+          tags: dietaryTags
+        }
+      });
+    }
+  }
+
+  if (vectorPoints.length) {
+    await upsertVectors(vectorPoints);
   }
 
   console.info("[nutrition-ingest] completed");

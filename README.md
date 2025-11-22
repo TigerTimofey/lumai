@@ -7,7 +7,85 @@ The repository is split into two workspaces:
 - `frontend/lumai` – Vite + React client
 - `backend` – Node.js/Express API with Firebase Admin SDK
 
+## Quick Docker Start
+
+1. From the repo root run:
+   ```bash
+   docker-compose up --build
+   ```
+2. Once the containers finish booting, open the frontend at **http://localhost:4173** (the backend listens on http://localhost:4000).
+
+### 🇷🇺 Быстрый старт в Docker
+
+1. Run:
+   ```bash
+   docker-compose up --build
+   ```
+2. after succusfull run visit. Frontend: **http://localhost:4173** (Backend: http://localhost:4000).
+
 This README gives you everything you need to configure Firebase, run both services locally, and understand the key tooling that powers the project.
+
+---
+
+## Wellness Frontend Usage
+
+Below you will find usage instructions both in English and Russian for the React/Vite SPA frontend.
+
+#### Prerequisites
+- Node.js 20+
+- npm
+- Running backend (`http://localhost:4000` by default)
+
+#### Local development
+```bash
+cd frontend/lumai
+npm install
+VITE_BACKEND_URL=http://localhost:4000 npm run dev
+```
+
+#### Production build
+```bash
+npm run build
+npm run preview
+```
+
+#### Docker
+The root project contains `frontend/Dockerfile` and `docker-compose.yml`.
+Build & run with the backend and vector DB:
+```bash
+docker-compose up --build
+```
+Frontend will be available on `http://localhost:4173`.
+
+---
+
+### 🇷🇺 Русский
+
+#### Необходимые инструменты
+- Node.js 20+
+- npm
+- Запущенный backend (`http://localhost:4000` по умолчанию)
+
+#### Локальная разработка
+```bash
+cd frontend/lumai
+npm install
+VITE_BACKEND_URL=http://localhost:4000 npm run dev
+```
+
+#### Сборка/предпросмотр
+```bash
+npm run build
+npm run preview
+```
+
+#### Docker
+В корне репозитория лежат `frontend/Dockerfile` и `docker-compose.yml`.
+Чтобы поднять весь стек (frontend + backend + vector DB):
+```bash
+docker-compose up --build
+```
+После сборки фронтенд доступен по адресу `http://localhost:4173`.
 
 ---
 
