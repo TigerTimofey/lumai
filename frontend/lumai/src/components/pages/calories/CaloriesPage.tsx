@@ -186,6 +186,7 @@ type RecipeDetail = {
   title: string;
   cuisine: string;
   summary: string;
+  dietaryTags?: string[];
   ingredients: Array<{ id: string; name: string; quantity: number; unit: string; originalUnit?: string; originalQuantity?: number }>;
   preparation: Array<{ step: string; description: string; ingredients: string[] }>;
   instructions: string;
@@ -1497,11 +1498,7 @@ const ShoppingListPanel: React.FC<ShoppingListPanelProps> = ({
     return { totalItems, checkedItems, totalCategories };
   }, [list, grouped]);
 
-  const handleQuantityStep = (item: ShoppingList['items'][number], delta: number) => {
-    if (!list) return;
-    const nextQuantity = Math.max(0, item.quantity + delta);
-    onQuantityChange(list.id, item.id, { quantity: nextQuantity });
-  };
+
 
   return (
     <div className="shopping-panel">
@@ -1553,14 +1550,7 @@ const ShoppingListPanel: React.FC<ShoppingListPanelProps> = ({
                           </div>
                           <div className="shopping-controls">
                             <div className="shopping-stepper">
-                              <button
-                                type="button"
-                                className="shopping-step"
-                                onClick={() => handleQuantityStep(item, -5)}
-                                aria-label={`Decrease ${item.name} quantity`}
-                              >
-                                –
-                              </button>
+      
                               <input
                                 type="number"
                                 value={Number(item.quantity.toFixed(0))}
@@ -1568,19 +1558,12 @@ const ShoppingListPanel: React.FC<ShoppingListPanelProps> = ({
                                   onQuantityChange(list.id, item.id, { quantity: Number(e.target.value) })
                                 }
                               />
-                              <button
-                                type="button"
-                                className="shopping-step"
-                                onClick={() => handleQuantityStep(item, 5)}
-                                aria-label={`Increase ${item.name} quantity`}
-                              >
-                                +
-                              </button>
+                    
                               <span className="shopping-unit">{item.unit}</span>
                             </div>
                             <button
                               type="button"
-                              className="dashboard-hero-action dashboard-hero-action--ghost shopping-remove"
+                              className="dashboard-hero-action--ghost shopping-remove"
                               onClick={() => onRemoveItem(list.id, item.id)}
                               aria-label={`Remove ${item.name} from list`}
                             >
@@ -1616,6 +1599,8 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ recipe, servings, onServingsC
     ...ingredient,
     quantity: Number((ingredient.quantity * scale).toFixed(1))
   }));
+  const macros = recipe.macrosPerServing ?? { calories: 0, protein: 0, carbs: 0, fats: 0 };
+  const tags = recipe.dietaryTags ?? [];
 
   return (
     <div className="recipe-modal-backdrop" role="dialog" aria-modal>
@@ -1624,9 +1609,33 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ recipe, servings, onServingsC
           <div>
             <h3>{recipe.title}</h3>
             <p>{recipe.summary}</p>
+            <div className="recipe-meta">
+              <span>{recipe.cuisine}</span>
+              {tags.slice(0, 3).map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+            </div>
           </div>
           <button type="button" className="recipe-modal-close dashboard-hero-action dashboard-hero-action--ghost" aria-label="Close recipe" onClick={onClose}>×</button>
         </header>
+        <div className="recipe-macro-grid">
+          <article>
+            <p>Calories</p>
+            <strong>{Math.round(macros.calories)} kcal</strong>
+          </article>
+          <article>
+            <p>Protein</p>
+            <strong>{Math.round(macros.protein)} g</strong>
+          </article>
+          <article>
+            <p>Carbs</p>
+            <strong>{Math.round(macros.carbs)} g</strong>
+          </article>
+          <article>
+            <p>Fats</p>
+            <strong>{Math.round(macros.fats)} g</strong>
+          </article>
+        </div>
         <div className="servings-row">
           <label>
             Servings
