@@ -128,21 +128,33 @@ export const listShoppingLists = async (userId: string, limit = 10) => {
 
 export const recordSnapshot = async (
   userId: string,
-  snapshot: Omit<NutritionalSnapshotDocument, "id" | "createdAt" | "updatedAt">
+  snapshot: Omit<NutritionalSnapshotDocument, "id" | "createdAt" | "updatedAt">,
+  options?: { merge?: boolean }
 ) => {
   const doc = snapshotsCollection(userId).doc(snapshot.date);
+  const existing = await doc.get();
   const now = Timestamp.now();
-  await doc.set({
-    ...snapshot,
-    id: doc.id,
-    createdAt: now,
-    updatedAt: now
-  });
+  const createdAt = existing.exists
+    ? ((existing.data()?.createdAt as Timestamp | undefined) ?? now)
+    : now;
+  await doc.set(
+    {
+      ...snapshot,
+      id: doc.id,
+      createdAt,
+      updatedAt: now
+    },
+    { merge: options?.merge ?? false }
+  );
 };
 
 export const getSnapshot = async (userId: string, date: string) => {
   const snapshot = await snapshotsCollection(userId).doc(date).get();
   return snapshot.exists ? (snapshot.data() as NutritionalSnapshotDocument) : null;
+};
+
+export const deleteSnapshot = async (userId: string, date: string) => {
+  await snapshotsCollection(userId).doc(date).delete();
 };
 
 export const listSnapshots = async (userId: string, limit = 14) => {

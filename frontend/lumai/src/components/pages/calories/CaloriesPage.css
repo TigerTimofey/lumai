@@ -450,6 +450,11 @@
   gap: 8px;
 }
 
+.meal-card.is-logged {
+  border-color: rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.08);
+}
+
 .meal-type {
   margin: 0;
   text-transform: uppercase;
@@ -468,6 +473,16 @@
   padding: 6px 12px;
 }
 
+.meal-actions .dashboard-hero-action.is-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #065f46;
+}
+
+.meal-actions .dashboard-hero-action.is-success.is-ghost {
+  background: transparent;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+}
+
 .manual-meal {
   background: #fff;
   border-radius: 14px;
@@ -477,10 +492,30 @@
   gap: 8px;
 }
 
+.manual-meal input,
+.manual-meal select {
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+  background: rgba(15, 23, 42, 0.02);
+}
+
 .manual-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   gap: 8px;
+}
+
+.manual-grid label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  color: rgba(15, 23, 42, 0.7);
+  gap: 4px;
+}
+
+.manual-meal .dashboard-hero-action {
+  justify-self: flex-end;
 }
 
 .planner-analysis {

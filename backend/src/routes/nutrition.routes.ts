@@ -26,7 +26,12 @@ import {
   listShoppingLists,
   getShoppingList
 } from "../services/shopping-list.service.js";
-import { createSnapshotFromPlan, getSnapshots } from "../services/nutrition-snapshot.service.js";
+import {
+  createSnapshotFromPlan,
+  getSnapshots,
+  logMealConsumption,
+  unlogMealConsumption
+} from "../services/nutrition-snapshot.service.js";
 import { badRequest, notFound } from "../utils/api-error.js";
 
 const router = Router();
@@ -152,6 +157,28 @@ router.post("/meal-plans/:planId/days/:date/meals", async (req, res, next) => {
     if (!userId) throw badRequest("Missing user context");
     const plan = await addManualMeal(userId, req.params.planId, req.params.date, req.body ?? {});
     return res.json(plan);
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post("/meal-plans/:planId/days/:date/meals/:mealId/log", async (req, res, next) => {
+  try {
+    const userId = req.authToken?.uid;
+    if (!userId) throw badRequest("Missing user context");
+    const snapshot = await logMealConsumption(userId, req.params.planId, req.params.date, req.params.mealId);
+    return res.json(snapshot);
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.delete("/meal-plans/:planId/days/:date/meals/:mealId/log", async (req, res, next) => {
+  try {
+    const userId = req.authToken?.uid;
+    if (!userId) throw badRequest("Missing user context");
+    const snapshot = await unlogMealConsumption(userId, req.params.planId, req.params.date, req.params.mealId);
+    return res.json(snapshot);
   } catch (error) {
     return next(error);
   }

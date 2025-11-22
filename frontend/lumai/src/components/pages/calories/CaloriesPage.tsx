@@ -86,6 +86,26 @@ type NutritionSnapshot = {
     fatsDelta: number;
   };
   wellnessImpactScore: number;
+  consumedMeals?: Array<{
+    planId: string;
+    mealId: string;
+    title?: string;
+    type: string;
+    loggedAt?: string | { seconds: number; nanoseconds: number };
+    macros: {
+      calories: number;
+      protein: number;
+      carbs: number;
+      fats: number;
+    };
+    micronutrients?: {
+      vitaminD?: number;
+      vitaminB12?: number;
+      iron?: number;
+      magnesium?: number;
+      fiber?: number;
+    };
+  }>;
 };
 
 type MealPlanAnalysis = {
@@ -191,6 +211,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   const [swapTarget, setSwapTarget] = useState<string>('');
   const [manualMeals, setManualMeals] = useState<Record<string, ManualMealForm>>({});
   const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
+  const [pendingMealLog, setPendingMealLog] = useState<{ key: string; action: 'log' | 'unlog' } | null>(null);
 
   const selectedPlan = mealPlans.find((plan) => plan.id === selectedPlanId) ?? null;
 
@@ -459,6 +480,18 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     });
   }, []);
 
+  const loggedMealKeys = useMemo(() => {
+    const keys = new Set<string>();
+    const register = (entries?: NutritionSnapshot['consumedMeals']) => {
+      entries?.forEach((entry) => {
+        keys.add(`${entry.planId}|${entry.mealId}`);
+      });
+    };
+    register(snapshot?.consumedMeals);
+    snapshots.forEach((snap) => register(snap.consumedMeals));
+    return keys;
+  }, [snapshot, snapshots]);
+
   const handleManualMealAdd = async (planId: string, date: string, manualData?: ManualMealForm) => {
     const mealData = manualData ?? getManualMealForDate(date);
     setPlannerLoading(true);
@@ -488,6 +521,51 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     if (!recipeId) return;
     const recipe = await apiFetch<RecipeDetail>(`/nutrition/recipes/${recipeId}`);
     setRecipeModal({ open: true, recipe, servings: recipe.servings ?? 1 });
+  };
+
+  const mergeSnapshotUpdate = useCallback((updatedSnapshot: NutritionSnapshot | null, targetDate: string) => {
+    if (!targetDate) return;
+    if (!updatedSnapshot) {
+      setSnapshot((prev) => (prev?.date === targetDate ? null : prev));
+      setSnapshots((prev) => prev.filter((item) => item.date !== targetDate));
+      return;
+    }
+    setSnapshot((prev) => (prev?.date === updatedSnapshot.date || !prev ? updatedSnapshot : prev));
+    setSnapshots((prev) => {
+      const others = prev.filter((item) => item.date !== updatedSnapshot.date);
+      const next = [updatedSnapshot, ...others];
+      return next.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    });
+  }, []);
+
+  const handleLogMeal = async (planId: string, date: string, mealId: string) => {
+    const key = `${planId}|${mealId}`;
+    if (loggedMealKeys.has(key)) return;
+    setPendingMealLog({ key, action: 'log' });
+    try {
+      const updatedSnapshot = await apiFetch<NutritionSnapshot>(
+        `/nutrition/meal-plans/${planId}/days/${date}/meals/${mealId}/log`,
+        { method: 'POST' }
+      );
+      mergeSnapshotUpdate(updatedSnapshot, date);
+    } finally {
+      setPendingMealLog((current) => (current?.key === key ? null : current));
+    }
+  };
+
+  const handleUnlogMeal = async (planId: string, date: string, mealId: string) => {
+    const key = `${planId}|${mealId}`;
+    if (!loggedMealKeys.has(key)) return;
+    setPendingMealLog({ key, action: 'unlog' });
+    try {
+      const updatedSnapshot = await apiFetch<NutritionSnapshot | null>(
+        `/nutrition/meal-plans/${planId}/days/${date}/meals/${mealId}/log`,
+        { method: 'DELETE' }
+      );
+      mergeSnapshotUpdate(updatedSnapshot, date);
+    } finally {
+      setPendingMealLog((current) => (current?.key === key ? null : current));
+    }
   };
 
   const handleGenerateShoppingList = async () => {
@@ -777,6 +855,10 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
               manualMeals={manualMeals}
               onManualMealChange={updateManualMeal}
               onViewRecipe={(recipeId) => handleLoadRecipe(recipeId)}
+              onLogMeal={(date, mealId) => selectedPlanId && handleLogMeal(selectedPlanId, date, mealId)}
+              onUnlogMeal={(date, mealId) => selectedPlanId && handleUnlogMeal(selectedPlanId, date, mealId)}
+              loggedMeals={loggedMealKeys}
+              pendingMealLog={pendingMealLog}
               expandedDays={expandedDays}
               onToggleDay={(day) =>
                 setExpandedDays((prev) => ({ ...prev, [day]: !prev[day] }))
@@ -1081,6 +1163,10 @@ interface MealCalendarProps {
   manualMeals: Record<string, ManualMealForm>;
   onManualMealChange: (date: string, field: keyof ManualMealForm, value: string | number) => void;
   onViewRecipe: (recipeId?: string) => void;
+  onLogMeal: (date: string, mealId: string) => void;
+  onUnlogMeal: (date: string, mealId: string) => void;
+  loggedMeals: Set<string>;
+  pendingMealLog: { key: string; action: 'log' | 'unlog' } | null;
   expandedDays: Record<string, boolean>;
   onToggleDay: (day: string) => void;
 }
@@ -1093,6 +1179,10 @@ const MealCalendar: React.FC<MealCalendarProps> = ({
   manualMeals,
   onManualMealChange,
   onViewRecipe,
+  onLogMeal,
+  onUnlogMeal,
+  loggedMeals,
+  pendingMealLog,
   expandedDays,
   onToggleDay
 }) => {
@@ -1124,24 +1214,47 @@ const MealCalendar: React.FC<MealCalendarProps> = ({
           {expandedDays[day.date] && (
             <>
               <div className="meal-list">
-                {day.meals.map((meal) => (
-                  <div key={meal.id} className="meal-card">
-                    <div>
-                      <p className="meal-type">{meal.type}</p>
-                      <p className="meal-title">{meal.title ?? 'AI recipe'}</p>
-                      <p className="meal-meta">
-                        {Math.round(meal.macros.calories)} kcal · {Math.round(meal.macros.protein)}g protein
-                      </p>
-                      <p className="meal-time">{formatTime(meal.scheduledAt, timezone)}</p>
+                {day.meals.map((meal) => {
+                  const mealKey = `${plan.id}|${meal.id}`;
+                  const isLogged = loggedMeals.has(mealKey);
+                  const pendingAction = pendingMealLog?.key === mealKey ? pendingMealLog.action : null;
+                  const handleMealLogToggle = () =>
+                    isLogged ? onUnlogMeal(day.date, meal.id) : onLogMeal(day.date, meal.id);
+                  return (
+                    <div key={meal.id} className={`meal-card ${isLogged ? 'is-logged' : ''}`}>
+                      <div>
+                        <p className="meal-type">{meal.type}</p>
+                        <p className="meal-title">{meal.title ?? 'AI recipe'}</p>
+                        <p className="meal-meta">
+                          {Math.round(meal.macros.calories)} kcal · {Math.round(meal.macros.protein)}g protein
+                        </p>
+                        <p className="meal-time">{formatTime(meal.scheduledAt, timezone)}</p>
+                      </div>
+                      <div className="meal-actions">
+                        <button
+                          type="button"
+                          className={`dashboard-hero-action dashboard-hero-action--small ${
+                            isLogged ? 'is-success is-ghost' : ''
+                          }`}
+                          disabled={!!pendingAction}
+                          onClick={handleMealLogToggle}
+                        >
+                          {isLogged
+                            ? pendingAction === 'unlog'
+                              ? 'Removing…'
+                              : 'Unlog meal'
+                            : pendingAction === 'log'
+                              ? 'Logging…'
+                              : 'Log meal'}
+                        </button>
+                        {meal.recipeId && (
+                          <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={() => onViewRecipe(meal.recipeId)}>Recipe</button>
+                        )}
+                        <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={() => onRegenerateMeal(day.date, meal.id)}>Regenerate</button>
+                      </div>
                     </div>
-                    <div className="meal-actions">
-                      {meal.recipeId && (
-                        <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={() => onViewRecipe(meal.recipeId)}>Recipe</button>
-                      )}
-                      <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={() => onRegenerateMeal(day.date, meal.id)}>Regenerate</button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="manual-meal">
                 <h4>Add manual meal</h4>

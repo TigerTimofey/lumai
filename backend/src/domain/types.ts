@@ -388,6 +388,26 @@ export interface NutritionalSnapshotDocument {
     fatsDelta: number;
   };
   wellnessImpactScore: number;
+  consumedMeals?: Array<{
+    planId: string;
+    mealId: string;
+    title?: string;
+    type: string;
+    loggedAt: Timestamp;
+    macros: {
+      calories: number;
+      protein: number;
+      carbs: number;
+      fats: number;
+    };
+    micronutrients?: {
+      vitaminD?: number;
+      vitaminB12?: number;
+      iron?: number;
+      magnesium?: number;
+      fiber?: number;
+    };
+  }>;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
