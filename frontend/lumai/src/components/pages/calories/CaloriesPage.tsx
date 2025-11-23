@@ -46,6 +46,9 @@ type RecipeFromJson = {
 };
 
 const typedRecipes = recipesData as RecipeFromJson[];
+const LOCAL_RECIPE_IDS = new Set(typedRecipes.map((recipe) => String(recipe.recipe_id)));
+const generateLocalId = () =>
+  typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
 
 const SHOPPING_CATEGORIES = [
   { key: 'produce', label: 'Fresh produce', hints: ['produce', 'vegetable', 'fruit', 'greens'], icon: '🥬' },
@@ -263,6 +266,7 @@ type RecipeDetail = {
 type RecipeReview = {
   id: string;
   userId?: string;
+  recipeId?: string;
   rating: number;
   comment?: string;
   createdAt?: { seconds: number; nanoseconds: number };
@@ -285,6 +289,60 @@ const createManualMealForm = (): ManualMealForm => ({
   carbs: 20,
   fats: 8
 });
+
+type RecipeIngredientPreview = {
+  id?: string;
+  name?: string;
+};
+
+type RecipeSearchMatch = {
+  recipe: {
+    id: string;
+    title: string;
+    cuisine: string;
+    dietaryTags: string[];
+    macrosPerServing: {
+      calories: number;
+      protein: number;
+      carbs: number;
+      fats: number;
+    };
+    ingredients?: RecipeIngredientPreview[];
+    servings: number;
+  };
+  similarity?: number;
+  score?: number;
+};
+
+const mapJsonRecipeToDetail = (recipeId: string): RecipeDetail | null => {
+  const match = typedRecipes.find((recipe) => String(recipe.recipe_id) === String(recipeId));
+  if (!match) return null;
+  return {
+    id: String(match.recipe_id),
+    title: match.name,
+    cuisine: match.cuisine || 'Unknown cuisine',
+    summary: match.course ? `Course: ${match.course}` : 'Recipe preview',
+    dietaryTags: match.course ? [match.course] : [],
+    ingredients: match.ingredients.map((ingredient, index) => ({
+      id: ingredient.ingredient_id ? String(ingredient.ingredient_id) : `${match.recipe_id}-${index}`,
+      name: ingredient.name,
+      quantity: 1,
+      unit: 'unit'
+    })),
+    preparation: [],
+    instructions: '',
+    servings: match.servings ?? 1,
+    macrosPerServing: {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fats: 0,
+      fiber: 0
+    },
+    ratingAverage: 0,
+    ratingCount: 0
+  };
+};
 
 const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   const displayName = user.displayName ?? user.email ?? 'friend';
@@ -316,6 +374,12 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   const [micronutrientSummary, setMicronutrientSummary] = useState<MicronutrientSummary | null>(null);
   const [micronutrientFocus, setMicronutrientFocus] = useState<string>('');
   const [planDuration, setPlanDuration] = useState<'daily' | 'weekly'>('weekly');
+  const [recipeSearchQuery, setRecipeSearchQuery] = useState('');
+  const [recipeSearchCuisine, setRecipeSearchCuisine] = useState('');
+  const [recipeSearchDiet, setRecipeSearchDiet] = useState('');
+  const [recipeSearchResults, setRecipeSearchResults] = useState<RecipeSearchMatch[]>([]);
+  const [recipeSearchLoading, setRecipeSearchLoading] = useState(false);
+  const [recipeSearchError, setRecipeSearchError] = useState<string | null>(null);
 
   const selectedPlan = mealPlans.find((plan) => plan.id === selectedPlanId) ?? null;
 
@@ -669,13 +733,6 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     setSelectedListId((prev) => prev ?? response.lists?.[0]?.id ?? null);
   }, []);
 
-  const fetchRecipeReviews = useCallback(async (recipeId: string) => {
-    const response = await apiFetch<{ reviews: RecipeReview[] }>(
-      `/nutrition/recipes/${recipeId}/reviews?status=approved`
-    );
-    return response.reviews ?? [];
-  }, []);
-
   const handleSavePreferences = async (payload: PreferencesUpdatePayload) => {
     const updated = await apiFetch<NutritionPreferences>('/nutrition/preferences', {
       method: 'PUT',
@@ -809,11 +866,23 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
 
   const handleLoadRecipe = async (recipeId: string | undefined) => {
     if (!recipeId) return;
-    const [recipe, reviews] = await Promise.all([
-      apiFetch<RecipeDetail>(`/nutrition/recipes/${recipeId}`),
-      fetchRecipeReviews(recipeId)
-    ]);
-    setRecipeModal({ open: true, recipe, servings: recipe.servings ?? 1, reviews });
+    const isLocalRecipe = LOCAL_RECIPE_IDS.has(String(recipeId));
+    if (isLocalRecipe) {
+      const fallbackRecipe = mapJsonRecipeToDetail(recipeId);
+      if (!fallbackRecipe) return;
+      setRecipeModal({ open: true, recipe: fallbackRecipe, servings: fallbackRecipe.servings ?? 1, reviews: [] });
+      setReviewForm({ rating: 5, comment: '' });
+      return;
+    }
+    let recipe: RecipeDetail | null = null;
+    try {
+      recipe = await apiFetch<RecipeDetail>(`/nutrition/recipes/${recipeId}`);
+    } catch (error) {
+      console.error('Failed to load recipe from API, falling back to local data', error);
+      recipe = mapJsonRecipeToDetail(recipeId);
+    }
+    if (!recipe) return;
+    setRecipeModal({ open: true, recipe, servings: recipe.servings ?? 1, reviews: [] });
     setReviewForm({ rating: 5, comment: '' });
   };
 
@@ -885,15 +954,20 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
           comment: reviewForm.comment || undefined
         })
       });
-      const updatedReviews = await fetchRecipeReviews(recipeModal.recipe.id);
-      setRecipeModal((prev) =>
-        prev.recipe
-          ? {
-              ...prev,
-              reviews: updatedReviews
-            }
-          : prev
-      );
+      setRecipeModal((prev) => {
+        if (!prev.recipe) return prev;
+        const newReview: RecipeReview = {
+          id: generateLocalId(),
+          recipeId: prev.recipe.id,
+          rating: reviewForm.rating,
+          comment: reviewForm.comment,
+          createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 }
+        };
+        return {
+          ...prev,
+          reviews: [...prev.reviews, newReview]
+        };
+      });
       setReviewForm({ rating: 5, comment: '' });
     } finally {
       setSubmittingReview(false);
@@ -928,6 +1002,31 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
       method: 'DELETE'
     });
     setShoppingLists((prev) => prev.map((list) => (list.id === updated.id ? updated : list)));
+  };
+
+  const handleRecipeSearch = async (event?: React.FormEvent) => {
+    event?.preventDefault();
+    if (!recipeSearchQuery && !recipeSearchCuisine && !recipeSearchDiet) {
+      setRecipeSearchResults([]);
+      return;
+    }
+    const params = new URLSearchParams();
+    if (recipeSearchQuery) params.set('q', recipeSearchQuery);
+    if (recipeSearchCuisine) params.set('cuisine', recipeSearchCuisine);
+    if (recipeSearchDiet) params.set('diet', recipeSearchDiet);
+    setRecipeSearchLoading(true);
+    setRecipeSearchError(null);
+    try {
+      const response = await apiFetch<{ results: RecipeSearchMatch[] }>(
+        `/nutrition/recipes${params.toString() ? `?${params.toString()}` : ''}`
+      );
+      setRecipeSearchResults(response.results ?? []);
+    } catch (error) {
+      console.error(error);
+      setRecipeSearchError('Не удалось загрузить рецепты. Попробуйте еще раз.');
+    } finally {
+      setRecipeSearchLoading(false);
+    }
   };
 
   const historyChart = useMemo(() => {
@@ -1155,8 +1254,8 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                       />
                     </div>
                   )}
-                   {micronutrientSummary?.coverage && (
-                  <article className="micronutrient-summary-card">
+            {micronutrientSummary?.coverage && (
+              <article className="micronutrient-summary-card">
                     <header>
                       <div>
                         <h3>Micronutrient focus</h3>
@@ -1203,12 +1302,13 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                         Try this: {micronutrientSummary.recipeIdeas.join(', ')}
                       </p>
                     )}
-                  </article>
-                )}
+              </article>
+            )}
 
           </section>
 
           <section className="calories-planner">
+
             <header className="section-header">
               <div>
                 <p className="calories-section-label">Meal planner</p>
@@ -1326,7 +1426,87 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                 </div>
               </div>
             )}
+                        <section className="recipe-search">
+            <header className="section-header">
+              <div>
+                <p className="calories-section-label">Recipe explorer</p>
+                <h2>Find dishes by name, ingredients, or cuisine</h2>
+              </div>
+            </header>
+            <form className="recipe-search-form" onSubmit={handleRecipeSearch}>
+              <div>
+                <label htmlFor="recipeQuery">Name or ingredients</label>
+                <input
+                  id="recipeQuery"
+                  value={recipeSearchQuery}
+                  onChange={(e) => setRecipeSearchQuery(e.target.value)}
+                  placeholder="e.g., lentil soup, salmon, avocado"
+                />
+              </div>
+              <div>
+                <label htmlFor="recipeCuisine">Cuisine</label>
+                <input
+                  id="recipeCuisine"
+                  value={recipeSearchCuisine}
+                  onChange={(e) => setRecipeSearchCuisine(e.target.value)}
+                  placeholder="mediterranean, japanese..."
+                />
+              </div>
+              <div>
+                <label htmlFor="recipeDiet">Dietary tag</label>
+                <input
+                  id="recipeDiet"
+                  value={recipeSearchDiet}
+                  onChange={(e) => setRecipeSearchDiet(e.target.value)}
+                  placeholder="vegetarian, gluten_free..."
+                />
+              </div>
+              <button type="submit" className="dashboard-hero-action dashboard-hero-action--small" disabled={recipeSearchLoading}>
+                {recipeSearchLoading ? 'Searching…' : 'Search recipes'}
+              </button>
+            </form>
+            {recipeSearchError && <p className="calories-error">{recipeSearchError}</p>}
+            <div className="recipe-search-results">
+              {recipeSearchResults.length === 0 && !recipeSearchLoading ? (
+                <p className="calories-empty">Enter a query to explore recipes.</p>
+              ) : (
+                recipeSearchResults.map((match) => {
+                  const matchLabel =
+                    typeof match.similarity === 'number'
+                      ? `${Math.round(match.similarity * 100)}% match`
+                      : 'Suggested';
+                  return (
+                    <article key={match.recipe.id} className="recipe-search-card">
+                      <header>
+                        <div>
+                          <h3>{match.recipe.title}</h3>
+                          <p>{match.recipe.cuisine || 'Any cuisine'}</p>
+                        </div>
+                        <span className="recipe-search-score">{matchLabel}</span>
+                      </header>
+                      <p className="recipe-search-macros">
+                        {Math.round(match.recipe.macrosPerServing.calories)} kcal · {Math.round(match.recipe.macrosPerServing.protein)}g protein · {Math.round(match.recipe.macrosPerServing.carbs)}g carbs · {Math.round(match.recipe.macrosPerServing.fats)}g fats
+                      </p>
+                      {match.recipe.dietaryTags?.length > 0 && (
+                        <p className="recipe-search-tags">Tags: {match.recipe.dietaryTags.join(', ')}</p>
+                      )}
+                      <p className="recipe-search-ingredients">
+                        Key ingredients:{' '}
+                        {match.recipe.ingredients
+                          ?.slice(0, 4)
+                          .map((ingredient: RecipeIngredientPreview) => ingredient?.name)
+                          .filter(Boolean)
+                          .join(', ') || 'n/a'}
+                      </p>
+                    </article>
+                  );
+                })
+              )}
+            </div>
+          
           </section>
+            </section>
+     
 
           <section className="calories-shopping">
             <header className="section-header">
@@ -1760,7 +1940,7 @@ const MealCalendar: React.FC<MealCalendarProps> = ({
                         {meal.recipeId && (
                           <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={() => onViewRecipe(meal.recipeId)}>Recipe</button>
                         )}
-                        <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={() => onRegenerateMeal(day.date, meal.id)}>Regenerate</button>
+                        <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={() => onRegenerateMeal(day.date, meal.id)}>Generate alternative</button>
                       </div>
                     </div>
                   );
@@ -1951,13 +2131,13 @@ interface RecipeModalProps {
 const RecipeModal: React.FC<RecipeModalProps> = ({
   recipe,
   servings,
-  reviews,
-  reviewForm,
-  submittingReview,
+  // reviews,
+  // reviewForm,
+  // submittingReview,
   onServingsChange,
   onClose,
-  onReviewChange,
-  onSubmitReview
+  // onReviewChange,
+  // onSubmitReview
 }) => {
   const scale = servings / (recipe.servings || 1);
   const scaledIngredients = recipe.ingredients.map((ingredient) => ({
@@ -2024,7 +2204,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
                 : recipe.instructions.split('. ').map((sentence, index) => <li key={index}>{sentence}</li>)}
             </ol>
           </section>
-          <section className="recipe-reviews">
+          {/* <section className="recipe-reviews">
             <h4>Community reviews</h4>
             {reviews.length ? (
               <ul>
@@ -2080,7 +2260,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
                 {submittingReview ? 'Sending...' : 'Share review'}
               </button>
             </form>
-          </section>
+          </section> */}
         </div>
       </div>
     </div>

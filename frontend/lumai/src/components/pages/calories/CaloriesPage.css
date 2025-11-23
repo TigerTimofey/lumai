@@ -353,7 +353,7 @@
 .calories-loading,
 .calories-error,
 .calories-empty {
-  margin: 0;
+  margin-top: 10px;
   padding: 16px;
   border-radius: 12px;
   background: rgba(15, 23, 42, 0.05);
@@ -744,10 +744,6 @@
   gap: 8px;
 }
 
-.shopping-item input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-}
 
 .shopping-item-name {
   cursor: pointer;
@@ -971,6 +967,86 @@
 
 .macro-pie-card header {
   margin-bottom: 12px;
+}
+
+.recipe-search {
+  background: #fff;
+  border-radius: 24px;
+  margin-top: 32px;
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.recipe-search-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.recipe-search-form label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: rgba(15, 23, 42, 0.75);
+}
+
+.recipe-search-form input {
+  width: 90%;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+  background: rgba(15, 23, 42, 0.02);
+}
+
+.recipe-search-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.recipe-search-card {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(248, 250, 252, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recipe-search-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.recipe-search-card h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.recipe-search-card p {
+  margin: 0;
+  color: rgba(15, 23, 42, 0.7);
+}
+
+.recipe-search-score {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(15, 23, 42, 0.6);
+}
+
+.recipe-search-macros {
+  font-weight: 600;
+}
+
+.recipe-search-tags {
+  font-size: 0.85rem;
+  color: rgba(15, 23, 42, 0.65);
 }
 
 .planner-metrics {

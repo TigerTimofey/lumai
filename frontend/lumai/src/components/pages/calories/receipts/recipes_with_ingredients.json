@@ -12,21 +12,21 @@
     "ingredients": [
       {
         "ingredient_id": 339,
-        "name": "ingredient_339",
+        "name": "vegetable_339",
         "category": "vegetable",
         "quantity": 2.29,
         "unit": "g"
       },
       {
         "ingredient_id": 478,
-        "name": "ingredient_478",
+        "name": "spice_478",
         "category": "spice",
         "quantity": 2.18,
         "unit": "cup"
       },
       {
         "ingredient_id": 426,
-        "name": "ingredient_426",
+        "name": "grain_426",
         "category": "grain",
         "quantity": 1.32,
         "unit": "tbsp"
@@ -40,21 +40,21 @@
       },
       {
         "ingredient_id": 212,
-        "name": "ingredient_212",
+        "name": "spice_212",
         "category": "spice",
         "quantity": 2.17,
         "unit": "cup"
       },
       {
         "ingredient_id": 431,
-        "name": "ingredient_431",
+        "name": "dairy_431",
         "category": "dairy",
         "quantity": 1.46,
         "unit": "l"
       },
       {
         "ingredient_id": 399,
-        "name": "ingredient_399",
+        "name": "other_399",
         "category": "other",
         "quantity": 1.35,
         "unit": "tsp"
@@ -81,7 +81,7 @@
       },
       {
         "ingredient_id": 404,
-        "name": "ingredient_404",
+        "name": "vegetable_404",
         "category": "vegetable",
         "quantity": 0.73,
         "unit": "tbsp"
@@ -95,28 +95,28 @@
       },
       {
         "ingredient_id": 439,
-        "name": "ingredient_439",
+        "name": "spice_439",
         "category": "spice",
         "quantity": 0.88,
         "unit": "cup"
       },
       {
         "ingredient_id": 139,
-        "name": "ingredient_139",
+        "name": "other_139",
         "category": "other",
         "quantity": 0.82,
         "unit": "kg"
       },
       {
         "ingredient_id": 473,
-        "name": "ingredient_473",
+        "name": "sauce_473",
         "category": "sauce",
         "quantity": 1.31,
         "unit": "g"
       },
       {
         "ingredient_id": 187,
-        "name": "ingredient_187",
+        "name": "meat_187",
         "category": "meat",
         "quantity": 2.5,
         "unit": "tbsp"
@@ -143,49 +143,49 @@
     "ingredients": [
       {
         "ingredient_id": 118,
-        "name": "ingredient_118",
+        "name": "fish_118",
         "category": "fish",
         "quantity": 2.42,
         "unit": "kg"
       },
       {
         "ingredient_id": 224,
-        "name": "ingredient_224",
+        "name": "sauce_224",
         "category": "sauce",
         "quantity": 1.55,
         "unit": "tsp"
       },
       {
         "ingredient_id": 477,
-        "name": "ingredient_477",
+        "name": "sauce_477",
         "category": "sauce",
         "quantity": 1.55,
         "unit": "cup"
       },
       {
         "ingredient_id": 263,
-        "name": "ingredient_263",
+        "name": "other_263",
         "category": "other",
         "quantity": 1.14,
         "unit": "l"
       },
       {
         "ingredient_id": 378,
-        "name": "ingredient_378",
+        "name": "fish_378",
         "category": "fish",
         "quantity": 0.42,
         "unit": "l"
       },
       {
         "ingredient_id": 172,
-        "name": "ingredient_172",
+        "name": "sauce_172",
         "category": "sauce",
         "quantity": 0.48,
         "unit": "tsp"
       },
       {
         "ingredient_id": 168,
-        "name": "ingredient_168",
+        "name": "spice_168",
         "category": "spice",
         "quantity": 2.16,
         "unit": "kg"
@@ -212,35 +212,35 @@
       },
       {
         "ingredient_id": 431,
-        "name": "ingredient_431",
+        "name": "dairy_431",
         "category": "dairy",
         "quantity": 1.84,
         "unit": "cup"
       },
       {
         "ingredient_id": 502,
-        "name": "ingredient_502",
+        "name": "sauce_502",
         "category": "sauce",
         "quantity": 0.65,
         "unit": "tsp"
       },
       {
         "ingredient_id": 109,
-        "name": "ingredient_109",
+        "name": "spice_109",
         "category": "spice",
         "quantity": 1.64,
         "unit": "pcs"
       },
       {
         "ingredient_id": 444,
-        "name": "ingredient_444",
+        "name": "other_444",
         "category": "other",
         "quantity": 1.3,
         "unit": "tsp"
       },
       {
         "ingredient_id": 371,
-        "name": "ingredient_371",
+        "name": "meat_371",
         "category": "meat",
         "quantity": 0.98,
         "unit": "l"
@@ -267,35 +267,35 @@
       },
       {
         "ingredient_id": 507,
-        "name": "ingredient_507",
+        "name": "fruit_507",
         "category": "fruit",
         "quantity": 1.02,
         "unit": "tsp"
       },
       {
         "ingredient_id": 333,
-        "name": "ingredient_333",
+        "name": "dairy_333",
         "category": "dairy",
         "quantity": 1.5,
         "unit": "l"
       },
       {
         "ingredient_id": 187,
-        "name": "ingredient_187",
+        "name": "meat_187",
         "category": "meat",
         "quantity": 0.44,
         "unit": "cup"
       },
       {
         "ingredient_id": 500,
-        "name": "ingredient_500",
+        "name": "spice_500",
         "category": "spice",
         "quantity": 1.35,
         "unit": "l"
       },
       {
         "ingredient_id": 218,
-        "name": "ingredient_218",
+        "name": "other_218",
         "category": "other",
         "quantity": 1.8,
         "unit": "pcs"
@@ -315,56 +315,56 @@
     "ingredients": [
       {
         "ingredient_id": 378,
-        "name": "ingredient_378",
+        "name": "fish_378",
         "category": "fish",
         "quantity": 0.94,
         "unit": "l"
       },
       {
         "ingredient_id": 485,
-        "name": "ingredient_485",
+        "name": "vegetable_485",
         "category": "vegetable",
         "quantity": 0.52,
         "unit": "l"
       },
       {
         "ingredient_id": 353,
-        "name": "ingredient_353",
+        "name": "spice_353",
         "category": "spice",
         "quantity": 0.96,
         "unit": "ml"
       },
       {
         "ingredient_id": 436,
-        "name": "ingredient_436",
+        "name": "other_436",
         "category": "other",
         "quantity": 0.68,
         "unit": "pcs"
       },
       {
         "ingredient_id": 339,
-        "name": "ingredient_339",
+        "name": "vegetable_339",
         "category": "vegetable",
         "quantity": 0.87,
         "unit": "tsp"
       },
       {
         "ingredient_id": 361,
-        "name": "ingredient_361",
+        "name": "fruit_361",
         "category": "fruit",
         "quantity": 2.46,
         "unit": "l"
       },
       {
         "ingredient_id": 465,
-        "name": "ingredient_465",
+        "name": "fruit_465",
         "category": "fruit",
         "quantity": 0.92,
         "unit": "tbsp"
       },
       {
         "ingredient_id": 278,
-        "name": "ingredient_278",
+        "name": "spice_278",
         "category": "spice",
         "quantity": 0.65,
         "unit": "g"
@@ -384,14 +384,14 @@
     "ingredients": [
       {
         "ingredient_id": 503,
-        "name": "ingredient_503",
+        "name": "vegetable_503",
         "category": "vegetable",
         "quantity": 2.42,
         "unit": "tsp"
       },
       {
         "ingredient_id": 106,
-        "name": "ingredient_106",
+        "name": "fish_106",
         "category": "fish",
         "quantity": 2.37,
         "unit": "pcs"
@@ -405,42 +405,42 @@
       },
       {
         "ingredient_id": 292,
-        "name": "ingredient_292",
+        "name": "meat_292",
         "category": "meat",
         "quantity": 1.15,
         "unit": "kg"
       },
       {
         "ingredient_id": 481,
-        "name": "ingredient_481",
+        "name": "meat_481",
         "category": "meat",
         "quantity": 1.55,
         "unit": "g"
       },
       {
         "ingredient_id": 491,
-        "name": "ingredient_491",
+        "name": "fish_491",
         "category": "fish",
         "quantity": 0.59,
         "unit": "tsp"
       },
       {
         "ingredient_id": 452,
-        "name": "ingredient_452",
+        "name": "sauce_452",
         "category": "sauce",
         "quantity": 0.44,
         "unit": "l"
       },
       {
         "ingredient_id": 349,
-        "name": "ingredient_349",
+        "name": "meat_349",
         "category": "meat",
         "quantity": 0.52,
         "unit": "cup"
       },
       {
         "ingredient_id": 189,
-        "name": "ingredient_189",
+        "name": "fish_189",
         "category": "fish",
         "quantity": 1.61,
         "unit": "l"
@@ -467,28 +467,28 @@
       },
       {
         "ingredient_id": 102,
-        "name": "ingredient_102",
+        "name": "other_102",
         "category": "other",
         "quantity": 0.6,
         "unit": "cup"
       },
       {
         "ingredient_id": 213,
-        "name": "ingredient_213",
+        "name": "grain_213",
         "category": "grain",
         "quantity": 1.26,
         "unit": "pcs"
       },
       {
         "ingredient_id": 217,
-        "name": "ingredient_217",
+        "name": "fruit_217",
         "category": "fruit",
         "quantity": 0.91,
         "unit": "l"
       },
       {
         "ingredient_id": 271,
-        "name": "ingredient_271",
+        "name": "fish_271",
         "category": "fish",
         "quantity": 0.9,
         "unit": "tsp"
@@ -502,14 +502,14 @@
       },
       {
         "ingredient_id": 161,
-        "name": "ingredient_161",
+        "name": "dairy_161",
         "category": "dairy",
         "quantity": 0.41,
         "unit": "l"
       },
       {
         "ingredient_id": 246,
-        "name": "ingredient_246",
+        "name": "dairy_246",
         "category": "dairy",
         "quantity": 2.33,
         "unit": "l"
@@ -529,35 +529,35 @@
     "ingredients": [
       {
         "ingredient_id": 315,
-        "name": "ingredient_315",
+        "name": "vegetable_315",
         "category": "vegetable",
         "quantity": 1.8,
         "unit": "cup"
       },
       {
         "ingredient_id": 296,
-        "name": "ingredient_296",
+        "name": "other_296",
         "category": "other",
         "quantity": 2.37,
         "unit": "pcs"
       },
       {
         "ingredient_id": 450,
-        "name": "ingredient_450",
+        "name": "grain_450",
         "category": "grain",
         "quantity": 1.23,
         "unit": "g"
       },
       {
         "ingredient_id": 128,
-        "name": "ingredient_128",
+        "name": "dairy_128",
         "category": "dairy",
         "quantity": 2.25,
         "unit": "tbsp"
       },
       {
         "ingredient_id": 480,
-        "name": "ingredient_480",
+        "name": "vegetable_480",
         "category": "vegetable",
         "quantity": 1.61,
         "unit": "g"
@@ -577,35 +577,35 @@
     "ingredients": [
       {
         "ingredient_id": 453,
-        "name": "ingredient_453",
+        "name": "sauce_453",
         "category": "sauce",
         "quantity": 1.03,
         "unit": "tbsp"
       },
       {
         "ingredient_id": 285,
-        "name": "ingredient_285",
+        "name": "dairy_285",
         "category": "dairy",
         "quantity": 0.97,
         "unit": "kg"
       },
       {
         "ingredient_id": 186,
-        "name": "ingredient_186",
+        "name": "fish_186",
         "category": "fish",
         "quantity": 2.18,
         "unit": "tbsp"
       },
       {
         "ingredient_id": 447,
-        "name": "ingredient_447",
+        "name": "dairy_447",
         "category": "dairy",
         "quantity": 1.18,
         "unit": "pcs"
       },
       {
         "ingredient_id": 504,
-        "name": "ingredient_504",
+        "name": "sauce_504",
         "category": "sauce",
         "quantity": 0.9,
         "unit": "cup"
@@ -619,7 +619,7 @@
       },
       {
         "ingredient_id": 482,
-        "name": "ingredient_482",
+        "name": "fish_482",
         "category": "fish",
         "quantity": 1.27,
         "unit": "tbsp"
@@ -646,28 +646,28 @@
       },
       {
         "ingredient_id": 193,
-        "name": "ingredient_193",
+        "name": "sauce_193",
         "category": "sauce",
         "quantity": 2.34,
         "unit": "pcs"
       },
       {
         "ingredient_id": 371,
-        "name": "ingredient_371",
+        "name": "meat_371",
         "category": "meat",
         "quantity": 2.23,
         "unit": "pcs"
       },
       {
         "ingredient_id": 511,
-        "name": "ingredient_511",
+        "name": "fruit_511",
         "category": "fruit",
         "quantity": 0.52,
         "unit": "l"
       },
       {
         "ingredient_id": 453,
-        "name": "ingredient_453",
+        "name": "sauce_453",
         "category": "sauce",
         "quantity": 1.85,
         "unit": "tsp"
@@ -681,7 +681,7 @@
       },
       {
         "ingredient_id": 209,
-        "name": "ingredient_209",
+        "name": "meat_209",
         "category": "meat",
         "quantity": 0.46,
         "unit": "kg"
@@ -701,42 +701,42 @@
     "ingredients": [
       {
         "ingredient_id": 250,
-        "name": "ingredient_250",
+        "name": "other_250",
         "category": "other",
         "quantity": 0.87,
         "unit": "cup"
       },
       {
         "ingredient_id": 468,
-        "name": "ingredient_468",
+        "name": "meat_468",
         "category": "meat",
         "quantity": 1.01,
         "unit": "tsp"
       },
       {
         "ingredient_id": 149,
-        "name": "ingredient_149",
+        "name": "meat_149",
         "category": "meat",
         "quantity": 2.1,
         "unit": "tsp"
       },
       {
         "ingredient_id": 393,
-        "name": "ingredient_393",
+        "name": "dairy_393",
         "category": "dairy",
         "quantity": 1.88,
         "unit": "pcs"
       },
       {
         "ingredient_id": 196,
-        "name": "ingredient_196",
+        "name": "vegetable_196",
         "category": "vegetable",
         "quantity": 2.2,
         "unit": "pcs"
       },
       {
         "ingredient_id": 140,
-        "name": "ingredient_140",
+        "name": "other_140",
         "category": "other",
         "quantity": 1.46,
         "unit": "tbsp"
