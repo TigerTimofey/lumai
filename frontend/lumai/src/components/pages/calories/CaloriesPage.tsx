@@ -315,6 +315,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   const [pendingMealLog, setPendingMealLog] = useState<{ key: string; action: 'log' | 'unlog' } | null>(null);
   const [micronutrientSummary, setMicronutrientSummary] = useState<MicronutrientSummary | null>(null);
   const [micronutrientFocus, setMicronutrientFocus] = useState<string>('');
+  const [planDuration, setPlanDuration] = useState<'daily' | 'weekly'>('weekly');
 
   const selectedPlan = mealPlans.find((plan) => plan.id === selectedPlanId) ?? null;
 
@@ -688,7 +689,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     try {
       await apiFetch('/nutrition/meal-plans', {
         method: 'POST',
-        body: JSON.stringify({ duration: 'weekly', startDate: new Date().toISOString().slice(0, 10) })
+        body: JSON.stringify({ duration: planDuration, startDate: new Date().toISOString().slice(0, 10) })
       });
       await fetchMealPlans();
     } finally {
@@ -1145,6 +1146,8 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                           ]
                         }}
                         options={{
+                          maintainAspectRatio: false,
+                          responsive: true,
                           plugins: {
                             legend: { position: 'bottom' }
                           }
@@ -1212,13 +1215,14 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                 <h2>Create and manage meal plans</h2>
               </div>
               <div className="planner-actions">
+   
                 <button
                   type="button"
                   className="dashboard-hero-action"
                   onClick={handleGeneratePlan}
                   disabled={plannerLoading}
                 >
-                  Generate weekly plan
+                  {planDuration === 'weekly' ? 'Generate weekly plan' : 'Generate daily plan'}
                 </button>
                 {selectedPlanId && (
                   <button
@@ -1229,7 +1233,17 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                   >
                     Regenerate selected plan
                   </button>
-                )}
+                )}             <div className="planner-duration">
+                  <label htmlFor="planDuration">Plan length</label>
+                  <select
+                    id="planDuration"
+                    value={planDuration}
+                    onChange={(e) => setPlanDuration(e.target.value as 'daily' | 'weekly')}
+                  >
+                    <option value="daily">1 day</option>
+                    <option value="weekly">7 days</option>
+                  </select>
+                </div>
               </div>
             </header>
             <PlannerControls

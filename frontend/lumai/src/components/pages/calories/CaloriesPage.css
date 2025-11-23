@@ -414,8 +414,32 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 16px;
+  width: 100%;
+}
+
+.planner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.planner-actions label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: rgba(15, 23, 42, 0.75);
+}
+
+.planner-actions select {
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+  background: rgba(15, 23, 42, 0.02);
+  min-width: 160px;
 }
 
 .planner-actions button {
@@ -931,11 +955,18 @@
 }
 
 .macro-pie-card {
-  background: #fff;
+  background:transparent;
   border-radius: 16px;
-  padding: 16px;
-  box-shadow: var(--dashboard-card-shadow, 0 2px 4px rgba(15, 23, 42, 0.06));
   margin-top: 10px;
+  padding: 16px;
+  max-width: 300px;
+  width: 100%;
+}
+
+.macro-pie-card canvas {
+  width: 150px !important;
+  height: 300px !important;
+  margin: 0 auto;
 }
 
 .macro-pie-card header {
