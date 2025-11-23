@@ -39,6 +39,10 @@ type RecipeFromJson = {
   cuisine: string;
   course: string;
   servings: number;
+  calories_est?: number;
+  instructions?: string;
+  prep_time_min?: number;
+  prepTimeMin?: number;
   ingredients: Array<{
     ingredient_id: number | string;
     name: string;
@@ -320,6 +324,7 @@ type RecipeSearchMatch = {
 const mapJsonRecipeToDetail = (recipeId: string): RecipeDetail | null => {
   const match = typedRecipes.find((recipe) => String(recipe.recipe_id) === String(recipeId));
   if (!match) return null;
+  const caloriesFromJson = Number(match.calories_est ?? 0);
   return {
     id: String(match.recipe_id),
     title: match.name,
@@ -333,11 +338,11 @@ const mapJsonRecipeToDetail = (recipeId: string): RecipeDetail | null => {
       unit: 'unit'
     })),
     preparation: [],
-    instructions: '',
+    instructions: match.instructions ?? '',
     servings: match.servings ?? 1,
-    // prepTimeMin: match.prep_time_min ?? 0,
+    prepTimeMin: match.prep_time_min ?? match.prepTimeMin ?? 0,
     macrosPerServing: {
-      calories: 0,
+      calories: Number.isNaN(caloriesFromJson) ? 0 : caloriesFromJson,
       protein: 0,
       carbs: 0,
       fats: 0,
@@ -381,6 +386,9 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   const [recipeSearchQuery, setRecipeSearchQuery] = useState('');
   const [recipeSearchCuisine, setRecipeSearchCuisine] = useState('');
   const [recipeSearchDiet, setRecipeSearchDiet] = useState('');
+  const [recipeSearchAllergens, setRecipeSearchAllergens] = useState('');
+  const [recipeSearchIncludeIngredients, setRecipeSearchIncludeIngredients] = useState('');
+  const [recipeSearchExcludeIngredients, setRecipeSearchExcludeIngredients] = useState('');
   const [recipeSearchMinCalories, setRecipeSearchMinCalories] = useState('');
   const [recipeSearchMaxCalories, setRecipeSearchMaxCalories] = useState('');
   const [recipeSearchMinProtein, setRecipeSearchMinProtein] = useState('');
@@ -389,6 +397,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   const [recipeSearchMaxCarbs, setRecipeSearchMaxCarbs] = useState('');
   const [recipeSearchMinFats, setRecipeSearchMinFats] = useState('');
   const [recipeSearchMaxFats, setRecipeSearchMaxFats] = useState('');
+  const [recipeSearchMaxPrep, setRecipeSearchMaxPrep] = useState('');
   const [recipeSearchResults, setRecipeSearchResults] = useState<RecipeSearchMatch[]>([]);
   const [recipeSearchLoading, setRecipeSearchLoading] = useState(false);
   const [recipeSearchError, setRecipeSearchError] = useState<string | null>(null);
@@ -910,12 +919,15 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     }
   };
 
-  const handleLoadRecipe = async (recipeId: string | undefined) => {
+  const handleLoadRecipe = async (recipeId: string | undefined, fallbackMacros?: RecipeDetail['macrosPerServing']) => {
     if (!recipeId) return;
     const isLocalRecipe = LOCAL_RECIPE_IDS.has(String(recipeId));
     if (isLocalRecipe) {
       const fallbackRecipe = mapJsonRecipeToDetail(recipeId);
       if (!fallbackRecipe) return;
+      if (fallbackMacros) {
+        fallbackRecipe.macrosPerServing = fallbackMacros;
+      }
       setRecipeModal({ open: true, recipe: fallbackRecipe, servings: fallbackRecipe.servings ?? 1, reviews: [] });
       setReviewForm({ rating: 5, comment: '' });
       return;
@@ -926,8 +938,22 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     } catch (error) {
       console.error('Failed to load recipe from API, falling back to local data', error);
       recipe = mapJsonRecipeToDetail(recipeId);
+      if (recipe && fallbackMacros) {
+        recipe.macrosPerServing = fallbackMacros;
+      }
     }
     if (!recipe) return;
+    if (fallbackMacros) {
+      const hasMeaningfulMacros = recipe.macrosPerServing
+        ? ['calories', 'protein', 'carbs', 'fats'].some((key) => {
+            const value = recipe.macrosPerServing[key as keyof RecipeDetail['macrosPerServing']];
+            return typeof value === 'number' && value > 0;
+          })
+        : false;
+      if (!hasMeaningfulMacros) {
+        recipe.macrosPerServing = fallbackMacros;
+      }
+    }
     setRecipeModal({ open: true, recipe, servings: recipe.servings ?? 1, reviews: [] });
     setReviewForm({ rating: 5, comment: '' });
   };
@@ -1060,6 +1086,9 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
       !recipeSearchQuery &&
       !recipeSearchCuisine &&
       !recipeSearchDiet &&
+      !recipeSearchAllergens &&
+      !recipeSearchIncludeIngredients &&
+      !recipeSearchExcludeIngredients &&
       !recipeSearchMinCalories &&
       !recipeSearchMaxCalories &&
       !recipeSearchMinProtein &&
@@ -1067,7 +1096,8 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
       !recipeSearchMinCarbs &&
       !recipeSearchMaxCarbs &&
       !recipeSearchMinFats &&
-      !recipeSearchMaxFats
+      !recipeSearchMaxFats &&
+      !recipeSearchMaxPrep
     ) {
       setRecipeSearchResults([]);
       return;
@@ -1076,6 +1106,9 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     if (recipeSearchQuery) params.set('q', recipeSearchQuery);
     if (recipeSearchCuisine) params.set('cuisine', recipeSearchCuisine);
     if (recipeSearchDiet) params.set('diet', recipeSearchDiet);
+    if (recipeSearchAllergens) params.set('excludeAllergens', recipeSearchAllergens);
+    if (recipeSearchIncludeIngredients) params.set('ingredients', recipeSearchIncludeIngredients);
+    if (recipeSearchExcludeIngredients) params.set('excludeIngredients', recipeSearchExcludeIngredients);
     if (recipeSearchMinCalories) params.set('minCalories', recipeSearchMinCalories);
     if (recipeSearchMaxCalories) params.set('maxCalories', recipeSearchMaxCalories);
     if (recipeSearchMinProtein) params.set('minProtein', recipeSearchMinProtein);
@@ -1084,13 +1117,43 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     if (recipeSearchMaxCarbs) params.set('maxCarbs', recipeSearchMaxCarbs);
     if (recipeSearchMinFats) params.set('minFats', recipeSearchMinFats);
     if (recipeSearchMaxFats) params.set('maxFats', recipeSearchMaxFats);
+    if (recipeSearchMaxPrep) params.set('maxPrep', recipeSearchMaxPrep);
     setRecipeSearchLoading(true);
     setRecipeSearchError(null);
     try {
       const response = await apiFetch<{ results: RecipeSearchMatch[] }>(
         `/nutrition/recipes${params.toString() ? `?${params.toString()}` : ''}`
       );
-      const filtered = response.results ?? [];
+      let filtered = response.results ?? [];
+      const includeTokens = recipeSearchIncludeIngredients
+        .split(',')
+        .map((token) => token.trim().toLowerCase())
+        .filter(Boolean);
+      if (includeTokens.length) {
+        filtered = filtered.filter((match) => {
+          const names = match.recipe.ingredients?.map((ingredient) => ingredient?.name?.toLowerCase() ?? '') ?? [];
+          return includeTokens.every((token) => names.some((name) => name.includes(token)));
+        });
+      }
+      const excludeTokens = recipeSearchExcludeIngredients
+        .split(',')
+        .map((token) => token.trim().toLowerCase())
+        .filter(Boolean);
+      if (excludeTokens.length) {
+        filtered = filtered.filter((match) => {
+          const names = match.recipe.ingredients?.map((ingredient) => ingredient?.name?.toLowerCase() ?? '') ?? [];
+          return !excludeTokens.some((token) => names.some((name) => name.includes(token)));
+        });
+      }
+      if (recipeSearchMaxPrep) {
+        const maxPrep = Number(recipeSearchMaxPrep);
+        if (!Number.isNaN(maxPrep)) {
+          filtered = filtered.filter((match) => {
+            const prep = match.recipe.prepTimeMin ?? match.recipe.prep_time_min ?? 0;
+            return prep <= maxPrep;
+          });
+        }
+      }
       setRecipeSearchResults(filtered);
     } catch (error) {
       console.error(error);
@@ -1465,7 +1528,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
               onManualMealAdd={(date, manual) => selectedPlanId && handleManualMealAdd(selectedPlanId, date, manual)}
               manualMeals={manualMeals}
               onManualMealChange={updateManualMeal}
-              onViewRecipe={(recipeId) => handleLoadRecipe(recipeId)}
+              onViewRecipe={(recipeId, macros) => handleLoadRecipe(recipeId, macros)}
               onLogMeal={(date, mealId) => selectedPlanId && handleLogMeal(selectedPlanId, date, mealId)}
               onUnlogMeal={(date, mealId) => selectedPlanId && handleUnlogMeal(selectedPlanId, date, mealId)}
               loggedMeals={loggedMealKeys}
@@ -1635,6 +1698,33 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
             </form>
             <div className="recipe-advanced-filters">
               <div>
+                <label htmlFor="recipeAllergens">Exclude allergens</label>
+                <input
+                  id="recipeAllergens"
+                  value={recipeSearchAllergens}
+                  onChange={(e) => setRecipeSearchAllergens(e.target.value)}
+                  placeholder="nuts, soy, shellfish"
+                />
+              </div>
+              <div>
+                <label htmlFor="recipeInclude">Must include ingredients</label>
+                <input
+                  id="recipeInclude"
+                  value={recipeSearchIncludeIngredients}
+                  onChange={(e) => setRecipeSearchIncludeIngredients(e.target.value)}
+                  placeholder="chicken, basil"
+                />
+              </div>
+              <div>
+                <label htmlFor="recipeExclude">Exclude ingredients</label>
+                <input
+                  id="recipeExclude"
+                  value={recipeSearchExcludeIngredients}
+                  onChange={(e) => setRecipeSearchExcludeIngredients(e.target.value)}
+                  placeholder="onion, dairy"
+                />
+              </div>
+              <div>
                 <label htmlFor="recipeMinCalories">Min calories</label>
                 <input
                   id="recipeMinCalories"
@@ -1714,6 +1804,16 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                   onChange={(e) => setRecipeSearchMaxFats(e.target.value)}
                 />
               </div>
+              <div>
+                <label htmlFor="recipeMaxPrep">Max prep time (min)</label>
+                <input
+                  id="recipeMaxPrep"
+                  type="number"
+                  min={0}
+                  value={recipeSearchMaxPrep}
+                  onChange={(e) => setRecipeSearchMaxPrep(e.target.value)}
+                />
+              </div>
             </div>
               <div className="recipe-replace-select">
                 <label htmlFor="recipeReplaceTarget">Meal to replace</label>
@@ -1776,6 +1876,13 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                         disabled={!swapSource || !selectedPlanId || recipeReplaceLoading === match.recipe.id}
                       >
                         {recipeReplaceLoading === match.recipe.id ? 'Replacing…' : 'Replace selected meal'}
+                      </button>
+                      <button
+                        type="button"
+                        className="dashboard-hero-action dashboard-hero-action--small dashboard-hero-action--ghost"
+                        onClick={() => handleLoadRecipe(match.recipe.id, match.recipe.macrosPerServing)}
+                      >
+                        View recipe
                       </button>
                     </article>
                   );
@@ -2060,7 +2167,7 @@ interface MealCalendarProps {
   onManualMealAdd: (date: string, manualMeal: ManualMealForm) => void;
   manualMeals: Record<string, ManualMealForm>;
   onManualMealChange: (date: string, field: keyof ManualMealForm, value: string | number) => void;
-  onViewRecipe: (recipeId?: string) => void;
+  onViewRecipe: (recipeId?: string, macros?: MealPlanMeal['macros']) => void;
   onLogMeal: (date: string, mealId: string) => void;
   onUnlogMeal: (date: string, mealId: string) => void;
   loggedMeals: Set<string>;
@@ -2146,7 +2253,13 @@ const MealCalendar: React.FC<MealCalendarProps> = ({
                               : 'Log meal'}
                         </button>
                         {meal.recipeId && (
-                          <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={() => onViewRecipe(meal.recipeId)}>Recipe</button>
+                          <button
+                            type="button"
+                            className="dashboard-hero-action dashboard-hero-action--small"
+                            onClick={() => onViewRecipe(meal.recipeId, meal.macros)}
+                          >
+                            Recipe
+                          </button>
                         )}
                         <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={() => onRegenerateMeal(day.date, meal.id)}>Generate alternative</button>
                       </div>
@@ -2354,6 +2467,16 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
   }));
   const macros = recipe.macrosPerServing ?? { calories: 0, protein: 0, carbs: 0, fats: 0 };
   const tags = recipe.dietaryTags ?? [];
+  const instructions =
+    recipe.preparation && recipe.preparation.length
+      ? recipe.preparation.map((step) => step.description)
+      : (() => {
+          const chunks = recipe.instructions
+            ?.split(".")
+            .map((sentence) => sentence.trim())
+            .filter(Boolean);
+          return chunks && chunks.length ? chunks : ["Follow standard preparation steps described in the recipe notes."];
+        })();
 
   return (
     <div className="recipe-modal-backdrop" role="dialog" aria-modal>
@@ -2407,9 +2530,11 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
           <section>
             <h4>Instructions</h4>
             <ol>
-              {recipe.preparation?.length
-                ? recipe.preparation.map((step) => <li key={step.step}>{step.description}</li>)
-                : recipe.instructions.split('. ').map((sentence, index) => <li key={index}>{sentence}</li>)}
+              {instructions.length ? (
+                instructions.map((sentence, index) => <li key={index}>{sentence}</li>)
+              ) : (
+                <li>No instructions provided.</li>
+              )}
             </ol>
           </section>
           {/* <section className="recipe-reviews">
