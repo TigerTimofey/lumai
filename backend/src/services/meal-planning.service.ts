@@ -13,13 +13,14 @@ import {
   updateMealPlan
 } from "../repositories/calories.repo.js";
 import { fetchNutritionPreferences } from "./nutrition-preferences.service.js";
-import { searchRecipes } from "./nutrition-rag.service.js";
+import { searchRecipes, getRecipe as getRecipeDocument } from "./nutrition-rag.service.js";
 import { calculateNutritionForRecipe } from "./nutrition-functions.service.js";
 import { orchestrateMealPlan } from "./meal-planning-orchestrator.service.js";
 import { FALLBACK_RECIPES } from "../data/fallback-recipes.js";
 import { badRequest, notFound, serviceUnavailable } from "../utils/api-error.js";
 import { getProfile } from "../repositories/profile.repo.js";
 import { buildHealthAwareRecipeFilters } from "../utils/recipe-filters.js";
+import { unlogMealConsumption } from "./nutrition-snapshot.service.js";
 
 interface GeneratePlanOptions {
   duration: "daily" | "weekly";
@@ -141,7 +142,7 @@ export const regenerateMeal = async (
   planId: string,
   date: string,
   mealId: string,
-  options?: { micronutrientFocus?: keyof RecipeDocument["micronutrientsPerServing"] }
+  options?: { micronutrientFocus?: keyof RecipeDocument["micronutrientsPerServing"]; recipeId?: string }
 ) => {
   const plan = await getMealPlan(userId, planId);
   if (!plan) throw notFound("Meal plan not found");
@@ -149,18 +150,26 @@ export const regenerateMeal = async (
     fetchNutritionPreferences(userId),
     getProfile(userId)
   ]);
-  const ragResults = await searchRecipes(
-    buildHealthAwareRecipeFilters(preferences, profile, {
-      query: "healthy meal substitution",
-      limit: 5,
-      micronutrientFocus: options?.micronutrientFocus
-    })
-  );
   const day = plan.days.find((entry) => entry.date === date);
   if (!day) throw badRequest("Day not found in plan");
   const mealIndex = day.meals.findIndex((meal) => meal.id === mealId);
   if (mealIndex === -1) throw badRequest("Meal not found");
-  const replacementRecipe = ragResults[0]?.recipe ?? FALLBACK_RECIPES[0];
+  let replacementRecipe: RecipeDocument | null = null;
+  if (options?.recipeId) {
+    replacementRecipe = await getRecipeDocument(options.recipeId);
+    if (!replacementRecipe) {
+      throw notFound("Recipe not found");
+    }
+  } else {
+    const ragResults = await searchRecipes(
+      buildHealthAwareRecipeFilters(preferences, profile, {
+        query: "healthy meal substitution",
+        limit: 5,
+        micronutrientFocus: options?.micronutrientFocus
+      })
+    );
+    replacementRecipe = ragResults[0]?.recipe ?? FALLBACK_RECIPES[0];
+  }
   if (!replacementRecipe) throw serviceUnavailable("Unable to find alternative recipe");
   const nutrition = calculateNutritionForRecipe(replacementRecipe, replacementRecipe.servings);
   day.meals[mealIndex] = {

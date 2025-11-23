@@ -116,6 +116,7 @@
 
 .calories-progress {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 16px;
   background: #fff;
   padding: 24px;
@@ -136,7 +137,7 @@
 .calories-macro-grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
 }
 
 .progress-card {
@@ -980,7 +981,7 @@
 
 .recipe-search-form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
   gap: 16px;
   margin-bottom: 16px;
 }
@@ -1004,6 +1005,25 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
+}
+
+.recipe-replace-select {
+  margin-bottom: 16px;
+}
+
+.recipe-replace-select label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: rgba(15, 23, 42, 0.75);
+}
+
+.recipe-replace-select select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+  background: rgba(15, 23, 42, 0.02);
 }
 
 .recipe-search-card {

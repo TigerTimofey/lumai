@@ -143,7 +143,7 @@ router.post("/meal-plans/:planId/days/:date/meals/:mealId/regenerate", async (re
       req.params.planId,
       req.params.date,
       req.params.mealId,
-      { micronutrientFocus: req.body?.micronutrientFocus }
+      { micronutrientFocus: req.body?.micronutrientFocus, recipeId: req.body?.recipeId }
     );
     return res.json(plan);
   } catch (error) {

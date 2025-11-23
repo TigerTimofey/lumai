@@ -380,6 +380,8 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   const [recipeSearchResults, setRecipeSearchResults] = useState<RecipeSearchMatch[]>([]);
   const [recipeSearchLoading, setRecipeSearchLoading] = useState(false);
   const [recipeSearchError, setRecipeSearchError] = useState<string | null>(null);
+  const [recipeReplaceLoading, setRecipeReplaceLoading] = useState<string | null>(null);
+  const [recipeReplaceTarget, setRecipeReplaceTarget] = useState<string>('');
 
   const selectedPlan = mealPlans.find((plan) => plan.id === selectedPlanId) ?? null;
 
@@ -398,7 +400,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     };
   }, []);
 
-  const latestSnapshot = snapshot ?? snapshots[0] ?? null;
+  const latestSnapshot = snapshot;
 
   const totalMealsScheduled = useMemo(
     () =>
@@ -533,6 +535,10 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     });
     setExpandedDays(defaults);
   }, [selectedPlanId, selectedPlan]);
+
+  useEffect(() => {
+    setRecipeReplaceTarget(swapSource);
+  }, [swapSource]);
 
   const handleGoToNutrition = () => {
     window.history.pushState({}, '', '/nutrition');
@@ -720,6 +726,12 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     );
   }, [selectedPlan]);
 
+  const selectedReplaceLabel = useMemo(() => {
+    if (!swapSource) return null;
+    const match = flattenedMeals.find((meal) => formatSwapValue(meal) === swapSource);
+    return match?.label ?? null;
+  }, [swapSource, flattenedMeals]);
+
   const fetchMealPlans = useCallback(async () => {
     const response = await apiFetch<{ plans: MealPlan[] }>('/nutrition/meal-plans?limit=3');
     setMealPlans(response.plans ?? []);
@@ -809,7 +821,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
         body: JSON.stringify({ targetDate: targetDay, targetMealId: targetMeal })
       });
       await fetchMealPlans();
-      setSwapSource('');
+      setRecipeReplaceTarget('');
       setSwapTarget('');
     } finally {
       setPlannerLoading(false);
@@ -912,7 +924,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
       setSnapshots((prev) => prev.filter((item) => item.date !== targetDate));
       return;
     }
-    setSnapshot((prev) => (prev?.date === updatedSnapshot.date || !prev ? updatedSnapshot : prev));
+    setSnapshot(updatedSnapshot);
     setSnapshots((prev) => {
       const others = prev.filter((item) => item.date !== updatedSnapshot.date);
       const next = [updatedSnapshot, ...others];
@@ -1052,6 +1064,35 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     }
   };
 
+  const handleReplaceMealWithRecipe = async (recipeId: string) => {
+    if (!selectedPlanId || !swapSource) {
+      setRecipeSearchError('Select the meal you want to replace using the planner controls.');
+      return;
+    }
+    const [targetDay, targetMealId] = swapSource.split('|');
+    if (!targetDay || !targetMealId) {
+      setRecipeSearchError('Invalid meal selection. Please choose another meal.');
+      return;
+    }
+    setRecipeSearchError(null);
+    setRecipeReplaceLoading(recipeId);
+    try {
+      await apiFetch(`/nutrition/meal-plans/${selectedPlanId}/days/${targetDay}/meals/${targetMealId}/regenerate`, {
+        method: 'POST',
+        body: JSON.stringify({ recipeId })
+      });
+      await fetchMealPlans();
+      await refreshSnapshots();
+      await refreshMicronutrientSummary();
+      setRecipeReplaceTarget('');
+    } catch (error) {
+      console.error(error);
+      setRecipeSearchError('Не удалось заменить блюдо. Попробуйте снова.');
+    } finally {
+      setRecipeReplaceLoading(null);
+    }
+  };
+
   const historyChart = useMemo(() => {
     if (!preferences) return null;
     const snapshotsHistory = snapshots.length ? snapshots : snapshot ? [snapshot] : [];
@@ -1129,7 +1170,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
             ) : (
               <>
                 <div className="calories-progress">
-                  <div>
+                  <div className="calories-macro-grid">
                     <p className="calories-section-label">Daily calorie target</p>
                     <ProgressBar
                       label="Calories"
@@ -1138,8 +1179,6 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                       percentage={calorieProgress}
                       unit="kcal"
                     />
-                  </div>
-                  <div className="calories-macro-grid">
                     {macroProgress?.map((macro) => (
                       <ProgressBar
                         key={macro.label}
@@ -1375,7 +1414,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
               onSelectPlan={setSelectedPlanId}
               swapSource={swapSource}
               swapTarget={swapTarget}
-              onSwapSourceChange={setSwapSource}
+              onSwapSourceChange={setRecipeReplaceTarget}
               onSwapTargetChange={setSwapTarget}
               onSwap={() => selectedPlanId && handleSwapMeals(selectedPlanId)}
               flattenedMeals={flattenedMeals}
@@ -1449,87 +1488,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                 </div>
               </div>
             )}
-                        <section className="recipe-search">
-            <header className="section-header">
-              <div>
-                <p className="calories-section-label">Recipe explorer</p>
-                <h2>Find dishes by name, ingredients, or cuisine</h2>
-              </div>
-            </header>
-            <form className="recipe-search-form" onSubmit={handleRecipeSearch}>
-              <div>
-                <label htmlFor="recipeQuery">Name or ingredients</label>
-                <input
-                  id="recipeQuery"
-                  value={recipeSearchQuery}
-                  onChange={(e) => setRecipeSearchQuery(e.target.value)}
-                  placeholder="e.g., lentil soup, salmon, avocado"
-                />
-              </div>
-              <div>
-                <label htmlFor="recipeCuisine">Cuisine</label>
-                <input
-                  id="recipeCuisine"
-                  value={recipeSearchCuisine}
-                  onChange={(e) => setRecipeSearchCuisine(e.target.value)}
-                  placeholder="mediterranean, japanese..."
-                />
-              </div>
-              <div>
-                <label htmlFor="recipeDiet">Dietary tag</label>
-                <input
-                  id="recipeDiet"
-                  value={recipeSearchDiet}
-                  onChange={(e) => setRecipeSearchDiet(e.target.value)}
-                  placeholder="vegetarian, gluten_free..."
-                />
-              </div>
-              <button type="submit" className="dashboard-hero-action dashboard-hero-action--small" disabled={recipeSearchLoading}>
-                {recipeSearchLoading ? 'Searching…' : 'Search recipes'}
-              </button>
-            </form>
-            {recipeSearchError && <p className="calories-error">{recipeSearchError}</p>}
-            <div className="recipe-search-results">
-              {recipeSearchResults.length === 0 && !recipeSearchLoading ? (
-                <p className="calories-empty">Enter a query to explore recipes.</p>
-              ) : (
-                recipeSearchResults.map((match) => {
-                  const matchLabel =
-                    typeof match.similarity === 'number'
-                      ? `${Math.round(match.similarity * 100)}% match`
-                      : 'Suggested';
-                  return (
-                    <article key={match.recipe.id} className="recipe-search-card">
-                      <header>
-                        <div>
-                          <h3>{match.recipe.title}</h3>
-                          <p>{match.recipe.cuisine || 'Any cuisine'}</p>
-                        </div>
-                        <span className="recipe-search-score">{matchLabel}</span>
-                      </header>
-                      <p className="recipe-search-macros">
-                        {Math.round(match.recipe.macrosPerServing.calories)} kcal · {Math.round(match.recipe.macrosPerServing.protein)}g protein · {Math.round(match.recipe.macrosPerServing.carbs)}g carbs · {Math.round(match.recipe.macrosPerServing.fats)}g fats
-                      </p>
-                      {match.recipe.dietaryTags?.length > 0 && (
-                        <p className="recipe-search-tags">Tags: {match.recipe.dietaryTags.join(', ')}</p>
-                      )}
-                      <p className="recipe-search-ingredients">
-                        Key ingredients:{' '}
-                        {match.recipe.ingredients
-                          ?.slice(0, 4)
-                          .map((ingredient: RecipeIngredientPreview) => ingredient?.name)
-                          .filter(Boolean)
-                          .join(', ') || 'n/a'}
-                      </p>
-                    </article>
-                  );
-                })
-              )}
-            </div>
-          
-          </section>
             </section>
-     
 
           <section className="calories-shopping">
             <header className="section-header">
@@ -1598,7 +1557,113 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
           </section>
           </section>
 
-      
+        <section className="recipe-search">
+            <header className="section-header">
+              <div>
+                <p className="calories-section-label">Recipe explorer</p>
+                <h2>Find dishes by name, ingredients, or cuisine</h2>
+              </div>
+            </header>
+            <form className="recipe-search-form" onSubmit={handleRecipeSearch}>
+              <div>
+                <label htmlFor="recipeQuery">Name or ingredients</label>
+                <input
+                  id="recipeQuery"
+                  value={recipeSearchQuery}
+                  onChange={(e) => setRecipeSearchQuery(e.target.value)}
+                  placeholder="e.g., lentil soup, salmon, avocado"
+                />
+              </div>
+              <div>
+                <label htmlFor="recipeCuisine">Cuisine</label>
+                <input
+                  id="recipeCuisine"
+                  value={recipeSearchCuisine}
+                  onChange={(e) => setRecipeSearchCuisine(e.target.value)}
+                  placeholder="mediterranean, japanese..."
+                />
+              </div>
+              <div>
+                <label htmlFor="recipeDiet">Dietary tag</label>
+                <input
+                  id="recipeDiet"
+                  value={recipeSearchDiet}
+                  onChange={(e) => setRecipeSearchDiet(e.target.value)}
+                  placeholder="vegetarian, gluten_free..."
+                />
+              </div>
+              <button type="submit" className="dashboard-hero-action dashboard-hero-action--small" disabled={recipeSearchLoading}>
+                {recipeSearchLoading ? 'Searching…' : 'Search recipes'}
+              </button>
+            </form>
+            <div className="recipe-replace-select">
+              <label htmlFor="recipeReplaceTarget">Meal to replace</label>
+              <select
+                id="recipeReplaceTarget"
+                value={recipeReplaceTarget}
+                onChange={(e) => setSwapSource(e.target.value)}
+              >
+                <option value="">Select meal from current plan</option>
+                {flattenedMeals.map((meal) => (
+                  <option key={meal.id} value={formatSwapValue(meal)}>
+                    {meal.label}
+                  </option>
+                ))}
+              </select>
+              <p className="planner-hint">
+                {recipeReplaceTarget
+                  ? `Will replace: ${selectedReplaceLabel ?? 'chosen meal'}.`
+                  : 'Pick a meal to swap, then choose a recipe below.'}
+              </p>
+            </div>
+            {recipeSearchError && <p className="calories-error">{recipeSearchError}</p>}
+            <div className="recipe-search-results">
+              {recipeSearchResults.length === 0 && !recipeSearchLoading ? (
+                <p className="calories-empty">Enter a query to explore recipes.</p>
+              ) : (
+                recipeSearchResults.map((match) => {
+                  const matchLabel =
+                    typeof match.similarity === 'number'
+                      ? `${Math.round(match.similarity * 100)}% match`
+                      : 'Suggested';
+                  return (
+                    <article key={match.recipe.id} className="recipe-search-card">
+                      <header>
+                        <div>
+                          <h3>{match.recipe.title}</h3>
+                          <p>{match.recipe.cuisine || 'Any cuisine'}</p>
+                        </div>
+                        <span className="recipe-search-score">{matchLabel}</span>
+                      </header>
+                      <p className="recipe-search-macros">
+                        {Math.round(match.recipe.macrosPerServing.calories)} kcal · {Math.round(match.recipe.macrosPerServing.protein)}g protein · {Math.round(match.recipe.macrosPerServing.carbs)}g carbs · {Math.round(match.recipe.macrosPerServing.fats)}g fats
+                      </p>
+                      {match.recipe.dietaryTags?.length > 0 && (
+                        <p className="recipe-search-tags">Tags: {match.recipe.dietaryTags.join(', ')}</p>
+                      )}
+                      <p className="recipe-search-ingredients">
+                        Key ingredients:{' '}
+                        {match.recipe.ingredients
+                          ?.slice(0, 4)
+                          .map((ingredient: RecipeIngredientPreview) => ingredient?.name)
+                          .filter(Boolean)
+                          .join(', ') || 'n/a'}
+                      </p>
+                      <button
+                        type="button"
+                        className="dashboard-hero-action dashboard-hero-action--small"
+                        onClick={() => handleReplaceMealWithRecipe(match.recipe.id)}
+                        disabled={!swapSource || !selectedPlanId || recipeReplaceLoading === match.recipe.id}
+                      >
+                        {recipeReplaceLoading === match.recipe.id ? 'Replacing…' : 'Replace selected meal'}
+                      </button>
+                    </article>
+                  );
+                })
+              )}
+            </div>
+          </section>
+
         </main>
       </div>
       {recipeModal.open && recipeModal.recipe && (
