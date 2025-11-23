@@ -184,6 +184,10 @@ export const regenerateMeal = async (
       fats: nutrition.fats
     },
     micronutrients: nutrition.micronutrients,
+    metadata: {
+      prepTimeMin: replacementRecipe.prepTimeMin,
+      cookTimeMin: replacementRecipe.cookTimeMin
+    },
     aiContext: {
       recipeStep: "regenerated meal with RAG context"
     }

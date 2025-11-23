@@ -6,7 +6,7 @@ import { getUserById } from "../repositories/user.repo.js";
 import { getProfile } from "../repositories/profile.repo.js";
 import { searchRecipes } from "./nutrition-rag.service.js";
 import { calculateNutritionByRecipeId } from "./nutrition-functions.service.js";
-import type { MealPlanDay, MealPlanMeal } from "../domain/types.js";
+import type { MealPlanDay, MealPlanMeal, RecipeDocument } from "../domain/types.js";
 import { logAiInsight } from "../repositories/ai-insight.repo.js";
 import { buildHealthAwareRecipeFilters } from "../utils/recipe-filters.js";
 
@@ -138,7 +138,7 @@ export const orchestrateMealPlan = async (userId: string, duration: "daily" | "w
     response: analyticsJson
   });
 
-  const recipeLookup = new Map(ragResults.map((entry) => [entry.recipe.id, entry.recipe.title]));
+  const recipeLookup = new Map(ragResults.map((entry) => [entry.recipe.id, entry.recipe]));
   const days = await buildDaysFromAiMeals(recipesJson.meals, startDate, preferences.timezone, recipeLookup);
   return {
     days,
@@ -161,7 +161,7 @@ const buildDaysFromAiMeals = async (
   meals: Array<{ dayOffset: number; type: string; recipeId?: string; description?: string; scheduledAt?: string }>,
   startDate: string,
   timezone: string,
-  recipeLookup: Map<string, string>
+  recipeLookup: Map<string, RecipeDocument>
 ) => {
   const grouped = new Map<string, MealPlanDay>();
   for (const meal of meals) {
@@ -172,10 +172,11 @@ const buildDaysFromAiMeals = async (
       grouped.set(isoDate, { date: isoDate, meals: [] });
     }
     const day = grouped.get(isoDate)!;
+    const recipeDetails = meal.recipeId ? recipeLookup.get(meal.recipeId) : undefined;
     const mealEntry: MealPlanMeal = {
       id: crypto.randomUUID(),
       type: meal.type ?? "meal",
-      title: meal.recipeId ? recipeLookup.get(meal.recipeId) ?? "AI recipe" : meal.description ?? "Custom meal",
+      title: recipeDetails?.title ?? (meal.recipeId ? "AI recipe" : meal.description ?? "Custom meal"),
       recipeId: meal.recipeId,
       servings: 1,
       scheduledAt: meal.scheduledAt ?? date.toISOString(),
@@ -186,6 +187,12 @@ const buildDaysFromAiMeals = async (
         fats: 0
       }
     };
+    if (recipeDetails) {
+      mealEntry.metadata = {
+        prepTimeMin: recipeDetails.prepTimeMin,
+        cookTimeMin: recipeDetails.cookTimeMin
+      };
+    }
     if (meal.recipeId) {
       try {
         const nutrition = await calculateNutritionByRecipeId(meal.recipeId, 1);

@@ -43,6 +43,8 @@ type RecipeFromJson = {
   instructions?: string;
   prep_time_min?: number;
   prepTimeMin?: number;
+  cook_time_min?: number;
+  cookTimeMin?: number;
   ingredients: Array<{
     ingredient_id: number | string;
     name: string;
@@ -51,6 +53,13 @@ type RecipeFromJson = {
 
 const typedRecipes = recipesData as RecipeFromJson[];
 const LOCAL_RECIPE_IDS = new Set(typedRecipes.map((recipe) => String(recipe.recipe_id)));
+const recipePrepTimeIndex = typedRecipes.reduce<Record<string, number>>((acc, recipe) => {
+  const prep = recipe.prep_time_min ?? recipe.prepTimeMin ?? recipe.cook_time_min ?? recipe.cookTimeMin;
+  if (typeof prep === 'number' && prep > 0) {
+    acc[String(recipe.recipe_id)] = prep;
+  }
+  return acc;
+}, {});
 const generateLocalId = () =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
 
@@ -227,6 +236,8 @@ type MealPlanMeal = {
   type: string;
   title?: string;
   recipeId?: string;
+  prepTimeMin?: number;
+  cookTimeMin?: number;
   servings: number;
   scheduledAt: string;
   macros: {
@@ -236,6 +247,39 @@ type MealPlanMeal = {
     fats: number;
   };
   micronutrients?: Record<string, number>;
+  metadata?: {
+    prepTimeMin?: number;
+    prep_time_min?: number;
+    cookTimeMin?: number;
+    cook_time_min?: number;
+    [key: string]: unknown;
+  };
+};
+
+const resolveMealPrepTime = (meal: MealPlanMeal): { value: number; label: string } | null => {
+  if (typeof meal.prepTimeMin === 'number' && meal.prepTimeMin > 0) {
+    return { value: meal.prepTimeMin, label: 'Prep time' };
+  }
+  const meta = meal.metadata ?? {};
+  if (typeof meta.prepTimeMin === 'number' && meta.prepTimeMin > 0) {
+    return { value: meta.prepTimeMin, label: 'Prep time' };
+  }
+  if (typeof meta.prep_time_min === 'number' && meta.prep_time_min > 0) {
+    return { value: meta.prep_time_min as number, label: 'Prep time' };
+  }
+  if (typeof meta.cookTimeMin === 'number' && meta.cookTimeMin > 0) {
+    return { value: meta.cookTimeMin, label: 'Cook time' };
+  }
+  if (typeof meta.cook_time_min === 'number' && meta.cook_time_min > 0) {
+    return { value: meta.cook_time_min as number, label: 'Cook time' };
+  }
+  if (meal.recipeId) {
+    const fallback = recipePrepTimeIndex[String(meal.recipeId)];
+    if (typeof fallback === 'number' && fallback > 0) {
+      return { value: fallback, label: 'Prep time' };
+    }
+  }
+  return null;
 };
 
 type ShoppingList = {
@@ -316,6 +360,8 @@ type RecipeSearchMatch = {
     servings: number;
     prepTimeMin?: number;
     prep_time_min?: number;
+    cookTimeMin?: number;
+    cook_time_min?: number;
   };
   similarity?: number;
   score?: number;
@@ -1671,7 +1717,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                   value={recipeSearchQuery}
                   required
                   onChange={(e) => setRecipeSearchQuery(e.target.value)}
-                  placeholder="e.g., lentil soup, salmon, avocado"
+                  placeholder="e.g., butter"
                 />
               </div>
               <div>
@@ -1680,7 +1726,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                   id="recipeCuisine"
                   value={recipeSearchCuisine}
                   onChange={(e) => setRecipeSearchCuisine(e.target.value)}
-                  placeholder="mediterranean, japanese..."
+                  placeholder="eg Indian"
                 />
               </div>
               <div>
@@ -1689,7 +1735,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                   id="recipeDiet"
                   value={recipeSearchDiet}
                   onChange={(e) => setRecipeSearchDiet(e.target.value)}
-                  placeholder="vegetarian, gluten_free..."
+                  placeholder="eg high-energy, snack, mexican"
                 />
               </div>
                           <button type="submit" className="dashboard-hero-action dashboard-hero-action--small" disabled={recipeSearchLoading}>
@@ -1858,6 +1904,12 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                       <p className="recipe-search-macros">
                         {Math.round(match.recipe.macrosPerServing.calories)} kcal · {Math.round(match.recipe.macrosPerServing.protein)}g protein · {Math.round(match.recipe.macrosPerServing.carbs)}g carbs · {Math.round(match.recipe.macrosPerServing.fats)}g fats
                       </p>
+                      {(() => {
+                        const prepTime = match.recipe.prepTimeMin ?? match.recipe.prep_time_min;
+                        return typeof prepTime === 'number' && prepTime > 0 ? (
+                          <p className="recipe-search-prep">Prep time: {prepTime} min</p>
+                        ) : null;
+                      })()}
                       {match.recipe.dietaryTags?.length > 0 && (
                         <p className="recipe-search-tags">Tags: {match.recipe.dietaryTags.join(', ')}</p>
                       )}
@@ -2225,6 +2277,7 @@ const MealCalendar: React.FC<MealCalendarProps> = ({
                   const pendingAction = pendingMealLog?.key === mealKey ? pendingMealLog.action : null;
                   const handleMealLogToggle = () =>
                     isLogged ? onUnlogMeal(day.date, meal.id) : onLogMeal(day.date, meal.id);
+                  const resolvedPrepTime = resolveMealPrepTime(meal);
                   return (
                     <div key={meal.id} className={`meal-card ${isLogged ? 'is-logged' : ''}`}>
                       <div>
@@ -2233,6 +2286,12 @@ const MealCalendar: React.FC<MealCalendarProps> = ({
                         <p className="meal-meta">
                           {Math.round(meal.macros.calories)} kcal · {Math.round(meal.macros.protein)}g protein
                         </p>
+                        <p>{meal.cookTimeMin}</p>
+                        {resolvedPrepTime && (
+                          <p className="meal-prep">
+                            {resolvedPrepTime.label}: {resolvedPrepTime.value} min
+                          </p>
+                        )}
                         <p className="meal-time">{formatTime(meal.scheduledAt, timezone)}</p>
                       </div>
                       <div className="meal-actions">
@@ -2466,6 +2525,10 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
     quantity: Number((ingredient.quantity * scale).toFixed(1))
   }));
   const macros = recipe.macrosPerServing ?? { calories: 0, protein: 0, carbs: 0, fats: 0 };
+  const macroChartReady = ['protein', 'carbs', 'fats'].some((key) => {
+    const value = macros[key as keyof typeof macros];
+    return typeof value === 'number' && value > 0;
+  });
   const tags = recipe.dietaryTags ?? [];
   const instructions =
     recipe.preparation && recipe.preparation.length
@@ -2512,6 +2575,30 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
             <strong>{Math.round(macros.fats)} g</strong>
           </article>
         </div>
+        <p className="recipe-macro-note">Totals calculated from the recipe&apos;s ingredient nutrition per serving.</p>
+        {macroChartReady && (
+          <div className="recipe-macro-chart">
+            <h4>Macronutrient balance</h4>
+            <Doughnut
+              data={{
+                labels: ['Protein', 'Carbs', 'Fats'],
+                datasets: [
+                  {
+                    data: [macros.protein, macros.carbs, macros.fats],
+                    backgroundColor: ['#0ea5e9', '#fbbf24', '#f97316'],
+                    hoverOffset: 8
+                  }
+                ]
+              }}
+              options={{
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { position: 'bottom' }
+                }
+              }}
+            />
+          </div>
+        )}
         <div className="servings-row">
           <label>
             Servings

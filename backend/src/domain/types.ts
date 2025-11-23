@@ -329,6 +329,10 @@ export interface MealPlanMeal {
     structureStep?: string;
     recipeStep?: string;
   };
+  metadata?: {
+    prepTimeMin?: number;
+    cookTimeMin?: number;
+  };
 }
 
 export interface MealPlanDay {

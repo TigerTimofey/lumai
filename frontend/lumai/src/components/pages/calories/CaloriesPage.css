@@ -917,6 +917,31 @@
   font-size: 1.25rem;
 }
 
+.recipe-macro-note {
+  margin: -4px 0 12px;
+  font-size: 0.85rem;
+  color: rgba(15, 23, 42, 0.6);
+}
+
+.recipe-macro-chart {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: white;
+  height: 260px;
+}
+
+.recipe-macro-chart h4 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.recipe-macro-chart canvas {
+  width: 100% !important;
+  height: calc(100% - 32px) !important;
+}
+
 .recipe-content {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
