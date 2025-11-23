@@ -12,21 +12,21 @@
     "ingredients": [
       {
         "ingredient_id": 339,
-        "name": "vegetable_339",
+        "name": "Aromatic Rub 34",
         "category": "vegetable",
         "quantity": 2.29,
         "unit": "g"
       },
       {
         "ingredient_id": 478,
-        "name": "spice_478",
+        "name": "Sweet Chili Drizzle 48",
         "category": "spice",
         "quantity": 2.18,
         "unit": "cup"
       },
       {
         "ingredient_id": 426,
-        "name": "grain_426",
+        "name": "Nutty Crunch 43",
         "category": "grain",
         "quantity": 1.32,
         "unit": "tbsp"
@@ -40,21 +40,21 @@
       },
       {
         "ingredient_id": 212,
-        "name": "spice_212",
+        "name": "Citrus Zest 22",
         "category": "spice",
         "quantity": 2.17,
         "unit": "cup"
       },
       {
         "ingredient_id": 431,
-        "name": "dairy_431",
+        "name": "Umami Paste 44",
         "category": "dairy",
         "quantity": 1.46,
         "unit": "l"
       },
       {
         "ingredient_id": 399,
-        "name": "other_399",
+        "name": "Aromatic Rub 40",
         "category": "other",
         "quantity": 1.35,
         "unit": "tsp"
@@ -81,7 +81,7 @@
       },
       {
         "ingredient_id": 404,
-        "name": "vegetable_404",
+        "name": "Seasoned Oil 41",
         "category": "vegetable",
         "quantity": 0.73,
         "unit": "tbsp"
@@ -95,28 +95,28 @@
       },
       {
         "ingredient_id": 439,
-        "name": "spice_439",
+        "name": "Aromatic Rub 44",
         "category": "spice",
         "quantity": 0.88,
         "unit": "cup"
       },
       {
         "ingredient_id": 139,
-        "name": "other_139",
+        "name": "Aromatic Rub 14",
         "category": "other",
         "quantity": 0.82,
         "unit": "kg"
       },
       {
         "ingredient_id": 473,
-        "name": "sauce_473",
+        "name": "Toasted Spice Mix 48",
         "category": "sauce",
         "quantity": 1.31,
         "unit": "g"
       },
       {
         "ingredient_id": 187,
-        "name": "meat_187",
+        "name": "Savory Glaze 19",
         "category": "meat",
         "quantity": 2.5,
         "unit": "tbsp"
@@ -143,49 +143,49 @@
     "ingredients": [
       {
         "ingredient_id": 118,
-        "name": "fish_118",
+        "name": "Sweet Chili Drizzle 12",
         "category": "fish",
         "quantity": 2.42,
         "unit": "kg"
       },
       {
         "ingredient_id": 224,
-        "name": "sauce_224",
+        "name": "Seasoned Oil 23",
         "category": "sauce",
         "quantity": 1.55,
         "unit": "tsp"
       },
       {
         "ingredient_id": 477,
-        "name": "sauce_477",
+        "name": "Savory Glaze 48",
         "category": "sauce",
         "quantity": 1.55,
         "unit": "cup"
       },
       {
         "ingredient_id": 263,
-        "name": "other_263",
+        "name": "Toasted Spice Mix 27",
         "category": "other",
         "quantity": 1.14,
         "unit": "l"
       },
       {
         "ingredient_id": 378,
-        "name": "fish_378",
+        "name": "Sweet Chili Drizzle 38",
         "category": "fish",
         "quantity": 0.42,
         "unit": "l"
       },
       {
         "ingredient_id": 172,
-        "name": "sauce_172",
+        "name": "Citrus Zest 18",
         "category": "sauce",
         "quantity": 0.48,
         "unit": "tsp"
       },
       {
         "ingredient_id": 168,
-        "name": "spice_168",
+        "name": "Sweet Chili Drizzle 17",
         "category": "spice",
         "quantity": 2.16,
         "unit": "kg"
@@ -212,35 +212,35 @@
       },
       {
         "ingredient_id": 431,
-        "name": "dairy_431",
+        "name": "Umami Paste 44",
         "category": "dairy",
         "quantity": 1.84,
         "unit": "cup"
       },
       {
         "ingredient_id": 502,
-        "name": "sauce_502",
+        "name": "Citrus Zest 51",
         "category": "sauce",
         "quantity": 0.65,
         "unit": "tsp"
       },
       {
         "ingredient_id": 109,
-        "name": "spice_109",
+        "name": "Aromatic Rub 11",
         "category": "spice",
         "quantity": 1.64,
         "unit": "pcs"
       },
       {
         "ingredient_id": 444,
-        "name": "other_444",
+        "name": "Seasoned Oil 45",
         "category": "other",
         "quantity": 1.3,
         "unit": "tsp"
       },
       {
         "ingredient_id": 371,
-        "name": "meat_371",
+        "name": "Umami Paste 38",
         "category": "meat",
         "quantity": 0.98,
         "unit": "l"
@@ -267,35 +267,35 @@
       },
       {
         "ingredient_id": 507,
-        "name": "fruit_507",
+        "name": "Savory Glaze 51",
         "category": "fruit",
         "quantity": 1.02,
         "unit": "tsp"
       },
       {
         "ingredient_id": 333,
-        "name": "dairy_333",
+        "name": "Toasted Spice Mix 34",
         "category": "dairy",
         "quantity": 1.5,
         "unit": "l"
       },
       {
         "ingredient_id": 187,
-        "name": "meat_187",
+        "name": "Savory Glaze 19",
         "category": "meat",
         "quantity": 0.44,
         "unit": "cup"
       },
       {
         "ingredient_id": 500,
-        "name": "spice_500",
+        "name": "Herbal Blend 51",
         "category": "spice",
         "quantity": 1.35,
         "unit": "l"
       },
       {
         "ingredient_id": 218,
-        "name": "other_218",
+        "name": "Sweet Chili Drizzle 22",
         "category": "other",
         "quantity": 1.8,
         "unit": "pcs"
@@ -315,56 +315,56 @@
     "ingredients": [
       {
         "ingredient_id": 378,
-        "name": "fish_378",
+        "name": "Sweet Chili Drizzle 38",
         "category": "fish",
         "quantity": 0.94,
         "unit": "l"
       },
       {
         "ingredient_id": 485,
-        "name": "vegetable_485",
+        "name": "Mixed Seeds 49",
         "category": "vegetable",
         "quantity": 0.52,
         "unit": "l"
       },
       {
         "ingredient_id": 353,
-        "name": "spice_353",
+        "name": "Toasted Spice Mix 36",
         "category": "spice",
         "quantity": 0.96,
         "unit": "ml"
       },
       {
         "ingredient_id": 436,
-        "name": "other_436",
+        "name": "Nutty Crunch 44",
         "category": "other",
         "quantity": 0.68,
         "unit": "pcs"
       },
       {
         "ingredient_id": 339,
-        "name": "vegetable_339",
+        "name": "Aromatic Rub 34",
         "category": "vegetable",
         "quantity": 0.87,
         "unit": "tsp"
       },
       {
         "ingredient_id": 361,
-        "name": "fruit_361",
+        "name": "Umami Paste 37",
         "category": "fruit",
         "quantity": 2.46,
         "unit": "l"
       },
       {
         "ingredient_id": 465,
-        "name": "fruit_465",
+        "name": "Mixed Seeds 47",
         "category": "fruit",
         "quantity": 0.92,
         "unit": "tbsp"
       },
       {
         "ingredient_id": 278,
-        "name": "spice_278",
+        "name": "Sweet Chili Drizzle 28",
         "category": "spice",
         "quantity": 0.65,
         "unit": "g"
@@ -384,14 +384,14 @@
     "ingredients": [
       {
         "ingredient_id": 503,
-        "name": "vegetable_503",
+        "name": "Toasted Spice Mix 51",
         "category": "vegetable",
         "quantity": 2.42,
         "unit": "tsp"
       },
       {
         "ingredient_id": 106,
-        "name": "fish_106",
+        "name": "Nutty Crunch 11",
         "category": "fish",
         "quantity": 2.37,
         "unit": "pcs"
@@ -405,42 +405,42 @@
       },
       {
         "ingredient_id": 292,
-        "name": "meat_292",
+        "name": "Citrus Zest 30",
         "category": "meat",
         "quantity": 1.15,
         "unit": "kg"
       },
       {
         "ingredient_id": 481,
-        "name": "meat_481",
+        "name": "Umami Paste 49",
         "category": "meat",
         "quantity": 1.55,
         "unit": "g"
       },
       {
         "ingredient_id": 491,
-        "name": "fish_491",
+        "name": "Umami Paste 50",
         "category": "fish",
         "quantity": 0.59,
         "unit": "tsp"
       },
       {
         "ingredient_id": 452,
-        "name": "sauce_452",
+        "name": "Citrus Zest 46",
         "category": "sauce",
         "quantity": 0.44,
         "unit": "l"
       },
       {
         "ingredient_id": 349,
-        "name": "meat_349",
+        "name": "Aromatic Rub 35",
         "category": "meat",
         "quantity": 0.52,
         "unit": "cup"
       },
       {
         "ingredient_id": 189,
-        "name": "fish_189",
+        "name": "Aromatic Rub 19",
         "category": "fish",
         "quantity": 1.61,
         "unit": "l"
@@ -467,28 +467,28 @@
       },
       {
         "ingredient_id": 102,
-        "name": "other_102",
+        "name": "Citrus Zest 11",
         "category": "other",
         "quantity": 0.6,
         "unit": "cup"
       },
       {
         "ingredient_id": 213,
-        "name": "grain_213",
+        "name": "Toasted Spice Mix 22",
         "category": "grain",
         "quantity": 1.26,
         "unit": "pcs"
       },
       {
         "ingredient_id": 217,
-        "name": "fruit_217",
+        "name": "Savory Glaze 22",
         "category": "fruit",
         "quantity": 0.91,
         "unit": "l"
       },
       {
         "ingredient_id": 271,
-        "name": "fish_271",
+        "name": "Umami Paste 28",
         "category": "fish",
         "quantity": 0.9,
         "unit": "tsp"
@@ -502,14 +502,14 @@
       },
       {
         "ingredient_id": 161,
-        "name": "dairy_161",
+        "name": "Umami Paste 17",
         "category": "dairy",
         "quantity": 0.41,
         "unit": "l"
       },
       {
         "ingredient_id": 246,
-        "name": "dairy_246",
+        "name": "Nutty Crunch 25",
         "category": "dairy",
         "quantity": 2.33,
         "unit": "l"
@@ -529,35 +529,35 @@
     "ingredients": [
       {
         "ingredient_id": 315,
-        "name": "vegetable_315",
+        "name": "Mixed Seeds 32",
         "category": "vegetable",
         "quantity": 1.8,
         "unit": "cup"
       },
       {
         "ingredient_id": 296,
-        "name": "other_296",
+        "name": "Nutty Crunch 30",
         "category": "other",
         "quantity": 2.37,
         "unit": "pcs"
       },
       {
         "ingredient_id": 450,
-        "name": "grain_450",
+        "name": "Herbal Blend 46",
         "category": "grain",
         "quantity": 1.23,
         "unit": "g"
       },
       {
         "ingredient_id": 128,
-        "name": "dairy_128",
+        "name": "Sweet Chili Drizzle 13",
         "category": "dairy",
         "quantity": 2.25,
         "unit": "tbsp"
       },
       {
         "ingredient_id": 480,
-        "name": "vegetable_480",
+        "name": "Herbal Blend 49",
         "category": "vegetable",
         "quantity": 1.61,
         "unit": "g"
@@ -577,35 +577,35 @@
     "ingredients": [
       {
         "ingredient_id": 453,
-        "name": "sauce_453",
+        "name": "Toasted Spice Mix 46",
         "category": "sauce",
         "quantity": 1.03,
         "unit": "tbsp"
       },
       {
         "ingredient_id": 285,
-        "name": "dairy_285",
+        "name": "Mixed Seeds 29",
         "category": "dairy",
         "quantity": 0.97,
         "unit": "kg"
       },
       {
         "ingredient_id": 186,
-        "name": "fish_186",
+        "name": "Nutty Crunch 19",
         "category": "fish",
         "quantity": 2.18,
         "unit": "tbsp"
       },
       {
         "ingredient_id": 447,
-        "name": "dairy_447",
+        "name": "Savory Glaze 45",
         "category": "dairy",
         "quantity": 1.18,
         "unit": "pcs"
       },
       {
         "ingredient_id": 504,
-        "name": "sauce_504",
+        "name": "Seasoned Oil 51",
         "category": "sauce",
         "quantity": 0.9,
         "unit": "cup"
@@ -619,7 +619,7 @@
       },
       {
         "ingredient_id": 482,
-        "name": "fish_482",
+        "name": "Citrus Zest 49",
         "category": "fish",
         "quantity": 1.27,
         "unit": "tbsp"
@@ -646,28 +646,28 @@
       },
       {
         "ingredient_id": 193,
-        "name": "sauce_193",
+        "name": "Toasted Spice Mix 20",
         "category": "sauce",
         "quantity": 2.34,
         "unit": "pcs"
       },
       {
         "ingredient_id": 371,
-        "name": "meat_371",
+        "name": "Umami Paste 38",
         "category": "meat",
         "quantity": 2.23,
         "unit": "pcs"
       },
       {
         "ingredient_id": 511,
-        "name": "fruit_511",
+        "name": "Umami Paste 52",
         "category": "fruit",
         "quantity": 0.52,
         "unit": "l"
       },
       {
         "ingredient_id": 453,
-        "name": "sauce_453",
+        "name": "Toasted Spice Mix 46",
         "category": "sauce",
         "quantity": 1.85,
         "unit": "tsp"
@@ -681,7 +681,7 @@
       },
       {
         "ingredient_id": 209,
-        "name": "meat_209",
+        "name": "Aromatic Rub 21",
         "category": "meat",
         "quantity": 0.46,
         "unit": "kg"
@@ -701,42 +701,42 @@
     "ingredients": [
       {
         "ingredient_id": 250,
-        "name": "other_250",
+        "name": "Herbal Blend 26",
         "category": "other",
         "quantity": 0.87,
         "unit": "cup"
       },
       {
         "ingredient_id": 468,
-        "name": "meat_468",
+        "name": "Sweet Chili Drizzle 47",
         "category": "meat",
         "quantity": 1.01,
         "unit": "tsp"
       },
       {
         "ingredient_id": 149,
-        "name": "meat_149",
+        "name": "Aromatic Rub 15",
         "category": "meat",
         "quantity": 2.1,
         "unit": "tsp"
       },
       {
         "ingredient_id": 393,
-        "name": "dairy_393",
+        "name": "Toasted Spice Mix 40",
         "category": "dairy",
         "quantity": 1.88,
         "unit": "pcs"
       },
       {
         "ingredient_id": 196,
-        "name": "vegetable_196",
+        "name": "Nutty Crunch 20",
         "category": "vegetable",
         "quantity": 2.2,
         "unit": "pcs"
       },
       {
         "ingredient_id": 140,
-        "name": "other_140",
+        "name": "Herbal Blend 15",
         "category": "other",
         "quantity": 1.46,
         "unit": "tbsp"
@@ -745,7 +745,7 @@
         "ingredient_id": 72,
         "name": "chicken wings",
         "category": "spice",
-        "quantity": 1.0,
+        "quantity": 1,
         "unit": "cup"
       }
     ]
