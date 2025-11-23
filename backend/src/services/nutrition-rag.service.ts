@@ -24,6 +24,7 @@ export type RecipeSearchFilters = {
   cuisine?: string[];
   dietaryTags?: string[];
   excludeAllergens?: string[];
+  excludeIngredients?: string[];
   calories?: MacroRange;
   protein?: MacroRange;
   carbs?: MacroRange;
@@ -76,6 +77,17 @@ const matchesFilters = (recipe: RecipeDocument, filters: RecipeSearchFilters) =>
       if (!matchesMacroRange(value, range)) {
         return false;
       }
+    }
+  }
+  if (filters.excludeIngredients?.length) {
+    const ingredientNames = recipe.ingredients.map((ingredient) => ingredient.name.toLowerCase());
+    const violates = filters.excludeIngredients.some((item) => {
+      const normalized = item.trim().toLowerCase();
+      if (!normalized) return false;
+      return ingredientNames.some((name) => name.includes(normalized));
+    });
+    if (violates) {
+      return false;
     }
   }
   return true;

@@ -38,6 +38,7 @@ export const buildHealthAwareRecipeFilters = (
   const filters: RecipeSearchFilters = {
     dietaryTags: preferences.dietaryPreferences,
     excludeAllergens: preferences.allergies,
+    excludeIngredients: preferences.dislikedIngredients,
     cuisine: preferences.cuisinePreferences,
     ...overrides
   };

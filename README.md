@@ -200,6 +200,30 @@ For more backend details (API catalog, AI limitation handling) see `backend/READ
 
 ---
 
+## 8. AI & Data Reference
+
+### Prompt engineering strategy
+- The meal-planning orchestrator runs four chained prompts—**strategy → structure → recipes → analytics**—defined in `backend/src/services/{ai,meal-planning-orchestrator}.service.ts`. Each prompt template enforces JSON output keys, keeps temperatures/`top_p` per step predictable, and replays a small set of few-shot examples so we always get machine-readable responses.
+- Retrieval-augmented context is assembled from the recipe vector index (`nutrition-rag.service.ts`). Up to 12 high-similarity recipes are injected into the recipe step, while the analytics step receives a compact `planSummary`. Tool/function calling routes nutrition lookups through `calculate_nutrition`, guaranteeing that macros/micros come from our canonical database instead of hallucinated values.
+- User profiles are down-scoped to only the necessary demographics, lifestyle, and targets. Before any prompt is issued, the workflow verifies that the `ai_insights` consent flag is granted and stores a hashed `privacyHash` so that any logged prompt context stays pseudonymized.
+
+### AI model selection rationale
+- The AI layer is fronted by Hugging Face Inference (`HF_API_URL`/`HF_API_KEY`) with `meta-llama/Meta-Llama-3-8B-Instruct` as the default `HF_MODEL`. This model balances accuracy and cost, supports JSON-style responses plus function calling, and can be self-hosted later if we need to move off shared infrastructure.
+- Operators can swap in another Hugging Face or OpenAI-compatible chat model by changing env vars without touching code. Insight generation persists model names per record so we can A/B providers, measure drift, and roll back quickly if a regression is detected.
+- Health summaries and streak insights still have deterministic fallbacks (`health-summary.service.ts`), so even if an external model is unreachable the UI can continue to show meaningful, rule-based copy.
+
+### Data model decisions
+- Firestore stores tiered collections: `users` for auth + MFA metadata, `profiles` for longitudinal health records (versioned via `profileVersionId`), `processedMetrics` for anonymized AI snapshots, `consents` for privacy toggles, and `aiInsights` for auditability of generated content. Nutrition features add `recipes_master`, `nutrition_preferences`, `meal_plans`, `shopping_lists`, and review subcollections so that AI output can always be traced back to structured data.
+- Processed metrics are stamped with a 90-day TTL and a SHA-256 hash of `ANONYMIZATION_SALT:userId`, letting us join AI payloads back to a user when investigating an issue while still keeping exports pseudonymous.
+- Vector search is optional: when `VECTOR_DB_URL` is present we query the external store, otherwise we fall back to Firestore-stored embeddings and even bundled recipes for offline/local dev. This keeps developer onboarding simple without sacrificing accuracy in production.
+
+### Error handling methods
+- All business logic throws typed helpers from `backend/src/utils/api-error.ts`, and the global `errorHandler` middleware maps them to consistent JSON responses while logging through `pino`. Frontend API calls listen for these errors and surface them via toast notifications so users immediately see validation or permission issues.
+- Request throttling is layered: `apiRateLimit` protects every route, while `aiRateLimit` adds a stricter per-user bucket for AI endpoints. When limits trigger we send 429 responses with retry-after hints so the UI can back off gracefully.
+- AI-specific failures try to reuse the last successful `aiInsights` document (see `tryReturnCachedInsights`). Providers returning 401/429/5xx errors fall back to cached content with a banner note, keeping the UX resilient even when upstream models are flaky.
+
+---
+
 ## 8. Useful npm Scripts
 
 ### Backend

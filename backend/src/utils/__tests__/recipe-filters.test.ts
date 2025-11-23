@@ -56,4 +56,13 @@ describe("buildHealthAwareRecipeFilters", () => {
     });
     expect(filters.micronutrients?.iron?.min).toBeGreaterThan(0);
   });
+
+  it("passes disliked ingredients to excludeIngredients", () => {
+    const pickyPreferences: NutritionPreferencesDocument = {
+      ...preferences,
+      dislikedIngredients: ["beets", "anchovies"]
+    };
+    const filters = buildHealthAwareRecipeFilters(pickyPreferences, profile);
+    expect(filters.excludeIngredients).toEqual(["beets", "anchovies"]);
+  });
 });

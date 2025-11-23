@@ -75,6 +75,7 @@ type NutritionPreferences = {
   dietaryPreferences: string[];
   allergies: string[];
   dislikedIngredients: string[];
+  cuisinePreferences: string[];
   calorieTarget: number;
   macronutrientTargets: {
     protein: number;
@@ -83,13 +84,48 @@ type NutritionPreferences = {
   };
   micronutrientTargets?: Record<string, number>;
   mealsPerDay: number;
+  preferredMealTimes: Record<string, string>;
 };
 
 type PreferencesUpdatePayload = Partial<Omit<NutritionPreferences, 'dietaryPreferences' | 'allergies' | 'dislikedIngredients'>> & {
   dietaryPreferences?: string[];
   allergies?: string[];
   dislikedIngredients?: string[];
+  cuisinePreferences?: string[];
+  preferredMealTimes?: Record<string, string>;
 };
+
+const MEAL_TIME_FIELDS = ['breakfast', 'lunch', 'dinner'] as const;
+type MealTimeField = (typeof MEAL_TIME_FIELDS)[number];
+
+const isoToTimeInput = (iso?: string) => {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
+
+const timeInputToIso = (time: string) => {
+  if (!time) return undefined;
+  const [hours, minutes] = time.split(':').map((part) => Number(part));
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
+    return undefined;
+  }
+  const base = new Date();
+  base.setHours(hours, minutes, 0, 0);
+  return base.toISOString();
+};
+
+const buildMealTimeState = (prefs?: NutritionPreferences | null) =>
+  MEAL_TIME_FIELDS.reduce(
+    (acc, key) => {
+      acc[key] = isoToTimeInput(prefs?.preferredMealTimes?.[key]);
+      return acc;
+    },
+    {} as Record<MealTimeField, string>
+  );
 
 type NutritionSnapshot = {
   date: string;
@@ -1394,13 +1430,15 @@ interface PreferencesFormProps {
 }
 
 const PreferencesForm: React.FC<PreferencesFormProps> = ({ preferences, onSave }) => {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState(() => ({
     timezone: preferences?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
     dietaryPreferences: preferences?.dietaryPreferences.join(', ') ?? '',
     allergies: preferences?.allergies.join(', ') ?? '',
     dislikedIngredients: preferences?.dislikedIngredients.join(', ') ?? '',
-    mealsPerDay: preferences?.mealsPerDay ?? 3
-  });
+    cuisinePreferences: preferences?.cuisinePreferences.join(', ') ?? '',
+    mealsPerDay: preferences?.mealsPerDay ?? 3,
+    mealTimes: buildMealTimeState(preferences)
+  }));
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -1410,7 +1448,9 @@ const PreferencesForm: React.FC<PreferencesFormProps> = ({ preferences, onSave }
       dietaryPreferences: preferences.dietaryPreferences.join(', '),
       allergies: preferences.allergies.join(', '),
       dislikedIngredients: preferences.dislikedIngredients.join(', '),
-      mealsPerDay: preferences.mealsPerDay
+      cuisinePreferences: preferences.cuisinePreferences.join(', '),
+      mealsPerDay: preferences.mealsPerDay,
+      mealTimes: buildMealTimeState(preferences)
     });
   }, [preferences]);
 
@@ -1428,7 +1468,15 @@ const PreferencesForm: React.FC<PreferencesFormProps> = ({ preferences, onSave }
         dietaryPreferences: parseList(form.dietaryPreferences),
         allergies: parseList(form.allergies),
         dislikedIngredients: parseList(form.dislikedIngredients),
-        mealsPerDay: Number(form.mealsPerDay)
+        cuisinePreferences: parseList(form.cuisinePreferences),
+        mealsPerDay: Number(form.mealsPerDay),
+        preferredMealTimes: Object.entries(form.mealTimes).reduce<Record<string, string>>((acc, [key, value]) => {
+          const iso = timeInputToIso(value);
+          if (iso) {
+            acc[key] = iso;
+          }
+          return acc;
+        }, {})
       });
     } finally {
       setSaving(false);
@@ -1472,6 +1520,15 @@ const PreferencesForm: React.FC<PreferencesFormProps> = ({ preferences, onSave }
         />
       </div>
       <div>
+        <label htmlFor="cuisine">Cuisine preferences</label>
+        <input
+          id="cuisine"
+          value={form.cuisinePreferences}
+          onChange={(e) => setForm((prev) => ({ ...prev, cuisinePreferences: e.target.value }))}
+          placeholder="mediterranean, japanese"
+        />
+      </div>
+      <div>
         <label htmlFor="mealsPerDay">Meals per day</label>
         <input
           id="mealsPerDay"
@@ -1482,6 +1539,28 @@ const PreferencesForm: React.FC<PreferencesFormProps> = ({ preferences, onSave }
           onChange={(e) => setForm((prev) => ({ ...prev, mealsPerDay: Number(e.target.value) }))}
         />
       </div>
+      <fieldset className="meal-times">
+        <legend>Preferred meal times</legend>
+        <p className="planner-hint">These times determine the default schedule for generated meals.</p>
+        <div className="meal-times-grid">
+          {MEAL_TIME_FIELDS.map((key) => (
+            <div key={key}>
+              <label htmlFor={`${key}Time`}>{key.charAt(0).toUpperCase() + key.slice(1)}</label>
+              <input
+                id={`${key}Time`}
+                type="time"
+                value={form.mealTimes[key]}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    mealTimes: { ...prev.mealTimes, [key]: e.target.value }
+                  }))
+                }
+              />
+            </div>
+          ))}
+        </div>
+      </fieldset>
       <button type="submit" className="dashboard-hero-action dashboard-hero-action--small" disabled={saving}>Save preferences</button>
     </form>
   );
