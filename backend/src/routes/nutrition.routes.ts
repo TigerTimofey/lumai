@@ -35,6 +35,7 @@ import {
   unlogMealConsumption
 } from "../services/nutrition-snapshot.service.js";
 import { getMicronutrientSummary } from "../services/nutrition-analytics.service.js";
+import { generateIngredientSubstitutions } from "../services/ingredient-substitution.service.js";
 import { badRequest, notFound } from "../utils/api-error.js";
 
 const router = Router();
@@ -177,6 +178,24 @@ router.post("/meal-plans/:planId/days/:date/meals", async (req, res, next) => {
     if (!userId) throw badRequest("Missing user context");
     const plan = await addManualMeal(userId, req.params.planId, req.params.date, req.body ?? {});
     return res.json(plan);
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post("/recipes/:recipeId/substitutions", async (req, res, next) => {
+  try {
+    const userId = req.authToken?.uid;
+    if (!userId) throw badRequest("Missing user context");
+    const ingredient = (req.body?.ingredient ?? req.body?.ingredientName ?? "").toString();
+    if (!ingredient.trim()) throw badRequest("Ingredient is required");
+    const availability = req.body?.availability?.toString();
+    const result = await generateIngredientSubstitutions(userId, {
+      recipeId: req.params.recipeId,
+      ingredient,
+      availability
+    });
+    return res.json({ alternatives: result });
   } catch (error) {
     return next(error);
   }

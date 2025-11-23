@@ -2669,5 +2669,253 @@
         "unit": "tsp"
       }
     ]
+  },
+  {
+    "recipe_id": 53,
+    "name": "Californian Farmer Bowl #53",
+    "cuisine": "Californian",
+    "course": "lunch",
+    "prep_time_min": 28,
+    "cook_time_min": 22,
+    "servings": 2,
+    "calories_est": 510,
+    "instructions": "Toss greens with grains, roast vegetables, top with avocado-citrus dressing and seeds.",
+    "protein_est": 26,
+    "carbs_est": 58,
+    "fats_est": 18,
+    "ingredients": [
+      {
+        "ingredient_id": 6001,
+        "name": "Baby lettuces",
+        "category": "produce",
+        "quantity": 85,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 6002,
+        "name": "Farro pearls",
+        "category": "grain",
+        "quantity": 90,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 6003,
+        "name": "Roasted heirloom carrots",
+        "category": "produce",
+        "quantity": 110,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 6004,
+        "name": "Lime avocado dressing",
+        "category": "sauce",
+        "quantity": 1.5,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 6005,
+        "name": "Pumpkin seed crunch",
+        "category": "spice",
+        "quantity": 1,
+        "unit": "tbsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 54,
+    "name": "Nordic Sunrise Wrap #54",
+    "cuisine": "Nordic",
+    "course": "breakfast",
+    "prep_time_min": 18,
+    "cook_time_min": 10,
+    "servings": 1,
+    "calories_est": 420,
+    "instructions": "Warm the rye wrap, fill with smoked fish alternative, pickled vegetables, and dill yogurt.",
+    "protein_est": 22,
+    "carbs_est": 42,
+    "fats_est": 14,
+    "ingredients": [
+      {
+        "ingredient_id": 6010,
+        "name": "Rye flatbread",
+        "category": "grain",
+        "quantity": 1,
+        "unit": "piece"
+      },
+      {
+        "ingredient_id": 6011,
+        "name": "Smoked chickpea lox",
+        "category": "proteins",
+        "quantity": 90,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 6012,
+        "name": "Pickled cucumber ribbons",
+        "category": "produce",
+        "quantity": 60,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 6013,
+        "name": "Dill skyr yogurt",
+        "category": "dairy",
+        "quantity": 40,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 6014,
+        "name": "Crunchy radish coins",
+        "category": "produce",
+        "quantity": 30,
+        "unit": "g"
+      }
+    ]
+  },
+  {
+    "recipe_id": 55,
+    "name": "Iberian Hearth Stew #55",
+    "cuisine": "Iberian",
+    "course": "dinner",
+    "prep_time_min": 35,
+    "cook_time_min": 40,
+    "servings": 4,
+    "calories_est": 640,
+    "instructions": "Simmer slow-cooked legumes with smoked paprika vegetables, finish with herb oil.",
+    "protein_est": 32,
+    "carbs_est": 70,
+    "fats_est": 22,
+    "ingredients": [
+      {
+        "ingredient_id": 6020,
+        "name": "Braised white beans",
+        "category": "proteins",
+        "quantity": 180,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 6021,
+        "name": "Smoked paprika sofrito",
+        "category": "sauce",
+        "quantity": 120,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 6022,
+        "name": "Charred peppers & onions",
+        "category": "produce",
+        "quantity": 150,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 6023,
+        "name": "Golden potatoes",
+        "category": "produce",
+        "quantity": 160,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 6024,
+        "name": "Herb olive oil",
+        "category": "sauce",
+        "quantity": 1.2,
+        "unit": "tbsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 56,
+    "name": "Andean Energy Parfait #56",
+    "cuisine": "Andean",
+    "course": "snack",
+    "prep_time_min": 12,
+    "cook_time_min": 0,
+    "servings": 1,
+    "calories_est": 360,
+    "instructions": "Layer chia-lucuma pudding with quinoa crunch, berries, and maca yogurt topping.",
+    "protein_est": 14,
+    "carbs_est": 48,
+    "fats_est": 12,
+    "ingredients": [
+      {
+        "ingredient_id": 6030,
+        "name": "Lucuma chia pudding",
+        "category": "dairy",
+        "quantity": 110,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 6031,
+        "name": "Popped quinoa crunch",
+        "category": "grain",
+        "quantity": 35,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 6032,
+        "name": "Golden berries",
+        "category": "produce",
+        "quantity": 40,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 6033,
+        "name": "Maca yogurt whip",
+        "category": "dairy",
+        "quantity": 50,
+        "unit": "g"
+      }
+    ]
+  },
+  {
+    "recipe_id": 57,
+    "name": "Levante Herb Mezze #57",
+    "cuisine": "Levantine",
+    "course": "dinner",
+    "prep_time_min": 32,
+    "cook_time_min": 18,
+    "servings": 3,
+    "calories_est": 580,
+    "instructions": "Layer freekeh pilaf, grilled halloumi-style tofu, roasted eggplant, and sumac drizzle.",
+    "protein_est": 34,
+    "carbs_est": 62,
+    "fats_est": 20,
+    "ingredients": [
+      {
+        "ingredient_id": 6040,
+        "name": "Sumac freekeh pilaf",
+        "category": "grain",
+        "quantity": 130,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 6041,
+        "name": "Halloumi tofu steaks",
+        "category": "proteins",
+        "quantity": 150,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 6042,
+        "name": "Charred eggplant planks",
+        "category": "produce",
+        "quantity": 120,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 6043,
+        "name": "Pomegranate herb drizzle",
+        "category": "sauce",
+        "quantity": 1.4,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 6044,
+        "name": "Pickled sumac onions",
+        "category": "produce",
+        "quantity": 45,
+        "unit": "g"
+      }
+    ]
   }
 ]

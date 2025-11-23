@@ -17,7 +17,7 @@ import {
 
 const AI_CONSENT = "ai_insights" satisfies (typeof CONSENT_TYPES)[number];
 
-type PromptStep = "strategy" | "structure" | "recipes" | "analytics";
+type PromptStep = "strategy" | "structure" | "recipes" | "analytics" | "substitutions";
 
 const PROMPT_TEMPLATES: Record<PromptStep, string> = {
   strategy: `You are a certified nutritionist. Analyze the user profile below and produce a one-paragraph strategy with macronutrient emphasis, meal frequency, and any necessary adjustments. Respond in JSON with keys strategy_summary and macro_focus.
@@ -36,7 +36,18 @@ Recipes: {{recipes}}
 Restrictions: {{restrictions}}
 When nutritional values are required, call the calculate_nutrition function.`,
   analytics: `Review the generated meal plan and provide insights: key benefits, potential risks, and improvement suggestions. Respond in JSON with keys highlights, risks, suggestions. Use the calculate_nutrition function whenever you need precise macro/micro totals.
-Plan summary: {{planSummary}}`
+Plan summary: {{planSummary}}`,
+  substitutions: `You are a culinary nutrition AI that proposes ingredient substitutions matching dietary needs.
+Ingredient to replace: {{ingredient}}
+Recipe context: {{recipeTitle}} – {{recipeSummary}}
+Recipe macros: {{recipeMacros}}
+Available pantry items: {{availability}}
+Dietary preferences: {{dietaryPreferences}}
+Allergies: {{allergies}}
+Targets: {{targets}}
+
+Respond in JSON: {"alternatives":[{"name":"...","reason":"...","availabilityMatch":"...","nutritionNote":"..."}]}
+Always ensure suggestions respect allergies/dislikes and optionally highlight when availability matches.`
 };
 
 const FEW_SHOT_EXAMPLES: Record<PromptStep, Array<{ role: "user" | "assistant"; content: string }>> = {
@@ -63,7 +74,18 @@ const FEW_SHOT_EXAMPLES: Record<PromptStep, Array<{ role: "user" | "assistant"; 
     }
   ],
   recipes: [],
-  analytics: []
+  analytics: [],
+  substitutions: [
+    {
+      role: "user",
+      content: "Replace: butter in Mediterranean bowl. Pantry: olive oil, tahini."
+    },
+    {
+      role: "assistant",
+      content:
+        '{"alternatives":[{"name":"Olive oil drizzle","reason":"Keeps healthy fats and Mediterranean flavor profile","availabilityMatch":"Uses olive oil","nutritionNote":"Adds mono-unsaturated fats with minimal carbs"}]}'
+    }
+  ]
 };
 
 type AiFunctionDefinition = {
@@ -141,6 +163,11 @@ interface PromptOptions {
   restrictions?: string;
   planSummary?: string;
   startDate?: string;
+  ingredient?: string;
+  availability?: string;
+  recipeTitle?: string;
+  recipeSummary?: string;
+  recipeMacros?: string;
   temperature?: number;
   topP?: number;
   maxTokens?: number;
@@ -159,7 +186,8 @@ const defaultStepParams: Record<PromptStep, { temperature: number; topP: number;
   strategy: { temperature: 0.4, topP: 0.9, maxTokens: 350 },
   structure: { temperature: 0.3, topP: 0.85, maxTokens: 450 },
   recipes: { temperature: 0.6, topP: 0.95, maxTokens: 600 },
-  analytics: { temperature: 0.35, topP: 0.8, maxTokens: 300 }
+  analytics: { temperature: 0.35, topP: 0.8, maxTokens: 300 },
+  substitutions: { temperature: 0.55, topP: 0.9, maxTokens: 350 }
 };
 
 type ChatMessage = {
@@ -256,7 +284,12 @@ export const runPromptStep = async (options: PromptOptions) => {
       structure: options.structure ?? "",
       recipes: options.recipes ?? "",
       restrictions: options.restrictions ?? "",
-      planSummary: options.planSummary ?? ""
+      planSummary: options.planSummary ?? "",
+      ingredient: options.ingredient ?? "",
+      availability: options.availability ?? "",
+      recipeTitle: options.recipeTitle ?? "",
+      recipeSummary: options.recipeSummary ?? "",
+      recipeMacros: options.recipeMacros ?? ""
     });
 
     const messages: ChatMessage[] = [

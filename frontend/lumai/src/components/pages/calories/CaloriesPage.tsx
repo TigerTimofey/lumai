@@ -311,6 +311,13 @@ const SUBSTITUTION_BLUEPRINTS = [
 
 const FALLBACK_SUBSTITUTIONS = ['Roasted vegetable medley', 'Spiced lentil crumble', 'Herbed bean mash', 'Crispy cauliflower bites'];
 
+type IngredientSubstitutionSuggestion = {
+  name: string;
+  reason?: string;
+  availabilityMatch?: string;
+  nutritionNote?: string;
+};
+
 const tokenizeAvailability = (value: string) =>
   value
     .split(',')
@@ -330,7 +337,7 @@ const buildIngredientSubstitutions = (
   ingredientName: string,
   preferences: NutritionPreferences | null | undefined,
   availabilityTokens: string[]
-) => {
+): IngredientSubstitutionSuggestion[] => {
   const normalized = ingredientName?.toLowerCase() ?? '';
   const blueprint =
     SUBSTITUTION_BLUEPRINTS.find((entry) => entry.matchers.some((pattern) => pattern.test(normalized))) ?? null;
@@ -358,7 +365,15 @@ const buildIngredientSubstitutions = (
   });
 
   const combined = [...prioritized, ...remainder, ...FALLBACK_SUBSTITUTIONS];
-  return uniqueStrings(combined).slice(0, 4);
+  return uniqueStrings(combined)
+    .slice(0, 4)
+    .map((option) => ({
+      name: option,
+      reason: blueprint ? `Maintains the role of ${ingredientName} in the dish` : 'Pantry-friendly alternative',
+      availabilityMatch: availabilityTokens.some((token) => option.toLowerCase().includes(token))
+        ? 'Uses available pantry items'
+        : undefined
+    }));
 };
 
 type ShoppingList = {
@@ -2608,9 +2623,13 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
   availabilityNotes,
   onAvailabilityChange
 }) => {
-  const [substitutionIdeas, setSubstitutionIdeas] = useState<Record<string, string[]>>({});
+  const [substitutionIdeas, setSubstitutionIdeas] = useState<Record<string, IngredientSubstitutionSuggestion[]>>({});
+  const [substitutionLoading, setSubstitutionLoading] = useState<Record<string, boolean>>({});
+  const [substitutionError, setSubstitutionError] = useState<string | null>(null);
   useEffect(() => {
     setSubstitutionIdeas({});
+    setSubstitutionLoading({});
+    setSubstitutionError(null);
   }, [recipe.id]);
   const availabilityTokens = useMemo(() => tokenizeAvailability(availabilityNotes), [availabilityNotes]);
   const scale = servings / (recipe.servings || 1);
@@ -2623,15 +2642,46 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
     const value = macros[key as keyof typeof macros];
     return typeof value === 'number' && value > 0;
   });
-  const handleSuggestSubstitution = (ingredientKey: string, ingredientName?: string) => {
-    setSubstitutionIdeas((prev) => {
-      if (prev[ingredientKey]) {
-        const { [ingredientKey]: _, ...rest } = prev;
-        return rest;
-      }
-      const suggestions = buildIngredientSubstitutions(ingredientName ?? '', preferences, availabilityTokens);
-      return { ...prev, [ingredientKey]: suggestions };
-    });
+  const handleSuggestSubstitution = async (ingredientKey: string, ingredientName?: string) => {
+    if (!ingredientName) return;
+    if (substitutionIdeas[ingredientKey]) {
+      setSubstitutionIdeas((prev) => {
+        const next = { ...prev };
+        delete next[ingredientKey];
+        return next;
+      });
+      return;
+    }
+    setSubstitutionError(null);
+    setSubstitutionLoading((prev) => ({ ...prev, [ingredientKey]: true }));
+    try {
+      const response = await apiFetch<{ alternatives: IngredientSubstitutionSuggestion[] }>(
+        `/nutrition/recipes/${recipe.id}/substitutions`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            ingredient: ingredientName,
+            availability: availabilityNotes || undefined
+          })
+        }
+      );
+      const alternatives =
+        response.alternatives?.length && Array.isArray(response.alternatives)
+          ? response.alternatives
+          : buildIngredientSubstitutions(ingredientName, preferences, availabilityTokens);
+      setSubstitutionIdeas((prev) => ({ ...prev, [ingredientKey]: alternatives }));
+    } catch (error) {
+      console.error(error);
+      setSubstitutionError('AI substitutions unavailable. Showing pantry-based ideas.');
+      const fallback = buildIngredientSubstitutions(ingredientName, preferences, availabilityTokens);
+      setSubstitutionIdeas((prev) => ({ ...prev, [ingredientKey]: fallback }));
+    } finally {
+      setSubstitutionLoading((prev) => {
+        const next = { ...prev };
+        delete next[ingredientKey];
+        return next;
+      });
+    }
   };
   const tags = recipe.dietaryTags ?? [];
   const instructions =
@@ -2736,10 +2786,22 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
                     >
                       Suggest substitute
                     </button>
+                    {substitutionLoading[ingredientKey] && (
+                      <p className="recipe-substitute-loading">AI is finding alternatives…</p>
+                    )}
                     {suggestions && (
                       <ul className="recipe-substitute-list">
                         {suggestions.map((suggestion) => (
-                          <li key={`${ingredientKey}-${suggestion}`}>{suggestion}</li>
+                          <li key={`${ingredientKey}-${suggestion.name}`}>
+                            <strong>{suggestion.name}</strong>
+                            {suggestion.reason && <p className="recipe-substitute-meta">{suggestion.reason}</p>}
+                            {suggestion.availabilityMatch && (
+                              <p className="recipe-substitute-meta">{suggestion.availabilityMatch}</p>
+                            )}
+                            {suggestion.nutritionNote && (
+                              <p className="recipe-substitute-meta">{suggestion.nutritionNote}</p>
+                            )}
+                          </li>
                         ))}
                       </ul>
                     )}
@@ -2747,6 +2809,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
                 );
               })}
             </ul>
+            {substitutionError && <p className="recipe-substitute-error">{substitutionError}</p>}
           </section>
           <section>
             <h4>Instructions</h4>
