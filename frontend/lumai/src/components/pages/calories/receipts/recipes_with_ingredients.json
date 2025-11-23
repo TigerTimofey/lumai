@@ -749,5 +749,1925 @@
         "unit": "cup"
       }
     ]
+  },
+  {
+    "recipe_id": 13,
+    "name": "Mediterranean Harvest Bowl #13",
+    "cuisine": "Mediterranean",
+    "course": "breakfast",
+    "prep_time_min": 29,
+    "cook_time_min": 21,
+    "servings": 4,
+    "calories_est": 662,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5130,
+        "name": "Mediterranean Garden Vegetables",
+        "category": "produce",
+        "quantity": 82.66,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5131,
+        "name": "Mediterranean Lean Protein",
+        "category": "proteins",
+        "quantity": 119.08,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5132,
+        "name": "Mediterranean Whole Grain Blend",
+        "category": "grain",
+        "quantity": 105.44,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5133,
+        "name": "Mediterranean Infused Oil",
+        "category": "sauce",
+        "quantity": 2.91,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5134,
+        "name": "Mediterranean Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.86,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 14,
+    "name": "Thai Market Plate #14",
+    "cuisine": "Thai",
+    "course": "lunch",
+    "prep_time_min": 33,
+    "cook_time_min": 24,
+    "servings": 1,
+    "calories_est": 368,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5140,
+        "name": "Thai Garden Vegetables",
+        "category": "produce",
+        "quantity": 136.68,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5141,
+        "name": "Thai Lean Protein",
+        "category": "proteins",
+        "quantity": 113.57,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5142,
+        "name": "Thai Whole Grain Blend",
+        "category": "grain",
+        "quantity": 129.06,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5143,
+        "name": "Thai Infused Oil",
+        "category": "sauce",
+        "quantity": 1.42,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5144,
+        "name": "Thai Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.92,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 15,
+    "name": "Indian Evening Feast #15",
+    "cuisine": "Indian",
+    "course": "dinner",
+    "prep_time_min": 29,
+    "cook_time_min": 33,
+    "servings": 4,
+    "calories_est": 366,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5150,
+        "name": "Indian Garden Vegetables",
+        "category": "produce",
+        "quantity": 116.71,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5151,
+        "name": "Indian Lean Protein",
+        "category": "proteins",
+        "quantity": 92.38,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5152,
+        "name": "Indian Whole Grain Blend",
+        "category": "grain",
+        "quantity": 117.37,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5153,
+        "name": "Indian Infused Oil",
+        "category": "sauce",
+        "quantity": 1.04,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5154,
+        "name": "Indian Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.4,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 16,
+    "name": "Nordic Energy Bite #16",
+    "cuisine": "Nordic",
+    "course": "snack",
+    "prep_time_min": 31,
+    "cook_time_min": 41,
+    "servings": 1,
+    "calories_est": 646,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5160,
+        "name": "Nordic Garden Vegetables",
+        "category": "produce",
+        "quantity": 87.3,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5161,
+        "name": "Nordic Lean Protein",
+        "category": "proteins",
+        "quantity": 88.5,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5162,
+        "name": "Nordic Whole Grain Blend",
+        "category": "grain",
+        "quantity": 52.15,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5163,
+        "name": "Nordic Infused Oil",
+        "category": "sauce",
+        "quantity": 1.74,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5164,
+        "name": "Nordic Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.55,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 17,
+    "name": "Peruvian Harvest Bowl #17",
+    "cuisine": "Peruvian",
+    "course": "breakfast",
+    "prep_time_min": 17,
+    "cook_time_min": 15,
+    "servings": 3,
+    "calories_est": 492,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5170,
+        "name": "Peruvian Garden Vegetables",
+        "category": "produce",
+        "quantity": 99.17,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5171,
+        "name": "Peruvian Lean Protein",
+        "category": "proteins",
+        "quantity": 72.72,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5172,
+        "name": "Peruvian Whole Grain Blend",
+        "category": "grain",
+        "quantity": 118.76,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5173,
+        "name": "Peruvian Infused Oil",
+        "category": "sauce",
+        "quantity": 0.94,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5174,
+        "name": "Peruvian Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.84,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 18,
+    "name": "Moroccan Market Plate #18",
+    "cuisine": "Moroccan",
+    "course": "lunch",
+    "prep_time_min": 15,
+    "cook_time_min": 38,
+    "servings": 2,
+    "calories_est": 501,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5180,
+        "name": "Moroccan Garden Vegetables",
+        "category": "produce",
+        "quantity": 105.24,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5181,
+        "name": "Moroccan Lean Protein",
+        "category": "proteins",
+        "quantity": 112.99,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5182,
+        "name": "Moroccan Whole Grain Blend",
+        "category": "grain",
+        "quantity": 126.82,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5183,
+        "name": "Moroccan Infused Oil",
+        "category": "sauce",
+        "quantity": 0.93,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5184,
+        "name": "Moroccan Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.84,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 19,
+    "name": "Coastal Evening Feast #19",
+    "cuisine": "Coastal",
+    "course": "dinner",
+    "prep_time_min": 32,
+    "cook_time_min": 24,
+    "servings": 2,
+    "calories_est": 420,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5190,
+        "name": "Coastal Garden Vegetables",
+        "category": "produce",
+        "quantity": 79.67,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5191,
+        "name": "Coastal Lean Protein",
+        "category": "proteins",
+        "quantity": 95.88,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5192,
+        "name": "Coastal Whole Grain Blend",
+        "category": "grain",
+        "quantity": 75.26,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5193,
+        "name": "Coastal Infused Oil",
+        "category": "sauce",
+        "quantity": 1.55,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5194,
+        "name": "Coastal Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.19,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 20,
+    "name": "Korean Energy Bite #20",
+    "cuisine": "Korean",
+    "course": "snack",
+    "prep_time_min": 22,
+    "cook_time_min": 36,
+    "servings": 1,
+    "calories_est": 483,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5200,
+        "name": "Korean Garden Vegetables",
+        "category": "produce",
+        "quantity": 63.14,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5201,
+        "name": "Korean Lean Protein",
+        "category": "proteins",
+        "quantity": 108.14,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5202,
+        "name": "Korean Whole Grain Blend",
+        "category": "grain",
+        "quantity": 125.54,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5203,
+        "name": "Korean Infused Oil",
+        "category": "sauce",
+        "quantity": 2.37,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5204,
+        "name": "Korean Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.74,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 21,
+    "name": "Mediterranean Harvest Bowl #21",
+    "cuisine": "Mediterranean",
+    "course": "breakfast",
+    "prep_time_min": 35,
+    "cook_time_min": 35,
+    "servings": 3,
+    "calories_est": 685,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5210,
+        "name": "Mediterranean Garden Vegetables",
+        "category": "produce",
+        "quantity": 129.44,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5211,
+        "name": "Mediterranean Lean Protein",
+        "category": "proteins",
+        "quantity": 111.23,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5212,
+        "name": "Mediterranean Whole Grain Blend",
+        "category": "grain",
+        "quantity": 52.75,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5213,
+        "name": "Mediterranean Infused Oil",
+        "category": "sauce",
+        "quantity": 2.52,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5214,
+        "name": "Mediterranean Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.94,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 22,
+    "name": "Thai Market Plate #22",
+    "cuisine": "Thai",
+    "course": "lunch",
+    "prep_time_min": 10,
+    "cook_time_min": 41,
+    "servings": 2,
+    "calories_est": 565,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5220,
+        "name": "Thai Garden Vegetables",
+        "category": "produce",
+        "quantity": 75.15,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5221,
+        "name": "Thai Lean Protein",
+        "category": "proteins",
+        "quantity": 99.97,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5222,
+        "name": "Thai Whole Grain Blend",
+        "category": "grain",
+        "quantity": 121.63,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5223,
+        "name": "Thai Infused Oil",
+        "category": "sauce",
+        "quantity": 1.91,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5224,
+        "name": "Thai Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.38,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 23,
+    "name": "Indian Evening Feast #23",
+    "cuisine": "Indian",
+    "course": "dinner",
+    "prep_time_min": 30,
+    "cook_time_min": 23,
+    "servings": 3,
+    "calories_est": 409,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5230,
+        "name": "Indian Garden Vegetables",
+        "category": "produce",
+        "quantity": 108.28,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5231,
+        "name": "Indian Lean Protein",
+        "category": "proteins",
+        "quantity": 131.66,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5232,
+        "name": "Indian Whole Grain Blend",
+        "category": "grain",
+        "quantity": 52.08,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5233,
+        "name": "Indian Infused Oil",
+        "category": "sauce",
+        "quantity": 2.26,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5234,
+        "name": "Indian Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.6,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 24,
+    "name": "Nordic Energy Bite #24",
+    "cuisine": "Nordic",
+    "course": "snack",
+    "prep_time_min": 30,
+    "cook_time_min": 32,
+    "servings": 1,
+    "calories_est": 438,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5240,
+        "name": "Nordic Garden Vegetables",
+        "category": "produce",
+        "quantity": 69.78,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5241,
+        "name": "Nordic Lean Protein",
+        "category": "proteins",
+        "quantity": 90.84,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5242,
+        "name": "Nordic Whole Grain Blend",
+        "category": "grain",
+        "quantity": 102.74,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5243,
+        "name": "Nordic Infused Oil",
+        "category": "sauce",
+        "quantity": 2.65,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5244,
+        "name": "Nordic Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.24,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 25,
+    "name": "Peruvian Harvest Bowl #25",
+    "cuisine": "Peruvian",
+    "course": "breakfast",
+    "prep_time_min": 32,
+    "cook_time_min": 39,
+    "servings": 2,
+    "calories_est": 579,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5250,
+        "name": "Peruvian Garden Vegetables",
+        "category": "produce",
+        "quantity": 84.8,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5251,
+        "name": "Peruvian Lean Protein",
+        "category": "proteins",
+        "quantity": 95.91,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5252,
+        "name": "Peruvian Whole Grain Blend",
+        "category": "grain",
+        "quantity": 86.67,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5253,
+        "name": "Peruvian Infused Oil",
+        "category": "sauce",
+        "quantity": 2.64,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5254,
+        "name": "Peruvian Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.58,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 26,
+    "name": "Moroccan Market Plate #26",
+    "cuisine": "Moroccan",
+    "course": "lunch",
+    "prep_time_min": 14,
+    "cook_time_min": 25,
+    "servings": 3,
+    "calories_est": 482,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5260,
+        "name": "Moroccan Garden Vegetables",
+        "category": "produce",
+        "quantity": 100.11,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5261,
+        "name": "Moroccan Lean Protein",
+        "category": "proteins",
+        "quantity": 153.12,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5262,
+        "name": "Moroccan Whole Grain Blend",
+        "category": "grain",
+        "quantity": 83,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5263,
+        "name": "Moroccan Infused Oil",
+        "category": "sauce",
+        "quantity": 1.5,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5264,
+        "name": "Moroccan Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.51,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 27,
+    "name": "Coastal Evening Feast #27",
+    "cuisine": "Coastal",
+    "course": "dinner",
+    "prep_time_min": 17,
+    "cook_time_min": 27,
+    "servings": 2,
+    "calories_est": 324,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5270,
+        "name": "Coastal Garden Vegetables",
+        "category": "produce",
+        "quantity": 138.64,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5271,
+        "name": "Coastal Lean Protein",
+        "category": "proteins",
+        "quantity": 101.1,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5272,
+        "name": "Coastal Whole Grain Blend",
+        "category": "grain",
+        "quantity": 127.71,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5273,
+        "name": "Coastal Infused Oil",
+        "category": "sauce",
+        "quantity": 1.87,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5274,
+        "name": "Coastal Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.28,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 28,
+    "name": "Korean Energy Bite #28",
+    "cuisine": "Korean",
+    "course": "snack",
+    "prep_time_min": 29,
+    "cook_time_min": 36,
+    "servings": 1,
+    "calories_est": 389,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5280,
+        "name": "Korean Garden Vegetables",
+        "category": "produce",
+        "quantity": 62.06,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5281,
+        "name": "Korean Lean Protein",
+        "category": "proteins",
+        "quantity": 142.89,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5282,
+        "name": "Korean Whole Grain Blend",
+        "category": "grain",
+        "quantity": 62.79,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5283,
+        "name": "Korean Infused Oil",
+        "category": "sauce",
+        "quantity": 0.89,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5284,
+        "name": "Korean Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.49,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 29,
+    "name": "Mediterranean Harvest Bowl #29",
+    "cuisine": "Mediterranean",
+    "course": "breakfast",
+    "prep_time_min": 13,
+    "cook_time_min": 41,
+    "servings": 1,
+    "calories_est": 533,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5290,
+        "name": "Mediterranean Garden Vegetables",
+        "category": "produce",
+        "quantity": 102.77,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5291,
+        "name": "Mediterranean Lean Protein",
+        "category": "proteins",
+        "quantity": 102.5,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5292,
+        "name": "Mediterranean Whole Grain Blend",
+        "category": "grain",
+        "quantity": 77.22,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5293,
+        "name": "Mediterranean Infused Oil",
+        "category": "sauce",
+        "quantity": 0.9,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5294,
+        "name": "Mediterranean Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.13,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 30,
+    "name": "Thai Market Plate #30",
+    "cuisine": "Thai",
+    "course": "lunch",
+    "prep_time_min": 17,
+    "cook_time_min": 39,
+    "servings": 2,
+    "calories_est": 732,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5300,
+        "name": "Thai Garden Vegetables",
+        "category": "produce",
+        "quantity": 122.87,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5301,
+        "name": "Thai Lean Protein",
+        "category": "proteins",
+        "quantity": 152.53,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5302,
+        "name": "Thai Whole Grain Blend",
+        "category": "grain",
+        "quantity": 51.14,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5303,
+        "name": "Thai Infused Oil",
+        "category": "sauce",
+        "quantity": 2.58,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5304,
+        "name": "Thai Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.71,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 31,
+    "name": "Indian Evening Feast #31",
+    "cuisine": "Indian",
+    "course": "dinner",
+    "prep_time_min": 35,
+    "cook_time_min": 13,
+    "servings": 2,
+    "calories_est": 561,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5310,
+        "name": "Indian Garden Vegetables",
+        "category": "produce",
+        "quantity": 123.31,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5311,
+        "name": "Indian Lean Protein",
+        "category": "proteins",
+        "quantity": 159.8,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5312,
+        "name": "Indian Whole Grain Blend",
+        "category": "grain",
+        "quantity": 93.44,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5313,
+        "name": "Indian Infused Oil",
+        "category": "sauce",
+        "quantity": 2.34,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5314,
+        "name": "Indian Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.38,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 32,
+    "name": "Nordic Energy Bite #32",
+    "cuisine": "Nordic",
+    "course": "snack",
+    "prep_time_min": 17,
+    "cook_time_min": 18,
+    "servings": 1,
+    "calories_est": 489,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5320,
+        "name": "Nordic Garden Vegetables",
+        "category": "produce",
+        "quantity": 68.05,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5321,
+        "name": "Nordic Lean Protein",
+        "category": "proteins",
+        "quantity": 104.02,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5322,
+        "name": "Nordic Whole Grain Blend",
+        "category": "grain",
+        "quantity": 80.53,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5323,
+        "name": "Nordic Infused Oil",
+        "category": "sauce",
+        "quantity": 0.64,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5324,
+        "name": "Nordic Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.95,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 33,
+    "name": "Peruvian Harvest Bowl #33",
+    "cuisine": "Peruvian",
+    "course": "breakfast",
+    "prep_time_min": 29,
+    "cook_time_min": 30,
+    "servings": 4,
+    "calories_est": 498,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5330,
+        "name": "Peruvian Garden Vegetables",
+        "category": "produce",
+        "quantity": 128.34,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5331,
+        "name": "Peruvian Lean Protein",
+        "category": "proteins",
+        "quantity": 87.83,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5332,
+        "name": "Peruvian Whole Grain Blend",
+        "category": "grain",
+        "quantity": 66.31,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5333,
+        "name": "Peruvian Infused Oil",
+        "category": "sauce",
+        "quantity": 2.16,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5334,
+        "name": "Peruvian Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.21,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 34,
+    "name": "Moroccan Market Plate #34",
+    "cuisine": "Moroccan",
+    "course": "lunch",
+    "prep_time_min": 33,
+    "cook_time_min": 29,
+    "servings": 2,
+    "calories_est": 323,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5340,
+        "name": "Moroccan Garden Vegetables",
+        "category": "produce",
+        "quantity": 129.09,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5341,
+        "name": "Moroccan Lean Protein",
+        "category": "proteins",
+        "quantity": 116.54,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5342,
+        "name": "Moroccan Whole Grain Blend",
+        "category": "grain",
+        "quantity": 91.71,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5343,
+        "name": "Moroccan Infused Oil",
+        "category": "sauce",
+        "quantity": 1.43,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5344,
+        "name": "Moroccan Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.79,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 35,
+    "name": "Coastal Evening Feast #35",
+    "cuisine": "Coastal",
+    "course": "dinner",
+    "prep_time_min": 18,
+    "cook_time_min": 19,
+    "servings": 2,
+    "calories_est": 482,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5350,
+        "name": "Coastal Garden Vegetables",
+        "category": "produce",
+        "quantity": 115.93,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5351,
+        "name": "Coastal Lean Protein",
+        "category": "proteins",
+        "quantity": 106.61,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5352,
+        "name": "Coastal Whole Grain Blend",
+        "category": "grain",
+        "quantity": 55,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5353,
+        "name": "Coastal Infused Oil",
+        "category": "sauce",
+        "quantity": 1.21,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5354,
+        "name": "Coastal Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.83,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 36,
+    "name": "Korean Energy Bite #36",
+    "cuisine": "Korean",
+    "course": "snack",
+    "prep_time_min": 12,
+    "cook_time_min": 14,
+    "servings": 1,
+    "calories_est": 427,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5360,
+        "name": "Korean Garden Vegetables",
+        "category": "produce",
+        "quantity": 88.9,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5361,
+        "name": "Korean Lean Protein",
+        "category": "proteins",
+        "quantity": 85.73,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5362,
+        "name": "Korean Whole Grain Blend",
+        "category": "grain",
+        "quantity": 99.76,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5363,
+        "name": "Korean Infused Oil",
+        "category": "sauce",
+        "quantity": 1.69,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5364,
+        "name": "Korean Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.54,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 37,
+    "name": "Mediterranean Harvest Bowl #37",
+    "cuisine": "Mediterranean",
+    "course": "breakfast",
+    "prep_time_min": 12,
+    "cook_time_min": 32,
+    "servings": 4,
+    "calories_est": 659,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5370,
+        "name": "Mediterranean Garden Vegetables",
+        "category": "produce",
+        "quantity": 137.93,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5371,
+        "name": "Mediterranean Lean Protein",
+        "category": "proteins",
+        "quantity": 115.15,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5372,
+        "name": "Mediterranean Whole Grain Blend",
+        "category": "grain",
+        "quantity": 63.56,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5373,
+        "name": "Mediterranean Infused Oil",
+        "category": "sauce",
+        "quantity": 1.53,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5374,
+        "name": "Mediterranean Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.38,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 38,
+    "name": "Thai Market Plate #38",
+    "cuisine": "Thai",
+    "course": "lunch",
+    "prep_time_min": 34,
+    "cook_time_min": 35,
+    "servings": 4,
+    "calories_est": 328,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5380,
+        "name": "Thai Garden Vegetables",
+        "category": "produce",
+        "quantity": 71.7,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5381,
+        "name": "Thai Lean Protein",
+        "category": "proteins",
+        "quantity": 108.99,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5382,
+        "name": "Thai Whole Grain Blend",
+        "category": "grain",
+        "quantity": 100.85,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5383,
+        "name": "Thai Infused Oil",
+        "category": "sauce",
+        "quantity": 0.72,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5384,
+        "name": "Thai Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.87,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 39,
+    "name": "Indian Evening Feast #39",
+    "cuisine": "Indian",
+    "course": "dinner",
+    "prep_time_min": 11,
+    "cook_time_min": 39,
+    "servings": 1,
+    "calories_est": 320,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5390,
+        "name": "Indian Garden Vegetables",
+        "category": "produce",
+        "quantity": 113.14,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5391,
+        "name": "Indian Lean Protein",
+        "category": "proteins",
+        "quantity": 155.81,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5392,
+        "name": "Indian Whole Grain Blend",
+        "category": "grain",
+        "quantity": 95.55,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5393,
+        "name": "Indian Infused Oil",
+        "category": "sauce",
+        "quantity": 2.12,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5394,
+        "name": "Indian Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.78,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 40,
+    "name": "Nordic Energy Bite #40",
+    "cuisine": "Nordic",
+    "course": "snack",
+    "prep_time_min": 12,
+    "cook_time_min": 27,
+    "servings": 4,
+    "calories_est": 399,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5400,
+        "name": "Nordic Garden Vegetables",
+        "category": "produce",
+        "quantity": 83.55,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5401,
+        "name": "Nordic Lean Protein",
+        "category": "proteins",
+        "quantity": 127.88,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5402,
+        "name": "Nordic Whole Grain Blend",
+        "category": "grain",
+        "quantity": 110.04,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5403,
+        "name": "Nordic Infused Oil",
+        "category": "sauce",
+        "quantity": 1.01,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5404,
+        "name": "Nordic Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.41,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 41,
+    "name": "Peruvian Harvest Bowl #41",
+    "cuisine": "Peruvian",
+    "course": "breakfast",
+    "prep_time_min": 18,
+    "cook_time_min": 31,
+    "servings": 4,
+    "calories_est": 501,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5410,
+        "name": "Peruvian Garden Vegetables",
+        "category": "produce",
+        "quantity": 111.67,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5411,
+        "name": "Peruvian Lean Protein",
+        "category": "proteins",
+        "quantity": 148.8,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5412,
+        "name": "Peruvian Whole Grain Blend",
+        "category": "grain",
+        "quantity": 82.97,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5413,
+        "name": "Peruvian Infused Oil",
+        "category": "sauce",
+        "quantity": 2.37,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5414,
+        "name": "Peruvian Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.73,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 42,
+    "name": "Moroccan Market Plate #42",
+    "cuisine": "Moroccan",
+    "course": "lunch",
+    "prep_time_min": 19,
+    "cook_time_min": 41,
+    "servings": 4,
+    "calories_est": 478,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5420,
+        "name": "Moroccan Garden Vegetables",
+        "category": "produce",
+        "quantity": 116.01,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5421,
+        "name": "Moroccan Lean Protein",
+        "category": "proteins",
+        "quantity": 112.05,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5422,
+        "name": "Moroccan Whole Grain Blend",
+        "category": "grain",
+        "quantity": 93.24,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5423,
+        "name": "Moroccan Infused Oil",
+        "category": "sauce",
+        "quantity": 0.85,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5424,
+        "name": "Moroccan Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.1,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 43,
+    "name": "Coastal Evening Feast #43",
+    "cuisine": "Coastal",
+    "course": "dinner",
+    "prep_time_min": 26,
+    "cook_time_min": 34,
+    "servings": 4,
+    "calories_est": 645,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5430,
+        "name": "Coastal Garden Vegetables",
+        "category": "produce",
+        "quantity": 125.06,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5431,
+        "name": "Coastal Lean Protein",
+        "category": "proteins",
+        "quantity": 140.64,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5432,
+        "name": "Coastal Whole Grain Blend",
+        "category": "grain",
+        "quantity": 81.75,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5433,
+        "name": "Coastal Infused Oil",
+        "category": "sauce",
+        "quantity": 1.36,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5434,
+        "name": "Coastal Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.6,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 44,
+    "name": "Korean Energy Bite #44",
+    "cuisine": "Korean",
+    "course": "snack",
+    "prep_time_min": 30,
+    "cook_time_min": 42,
+    "servings": 1,
+    "calories_est": 667,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5440,
+        "name": "Korean Garden Vegetables",
+        "category": "produce",
+        "quantity": 126.74,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5441,
+        "name": "Korean Lean Protein",
+        "category": "proteins",
+        "quantity": 117.09,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5442,
+        "name": "Korean Whole Grain Blend",
+        "category": "grain",
+        "quantity": 120.54,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5443,
+        "name": "Korean Infused Oil",
+        "category": "sauce",
+        "quantity": 1.29,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5444,
+        "name": "Korean Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.96,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 45,
+    "name": "Mediterranean Harvest Bowl #45",
+    "cuisine": "Mediterranean",
+    "course": "breakfast",
+    "prep_time_min": 25,
+    "cook_time_min": 18,
+    "servings": 2,
+    "calories_est": 383,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5450,
+        "name": "Mediterranean Garden Vegetables",
+        "category": "produce",
+        "quantity": 91.64,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5451,
+        "name": "Mediterranean Lean Protein",
+        "category": "proteins",
+        "quantity": 150.22,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5452,
+        "name": "Mediterranean Whole Grain Blend",
+        "category": "grain",
+        "quantity": 85.87,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5453,
+        "name": "Mediterranean Infused Oil",
+        "category": "sauce",
+        "quantity": 1.69,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5454,
+        "name": "Mediterranean Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.54,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 46,
+    "name": "Thai Market Plate #46",
+    "cuisine": "Thai",
+    "course": "lunch",
+    "prep_time_min": 31,
+    "cook_time_min": 12,
+    "servings": 3,
+    "calories_est": 440,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5460,
+        "name": "Thai Garden Vegetables",
+        "category": "produce",
+        "quantity": 108.94,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5461,
+        "name": "Thai Lean Protein",
+        "category": "proteins",
+        "quantity": 143.39,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5462,
+        "name": "Thai Whole Grain Blend",
+        "category": "grain",
+        "quantity": 101.79,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5463,
+        "name": "Thai Infused Oil",
+        "category": "sauce",
+        "quantity": 1.6,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5464,
+        "name": "Thai Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.51,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 47,
+    "name": "Indian Evening Feast #47",
+    "cuisine": "Indian",
+    "course": "dinner",
+    "prep_time_min": 16,
+    "cook_time_min": 40,
+    "servings": 4,
+    "calories_est": 419,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5470,
+        "name": "Indian Garden Vegetables",
+        "category": "produce",
+        "quantity": 72.19,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5471,
+        "name": "Indian Lean Protein",
+        "category": "proteins",
+        "quantity": 156.8,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5472,
+        "name": "Indian Whole Grain Blend",
+        "category": "grain",
+        "quantity": 110.87,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5473,
+        "name": "Indian Infused Oil",
+        "category": "sauce",
+        "quantity": 1.55,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5474,
+        "name": "Indian Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.56,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 48,
+    "name": "Nordic Energy Bite #48",
+    "cuisine": "Nordic",
+    "course": "snack",
+    "prep_time_min": 18,
+    "cook_time_min": 37,
+    "servings": 1,
+    "calories_est": 381,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5480,
+        "name": "Nordic Garden Vegetables",
+        "category": "produce",
+        "quantity": 137.61,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5481,
+        "name": "Nordic Lean Protein",
+        "category": "proteins",
+        "quantity": 89.27,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5482,
+        "name": "Nordic Whole Grain Blend",
+        "category": "grain",
+        "quantity": 77.79,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5483,
+        "name": "Nordic Infused Oil",
+        "category": "sauce",
+        "quantity": 1.74,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5484,
+        "name": "Nordic Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.8,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 49,
+    "name": "Peruvian Harvest Bowl #49",
+    "cuisine": "Peruvian",
+    "course": "breakfast",
+    "prep_time_min": 27,
+    "cook_time_min": 20,
+    "servings": 4,
+    "calories_est": 470,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5490,
+        "name": "Peruvian Garden Vegetables",
+        "category": "produce",
+        "quantity": 64.78,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5491,
+        "name": "Peruvian Lean Protein",
+        "category": "proteins",
+        "quantity": 114.9,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5492,
+        "name": "Peruvian Whole Grain Blend",
+        "category": "grain",
+        "quantity": 112.2,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5493,
+        "name": "Peruvian Infused Oil",
+        "category": "sauce",
+        "quantity": 1.86,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5494,
+        "name": "Peruvian Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.82,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 50,
+    "name": "Moroccan Market Plate #50",
+    "cuisine": "Moroccan",
+    "course": "lunch",
+    "prep_time_min": 28,
+    "cook_time_min": 41,
+    "servings": 1,
+    "calories_est": 455,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5500,
+        "name": "Moroccan Garden Vegetables",
+        "category": "produce",
+        "quantity": 80.53,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5501,
+        "name": "Moroccan Lean Protein",
+        "category": "proteins",
+        "quantity": 86.09,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5502,
+        "name": "Moroccan Whole Grain Blend",
+        "category": "grain",
+        "quantity": 73.19,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5503,
+        "name": "Moroccan Infused Oil",
+        "category": "sauce",
+        "quantity": 1.39,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5504,
+        "name": "Moroccan Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.27,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 51,
+    "name": "Coastal Evening Feast #51",
+    "cuisine": "Coastal",
+    "course": "dinner",
+    "prep_time_min": 10,
+    "cook_time_min": 24,
+    "servings": 4,
+    "calories_est": 611,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5510,
+        "name": "Coastal Garden Vegetables",
+        "category": "produce",
+        "quantity": 92.46,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5511,
+        "name": "Coastal Lean Protein",
+        "category": "proteins",
+        "quantity": 107.56,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5512,
+        "name": "Coastal Whole Grain Blend",
+        "category": "grain",
+        "quantity": 122.91,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5513,
+        "name": "Coastal Infused Oil",
+        "category": "sauce",
+        "quantity": 1.37,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5514,
+        "name": "Coastal Herbal Crunch",
+        "category": "spice",
+        "quantity": 1.56,
+        "unit": "tsp"
+      }
+    ]
+  },
+  {
+    "recipe_id": 52,
+    "name": "Korean Energy Bite #52",
+    "cuisine": "Korean",
+    "course": "snack",
+    "prep_time_min": 35,
+    "cook_time_min": 26,
+    "servings": 1,
+    "calories_est": 652,
+    "instructions": "Prep produce and grains according to listed measurements. Warm a sauté pan with infused oil and aromatics. Combine protein and vegetables, cook until tender. Finish with herbs, seeds, and serve immediately.",
+    "ingredients": [
+      {
+        "ingredient_id": 5520,
+        "name": "Korean Garden Vegetables",
+        "category": "produce",
+        "quantity": 91.91,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5521,
+        "name": "Korean Lean Protein",
+        "category": "proteins",
+        "quantity": 156,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5522,
+        "name": "Korean Whole Grain Blend",
+        "category": "grain",
+        "quantity": 60.14,
+        "unit": "g"
+      },
+      {
+        "ingredient_id": 5523,
+        "name": "Korean Infused Oil",
+        "category": "sauce",
+        "quantity": 0.78,
+        "unit": "tbsp"
+      },
+      {
+        "ingredient_id": 5524,
+        "name": "Korean Herbal Crunch",
+        "category": "spice",
+        "quantity": 0.31,
+        "unit": "tsp"
+      }
+    ]
   }
 ]
