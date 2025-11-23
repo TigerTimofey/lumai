@@ -282,6 +282,85 @@ const resolveMealPrepTime = (meal: MealPlanMeal): { value: number; label: string
   return null;
 };
 
+const SUBSTITUTION_BLUEPRINTS = [
+  {
+    matchers: [/protein/i, /chicken/i, /turkey/i, /lean/i, /tofu/i],
+    options: ['Smoky chickpea medley', 'Marinated tofu cubes', 'Crispy tempeh strips', 'Seared seitan pieces']
+  },
+  {
+    matchers: [/grain/i, /rice/i, /quinoa/i, /oat/i, /farro/i, /pasta/i],
+    options: ['Cauliflower rice with herbs', 'Steamed buckwheat groats', 'Lentil couscous blend', 'Freekeh pilaf']
+  },
+  {
+    matchers: [/vegetable/i, /greens/i, /spinach/i, /kale/i, /broccoli/i, /pepper/i],
+    options: ['Charred broccolini', 'Roasted root vegetable mix', 'Baby kale & herb salad', 'Sauteed zucchini ribbons']
+  },
+  {
+    matchers: [/oil/i, /dressing/i, /sauce/i, /glaze/i, /butter/i],
+    options: ['Tahini-lemon drizzle', 'Miso-ginger vinaigrette', 'Avocado yogurt dressing', 'Walnut pesto sauce']
+  },
+  {
+    matchers: [/crunch/i, /seed/i, /nut/i, /chia/i, /flax/i, /herbal crunch/i],
+    options: ['Toasted pumpkin seeds', 'Sunflower-sesame sprinkle', 'Cacao nib & hemp topping', 'Crispy lentil crumble']
+  },
+  {
+    matchers: [/dairy/i, /yogurt/i, /cheese/i, /cream/i],
+    options: ['Cashew crema', 'Silken tofu whip', 'Almond ricotta', 'Coconut yogurt swirl']
+  }
+] as const;
+
+const FALLBACK_SUBSTITUTIONS = ['Roasted vegetable medley', 'Spiced lentil crumble', 'Herbed bean mash', 'Crispy cauliflower bites'];
+
+const tokenizeAvailability = (value: string) =>
+  value
+    .split(',')
+    .map((token) => token.trim().toLowerCase())
+    .filter(Boolean);
+
+const uniqueStrings = (items: string[]) => {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item)) return false;
+    seen.add(item);
+    return true;
+  });
+};
+
+const buildIngredientSubstitutions = (
+  ingredientName: string,
+  preferences: NutritionPreferences | null | undefined,
+  availabilityTokens: string[]
+) => {
+  const normalized = ingredientName?.toLowerCase() ?? '';
+  const blueprint =
+    SUBSTITUTION_BLUEPRINTS.find((entry) => entry.matchers.some((pattern) => pattern.test(normalized))) ?? null;
+  const baseOptions = blueprint ? [...blueprint.options] : [...FALLBACK_SUBSTITUTIONS];
+
+  const allergyTokens = (preferences?.allergies ?? []).map((item) => item.toLowerCase());
+  const dislikedTokens = (preferences?.dislikedIngredients ?? []).map((item) => item.toLowerCase());
+  const vegetarian = (preferences?.dietaryPreferences ?? []).some((pref) => pref.toLowerCase().includes('veg'));
+
+  const sanitizedOptions = baseOptions.filter((option) => {
+    const lower = option.toLowerCase();
+    if (vegetarian && /chicken|fish|meat|turkey/.test(lower)) return false;
+    return ![...allergyTokens, ...dislikedTokens].some((token) => token && lower.includes(token));
+  });
+
+  const prioritized: string[] = [];
+  const remainder: string[] = [];
+  sanitizedOptions.forEach((option) => {
+    const lower = option.toLowerCase();
+    if (availabilityTokens.some((token) => lower.includes(token))) {
+      prioritized.push(option);
+    } else {
+      remainder.push(option);
+    }
+  });
+
+  const combined = [...prioritized, ...remainder, ...FALLBACK_SUBSTITUTIONS];
+  return uniqueStrings(combined).slice(0, 4);
+};
+
 type ShoppingList = {
   id: string;
   mealPlanId: string;
@@ -448,6 +527,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   const [recipeSearchLoading, setRecipeSearchLoading] = useState(false);
   const [recipeSearchError, setRecipeSearchError] = useState<string | null>(null);
   const [recipeReplaceLoading, setRecipeReplaceLoading] = useState<string | null>(null);
+  const [ingredientAvailability, setIngredientAvailability] = useState('');
 
   const selectedPlan = mealPlans.find((plan) => plan.id === selectedPlanId) ?? null;
 
@@ -1956,6 +2036,9 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
           onServingsChange={(servings) => setRecipeModal((prev) => ({ ...prev, servings }))}
           onReviewChange={handleReviewFormChange}
           onSubmitReview={handleSubmitReview}
+          preferences={preferences}
+          availabilityNotes={ingredientAvailability}
+          onAvailabilityChange={setIngredientAvailability}
         />
       )}
     </div>
@@ -2506,6 +2589,9 @@ interface RecipeModalProps {
   onClose: () => void;
   onReviewChange: (field: keyof RecipeModalProps['reviewForm'], value: number | string) => void;
   onSubmitReview: () => void;
+  preferences: NutritionPreferences | null;
+  availabilityNotes: string;
+  onAvailabilityChange: (value: string) => void;
 }
 
 const RecipeModal: React.FC<RecipeModalProps> = ({
@@ -2518,7 +2604,15 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
   onClose,
   // onReviewChange,
   // onSubmitReview
+  preferences,
+  availabilityNotes,
+  onAvailabilityChange
 }) => {
+  const [substitutionIdeas, setSubstitutionIdeas] = useState<Record<string, string[]>>({});
+  useEffect(() => {
+    setSubstitutionIdeas({});
+  }, [recipe.id]);
+  const availabilityTokens = useMemo(() => tokenizeAvailability(availabilityNotes), [availabilityNotes]);
   const scale = servings / (recipe.servings || 1);
   const scaledIngredients = recipe.ingredients.map((ingredient) => ({
     ...ingredient,
@@ -2529,6 +2623,16 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
     const value = macros[key as keyof typeof macros];
     return typeof value === 'number' && value > 0;
   });
+  const handleSuggestSubstitution = (ingredientKey: string, ingredientName?: string) => {
+    setSubstitutionIdeas((prev) => {
+      if (prev[ingredientKey]) {
+        const { [ingredientKey]: _, ...rest } = prev;
+        return rest;
+      }
+      const suggestions = buildIngredientSubstitutions(ingredientName ?? '', preferences, availabilityTokens);
+      return { ...prev, [ingredientKey]: suggestions };
+    });
+  };
   const tags = recipe.dietaryTags ?? [];
   const instructions =
     recipe.preparation && recipe.preparation.length
@@ -2608,10 +2712,40 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
         <div className="recipe-content">
           <section>
             <h4>Ingredients</h4>
+            <div className="ingredient-availability">
+              <label htmlFor="ingredientAvailability">Available ingredients for swaps</label>
+              <input
+                id="ingredientAvailability"
+                value={availabilityNotes}
+                onChange={(e) => onAvailabilityChange(e.target.value)}
+                placeholder="e.g., chickpeas, kale, tahini"
+              />
+              <p>AI substitutions prioritize your pantry items and avoid allergies or dislikes.</p>
+            </div>
             <ul>
-              {scaledIngredients.map((ingredient) => (
-                <li key={ingredient.id}>{ingredient.quantity} {ingredient.unit} {ingredient.name}</li>
-              ))}
+              {scaledIngredients.map((ingredient, index) => {
+                const ingredientKey = ingredient.id ?? `${ingredient.name ?? 'ingredient'}-${index}`;
+                const suggestions = substitutionIdeas[ingredientKey];
+                return (
+                  <li key={ingredientKey}>
+                    {ingredient.quantity} {ingredient.unit} {ingredient.name}
+                    <button
+                      type="button"
+                      className="recipe-substitute-btn"
+                      onClick={() => handleSuggestSubstitution(ingredientKey, ingredient.name)}
+                    >
+                      Suggest substitute
+                    </button>
+                    {suggestions && (
+                      <ul className="recipe-substitute-list">
+                        {suggestions.map((suggestion) => (
+                          <li key={`${ingredientKey}-${suggestion}`}>{suggestion}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </section>
           <section>
