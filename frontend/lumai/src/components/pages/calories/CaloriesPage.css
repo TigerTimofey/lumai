@@ -354,7 +354,6 @@
 .calories-loading,
 .calories-error,
 .calories-empty {
-  margin-top: 10px;
   padding: 16px;
   border-radius: 12px;
   background: rgba(15, 23, 42, 0.05);
@@ -476,7 +475,7 @@
 }
 
 .planner-hint {
-  margin: 6px 0 0;
+  margin-top: 20px;
   font-size: 0.85rem;
   color: rgba(15, 23, 42, 0.6);
 }
@@ -490,7 +489,7 @@
 
 .planner-controls .dashboard-hero-action--small {
   justify-self: flex-start;
-  padding: 10px 18px;
+  padding: 10px 18px;;
 }
 
 .meal-calendar {
@@ -626,6 +625,9 @@
 
 .manual-meal .dashboard-hero-action {
   justify-self: flex-end;
+}
+.dashboard-hero-action{
+  margin-top: 10px;
 }
 
 .planner-analysis {
@@ -1007,6 +1009,28 @@
   gap: 16px;
 }
 
+.recipe-advanced-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 12px 0 20px;
+}
+
+.recipe-advanced-filters label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: rgba(15, 23, 42, 0.75);
+}
+
+.recipe-advanced-filters input {
+  width: 70%;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+  background: rgba(15, 23, 42, 0.02);
+}
+
 .recipe-replace-select {
   margin-bottom: 16px;
 }
@@ -1019,7 +1043,7 @@
 }
 
 .recipe-replace-select select {
-  width: 100%;
+  width: 90%;
   padding: 10px;
   border-radius: 12px;
   border: 1px solid rgba(15, 23, 42, 0.2);

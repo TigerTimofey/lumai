@@ -261,6 +261,7 @@ type RecipeDetail = {
   macrosPerServing: { calories: number; protein: number; carbs: number; fats: number; fiber?: number };
   ratingAverage?: number;
   ratingCount?: number;
+  prepTimeMin?: number;
 };
 
 type RecipeReview = {
@@ -309,6 +310,8 @@ type RecipeSearchMatch = {
     };
     ingredients?: RecipeIngredientPreview[];
     servings: number;
+    prepTimeMin?: number;
+    prep_time_min?: number;
   };
   similarity?: number;
   score?: number;
@@ -332,6 +335,7 @@ const mapJsonRecipeToDetail = (recipeId: string): RecipeDetail | null => {
     preparation: [],
     instructions: '',
     servings: match.servings ?? 1,
+    // prepTimeMin: match.prep_time_min ?? 0,
     macrosPerServing: {
       calories: 0,
       protein: 0,
@@ -377,11 +381,18 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   const [recipeSearchQuery, setRecipeSearchQuery] = useState('');
   const [recipeSearchCuisine, setRecipeSearchCuisine] = useState('');
   const [recipeSearchDiet, setRecipeSearchDiet] = useState('');
+  const [recipeSearchMinCalories, setRecipeSearchMinCalories] = useState('');
+  const [recipeSearchMaxCalories, setRecipeSearchMaxCalories] = useState('');
+  const [recipeSearchMinProtein, setRecipeSearchMinProtein] = useState('');
+  const [recipeSearchMaxProtein, setRecipeSearchMaxProtein] = useState('');
+  const [recipeSearchMinCarbs, setRecipeSearchMinCarbs] = useState('');
+  const [recipeSearchMaxCarbs, setRecipeSearchMaxCarbs] = useState('');
+  const [recipeSearchMinFats, setRecipeSearchMinFats] = useState('');
+  const [recipeSearchMaxFats, setRecipeSearchMaxFats] = useState('');
   const [recipeSearchResults, setRecipeSearchResults] = useState<RecipeSearchMatch[]>([]);
   const [recipeSearchLoading, setRecipeSearchLoading] = useState(false);
   const [recipeSearchError, setRecipeSearchError] = useState<string | null>(null);
   const [recipeReplaceLoading, setRecipeReplaceLoading] = useState<string | null>(null);
-  const [recipeReplaceTarget, setRecipeReplaceTarget] = useState<string>('');
 
   const selectedPlan = mealPlans.find((plan) => plan.id === selectedPlanId) ?? null;
 
@@ -401,6 +412,10 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   }, []);
 
   const latestSnapshot = snapshot;
+
+  const setRecipeReplaceTarget = useCallback((value: string) => {
+    setSwapSource(value);
+  }, []);
 
   const totalMealsScheduled = useMemo(
     () =>
@@ -537,8 +552,8 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   }, [selectedPlanId, selectedPlan]);
 
   useEffect(() => {
-    setRecipeReplaceTarget(swapSource);
-  }, [swapSource]);
+    setSwapSource('');
+  }, [selectedPlanId]);
 
   const handleGoToNutrition = () => {
     window.history.pushState({}, '', '/nutrition');
@@ -821,7 +836,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
         body: JSON.stringify({ targetDate: targetDay, targetMealId: targetMeal })
       });
       await fetchMealPlans();
-      setRecipeReplaceTarget('');
+      setSwapSource('');
       setSwapTarget('');
     } finally {
       setPlannerLoading(false);
@@ -1041,7 +1056,19 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
 
   const handleRecipeSearch = async (event?: React.FormEvent) => {
     event?.preventDefault();
-    if (!recipeSearchQuery && !recipeSearchCuisine && !recipeSearchDiet) {
+    if (
+      !recipeSearchQuery &&
+      !recipeSearchCuisine &&
+      !recipeSearchDiet &&
+      !recipeSearchMinCalories &&
+      !recipeSearchMaxCalories &&
+      !recipeSearchMinProtein &&
+      !recipeSearchMaxProtein &&
+      !recipeSearchMinCarbs &&
+      !recipeSearchMaxCarbs &&
+      !recipeSearchMinFats &&
+      !recipeSearchMaxFats
+    ) {
       setRecipeSearchResults([]);
       return;
     }
@@ -1049,13 +1076,22 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     if (recipeSearchQuery) params.set('q', recipeSearchQuery);
     if (recipeSearchCuisine) params.set('cuisine', recipeSearchCuisine);
     if (recipeSearchDiet) params.set('diet', recipeSearchDiet);
+    if (recipeSearchMinCalories) params.set('minCalories', recipeSearchMinCalories);
+    if (recipeSearchMaxCalories) params.set('maxCalories', recipeSearchMaxCalories);
+    if (recipeSearchMinProtein) params.set('minProtein', recipeSearchMinProtein);
+    if (recipeSearchMaxProtein) params.set('maxProtein', recipeSearchMaxProtein);
+    if (recipeSearchMinCarbs) params.set('minCarbs', recipeSearchMinCarbs);
+    if (recipeSearchMaxCarbs) params.set('maxCarbs', recipeSearchMaxCarbs);
+    if (recipeSearchMinFats) params.set('minFats', recipeSearchMinFats);
+    if (recipeSearchMaxFats) params.set('maxFats', recipeSearchMaxFats);
     setRecipeSearchLoading(true);
     setRecipeSearchError(null);
     try {
       const response = await apiFetch<{ results: RecipeSearchMatch[] }>(
         `/nutrition/recipes${params.toString() ? `?${params.toString()}` : ''}`
       );
-      setRecipeSearchResults(response.results ?? []);
+      const filtered = response.results ?? [];
+      setRecipeSearchResults(filtered);
     } catch (error) {
       console.error(error);
       setRecipeSearchError('Не удалось загрузить рецепты. Попробуйте еще раз.');
@@ -1084,7 +1120,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
       await fetchMealPlans();
       await refreshSnapshots();
       await refreshMicronutrientSummary();
-      setRecipeReplaceTarget('');
+      setSwapSource('');
     } catch (error) {
       console.error(error);
       setRecipeSearchError('Не удалось заменить блюдо. Попробуйте снова.');
@@ -1566,10 +1602,11 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
             </header>
             <form className="recipe-search-form" onSubmit={handleRecipeSearch}>
               <div>
-                <label htmlFor="recipeQuery">Name or ingredients</label>
+                <label htmlFor="recipeQuery">Name or ingredients *</label>
                 <input
                   id="recipeQuery"
                   value={recipeSearchQuery}
+                  required
                   onChange={(e) => setRecipeSearchQuery(e.target.value)}
                   placeholder="e.g., lentil soup, salmon, avocado"
                 />
@@ -1592,17 +1629,99 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                   placeholder="vegetarian, gluten_free..."
                 />
               </div>
-              <button type="submit" className="dashboard-hero-action dashboard-hero-action--small" disabled={recipeSearchLoading}>
+                          <button type="submit" className="dashboard-hero-action dashboard-hero-action--small" disabled={recipeSearchLoading}>
                 {recipeSearchLoading ? 'Searching…' : 'Search recipes'}
               </button>
             </form>
-            <div className="recipe-replace-select">
-              <label htmlFor="recipeReplaceTarget">Meal to replace</label>
+            <div className="recipe-advanced-filters">
+              <div>
+                <label htmlFor="recipeMinCalories">Min calories</label>
+                <input
+                  id="recipeMinCalories"
+                  type="number"
+                  min={0}
+                  value={recipeSearchMinCalories}
+                  onChange={(e) => setRecipeSearchMinCalories(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="recipeMaxCalories">Max calories</label>
+                <input
+                  id="recipeMaxCalories"
+                  type="number"
+                  min={0}
+                  value={recipeSearchMaxCalories}
+                  onChange={(e) => setRecipeSearchMaxCalories(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="recipeMinProtein">Min protein (g)</label>
+                <input
+                  id="recipeMinProtein"
+                  type="number"
+                  min={0}
+                  value={recipeSearchMinProtein}
+                  onChange={(e) => setRecipeSearchMinProtein(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="recipeMaxProtein">Max protein (g)</label>
+                <input
+                  id="recipeMaxProtein"
+                  type="number"
+                  min={0}
+                  value={recipeSearchMaxProtein}
+                  onChange={(e) => setRecipeSearchMaxProtein(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="recipeMinCarbs">Min carbs (g)</label>
+                <input
+                  id="recipeMinCarbs"
+                  type="number"
+                  min={0}
+                  value={recipeSearchMinCarbs}
+                  onChange={(e) => setRecipeSearchMinCarbs(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="recipeMaxCarbs">Max carbs (g)</label>
+                <input
+                  id="recipeMaxCarbs"
+                  type="number"
+                  min={0}
+                  value={recipeSearchMaxCarbs}
+                  onChange={(e) => setRecipeSearchMaxCarbs(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="recipeMinFats">Min fats (g)</label>
+                <input
+                  id="recipeMinFats"
+                  type="number"
+                  min={0}
+                  value={recipeSearchMinFats}
+                  onChange={(e) => setRecipeSearchMinFats(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="recipeMaxFats">Max fats (g)</label>
+                <input
+                  id="recipeMaxFats"
+                  type="number"
+                  min={0}
+                  value={recipeSearchMaxFats}
+                  onChange={(e) => setRecipeSearchMaxFats(e.target.value)}
+                />
+              </div>
+            </div>
+              <div className="recipe-replace-select">
+                <label htmlFor="recipeReplaceTarget">Meal to replace</label>
               <select
-                id="recipeReplaceTarget"
-                value={recipeReplaceTarget}
-                onChange={(e) => setSwapSource(e.target.value)}
-              >
+                  id="recipeReplaceTarget"
+                  value={swapSource}
+                  onChange={(e) => setRecipeReplaceTarget(e.target.value)}
+                >
                 <option value="">Select meal from current plan</option>
                 {flattenedMeals.map((meal) => (
                   <option key={meal.id} value={formatSwapValue(meal)}>
@@ -1610,8 +1729,9 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                   </option>
                 ))}
               </select>
+              
               <p className="planner-hint">
-                {recipeReplaceTarget
+                {swapSource
                   ? `Will replace: ${selectedReplaceLabel ?? 'chosen meal'}.`
                   : 'Pick a meal to swap, then choose a recipe below.'}
               </p>
