@@ -733,6 +733,25 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     setSelectedListId((prev) => prev ?? response.lists?.[0]?.id ?? null);
   }, []);
 
+  const refreshSnapshots = useCallback(async () => {
+    try {
+      const snapshotResponse = await apiFetch<{ snapshots: NutritionSnapshot[] }>('/nutrition/snapshots?limit=7');
+      setSnapshot(snapshotResponse.snapshots?.[0] ?? null);
+      setSnapshots(snapshotResponse.snapshots ?? []);
+    } catch (error) {
+      console.warn('Failed to refresh snapshots', error);
+    }
+  }, []);
+
+  const refreshMicronutrientSummary = useCallback(async () => {
+    try {
+      const summary = await apiFetch<MicronutrientSummary>('/nutrition/micronutrients/summary');
+      setMicronutrientSummary(summary);
+    } catch (error) {
+      console.warn('Failed to refresh micronutrient summary', error);
+    }
+  }, []);
+
   const handleSavePreferences = async (payload: PreferencesUpdatePayload) => {
     const updated = await apiFetch<NutritionPreferences>('/nutrition/preferences', {
       method: 'PUT',
@@ -911,6 +930,8 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
         { method: 'POST' }
       );
       mergeSnapshotUpdate(updatedSnapshot, date);
+      await refreshSnapshots();
+      refreshMicronutrientSummary();
     } finally {
       setPendingMealLog((current) => (current?.key === key ? null : current));
     }
@@ -926,6 +947,8 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
         { method: 'DELETE' }
       );
       mergeSnapshotUpdate(updatedSnapshot, date);
+      await refreshSnapshots();
+      refreshMicronutrientSummary();
     } finally {
       setPendingMealLog((current) => (current?.key === key ? null : current));
     }
