@@ -10,9 +10,10 @@ import {
   Legend,
   CategoryScale,
   LinearScale,
-  BarElement
+  BarElement,
+  ArcElement
 } from 'chart.js';
-import { Radar, Line, Bar } from 'react-chartjs-2';
+import { Radar, Line, Bar, Doughnut } from 'react-chartjs-2';
 import SideNav from '../../navigation/SideNav';
 import UserSettingBar from '../dashboard/user-settings/userSettingBar';
 import './CaloriesPage.css';
@@ -28,7 +29,8 @@ ChartJS.register(
   Legend,
   CategoryScale,
   LinearScale,
-  BarElement
+  BarElement,
+  ArcElement
 );
 
 type RecipeFromJson = {
@@ -155,6 +157,22 @@ type MealPlan = {
   timezone: string;
   strategySummary: string;
   analysis?: MealPlanAnalysis;
+  nutritionalBalanceScore: number;
+  diversityIndex: number;
+  micronutrientCoverage: {
+    percentage: number;
+    deficiencies: string[];
+    excess: string[];
+  };
+  weeklyTrends: {
+    proteinConsistency: string;
+    fiberTrend: string;
+    sugarTrend: string;
+  };
+  sustainabilityMetrics: {
+    plantToAnimalRatio: number;
+    seasonalIngredientPercentage: number;
+  };
   days: {
     date: string;
     meals: MealPlanMeal[];
@@ -202,6 +220,16 @@ type RecipeDetail = {
   instructions: string;
   servings: number;
   macrosPerServing: { calories: number; protein: number; carbs: number; fats: number; fiber?: number };
+  ratingAverage?: number;
+  ratingCount?: number;
+};
+
+type RecipeReview = {
+  id: string;
+  userId?: string;
+  rating: number;
+  comment?: string;
+  createdAt?: { seconds: number; nanoseconds: number };
 };
 
 type ManualMealForm = {
@@ -236,11 +264,14 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>([]);
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [shoppingLoading, setShoppingLoading] = useState(false);
-  const [recipeModal, setRecipeModal] = useState<{ open: boolean; recipe: RecipeDetail | null; servings: number }>({
+  const [recipeModal, setRecipeModal] = useState<{ open: boolean; recipe: RecipeDetail | null; servings: number; reviews: RecipeReview[] }>({
     open: false,
     recipe: null,
-    servings: 1
+    servings: 1,
+    reviews: []
   });
+  const [reviewForm, setReviewForm] = useState<{ rating: number; comment: string }>({ rating: 5, comment: '' });
+  const [submittingReview, setSubmittingReview] = useState(false);
   const [swapSource, setSwapSource] = useState<string>('');
   const [swapTarget, setSwapTarget] = useState<string>('');
   const [manualMeals, setManualMeals] = useState<Record<string, ManualMealForm>>({});
@@ -481,6 +512,57 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     ];
   }, [preferences, latestSnapshot]);
 
+  const derivedPlanMetrics = useMemo(() => derivePlannerMetrics(selectedPlan, preferences), [selectedPlan, preferences]);
+
+  const plannerMetricCards = useMemo(() => {
+    if (!selectedPlan || !derivedPlanMetrics) return [];
+    const balance = derivedPlanMetrics.nutritionalBalanceScore;
+    const diversity = derivedPlanMetrics.diversityIndex;
+    const coverage = derivedPlanMetrics.micronutrientCoverage.percentage;
+    const plantRatio = derivedPlanMetrics.sustainabilityMetrics.plantToAnimalRatio;
+    const seasonal = derivedPlanMetrics.sustainabilityMetrics.seasonalIngredientPercentage;
+    return [
+      {
+        title: 'Balance score',
+        value: `${balance}/100`,
+        detail: 'Macro + calorie alignment'
+      },
+      {
+        title: 'Meal diversity',
+        value: `${diversity}%`,
+        detail: 'Unique meals in this plan'
+      },
+      {
+        title: 'Micronutrient coverage',
+        value: `${coverage}%`,
+        detail: 'Average coverage vs. targets'
+      },
+      {
+        title: 'Plant ratio',
+        value: `${plantRatio}:1`,
+        detail: 'Plant-to-animal servings'
+      },
+      {
+        title: 'Seasonal picks',
+        value: `${seasonal}%`,
+        detail: 'Meals featuring seasonal produce'
+      }
+    ];
+  }, [selectedPlan, derivedPlanMetrics]);
+
+  const macroPieChart = useMemo(() => {
+    if (!latestSnapshot) return null;
+    const { protein, carbs, fats } = latestSnapshot.totals;
+    const total = protein + carbs + fats;
+    if (total === 0) {
+      return null;
+    }
+    return {
+      labels: ['Protein', 'Carbs', 'Fats'],
+      data: [protein, carbs, fats]
+    };
+  }, [latestSnapshot]);
+
   const aiAdvice = useMemo(() => {
     const base =
       analysis?.suggestions?.length
@@ -548,6 +630,13 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     const response = await apiFetch<{ lists: ShoppingList[] }>('/nutrition/shopping-lists?limit=3');
     setShoppingLists(response.lists ?? []);
     setSelectedListId((prev) => prev ?? response.lists?.[0]?.id ?? null);
+  }, []);
+
+  const fetchRecipeReviews = useCallback(async (recipeId: string) => {
+    const response = await apiFetch<{ reviews: RecipeReview[] }>(
+      `/nutrition/recipes/${recipeId}/reviews?status=approved`
+    );
+    return response.reviews ?? [];
   }, []);
 
   const handleSavePreferences = async (payload: PreferencesUpdatePayload) => {
@@ -683,8 +772,12 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
 
   const handleLoadRecipe = async (recipeId: string | undefined) => {
     if (!recipeId) return;
-    const recipe = await apiFetch<RecipeDetail>(`/nutrition/recipes/${recipeId}`);
-    setRecipeModal({ open: true, recipe, servings: recipe.servings ?? 1 });
+    const [recipe, reviews] = await Promise.all([
+      apiFetch<RecipeDetail>(`/nutrition/recipes/${recipeId}`),
+      fetchRecipeReviews(recipeId)
+    ]);
+    setRecipeModal({ open: true, recipe, servings: recipe.servings ?? 1, reviews });
+    setReviewForm({ rating: 5, comment: '' });
   };
 
   const mergeSnapshotUpdate = useCallback((updatedSnapshot: NutritionSnapshot | null, targetDate: string) => {
@@ -729,6 +822,44 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
       mergeSnapshotUpdate(updatedSnapshot, date);
     } finally {
       setPendingMealLog((current) => (current?.key === key ? null : current));
+    }
+  };
+
+  const closeRecipeModal = () => {
+    setRecipeModal({ open: false, recipe: null, servings: 1, reviews: [] });
+    setReviewForm({ rating: 5, comment: '' });
+  };
+
+  const handleReviewFormChange = (field: keyof typeof reviewForm, value: number | string) => {
+    setReviewForm((prev) => ({
+      ...prev,
+      [field]: field === 'rating' ? Number(value) : String(value)
+    }));
+  };
+
+  const handleSubmitReview = async () => {
+    if (!recipeModal.recipe) return;
+    setSubmittingReview(true);
+    try {
+      await apiFetch(`/nutrition/recipes/${recipeModal.recipe.id}/reviews`, {
+        method: 'POST',
+        body: JSON.stringify({
+          rating: reviewForm.rating,
+          comment: reviewForm.comment || undefined
+        })
+      });
+      const updatedReviews = await fetchRecipeReviews(recipeModal.recipe.id);
+      setRecipeModal((prev) =>
+        prev.recipe
+          ? {
+              ...prev,
+              reviews: updatedReviews
+            }
+          : prev
+      );
+      setReviewForm({ rating: 5, comment: '' });
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -918,9 +1049,74 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                       </article>
                     ))}
                   </div>
+  
                 </div>
 
-                {micronutrientSummary?.coverage && (
+                <div className="calories-ai-advice">
+                  <article className="ai-advice-card">
+                    <header>
+                      <h3>AI suggestions</h3>
+                      <p>Personalized nudges from your current plan</p>
+                    </header>
+                    <ul>
+                      {aiAdvice.map((tip, index) => (
+                        <li key={`${tip}-${index}`}>{tip}</li>
+                      ))}
+                    </ul>
+                  </article>
+                  <article className="ai-advice-card secondary">
+                    <header>
+                      <h3>Watch-outs</h3>
+                      <p>Potential risks detected</p>
+                    </header>
+                    {riskAdvice.length ? (
+                      <ul>
+                        {riskAdvice.map((risk, index) => (
+                          <li key={`${risk}-${index}`}>{risk}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="calories-empty">No risks detected this week.</p>
+                    )}
+                  </article>
+                </div>
+              </>
+            )}
+          </section>
+
+          <section className="calories-preferences">
+            <PreferencesForm preferences={preferences} onSave={handleSavePreferences} />
+            {preferences && needsPreferencePrompt(preferences) && (
+              <div className="preferences-alert" role="status">
+                <strong>Heads up:</strong> fill out dietary preferences, allergies, disliked ingredients, and meals-per-day to help AI craft better plans.
+              </div>
+            )}
+                         {macroPieChart && (
+                    <div className="macro-pie-card">
+                      <header>
+                        <h3>Macro breakdown</h3>
+                        <p>Distribution for your latest log</p>
+                      </header>
+                      <Doughnut
+                        data={{
+                          labels: macroPieChart.labels,
+                          datasets: [
+                            {
+                              data: macroPieChart.data,
+                              backgroundColor: ['#0ea5e9', '#fbbf24', '#f97316'],
+                              hoverOffset: 8
+                            }
+                          ]
+                        }}
+                        options={{
+                          plugins: {
+                            legend: { position: 'bottom' }
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+                   {micronutrientSummary?.coverage && (
                   <article className="micronutrient-summary-card">
                     <header>
                       <div>
@@ -971,45 +1167,6 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                   </article>
                 )}
 
-                <div className="calories-ai-advice">
-                  <article className="ai-advice-card">
-                    <header>
-                      <h3>AI suggestions</h3>
-                      <p>Personalized nudges from your current plan</p>
-                    </header>
-                    <ul>
-                      {aiAdvice.map((tip, index) => (
-                        <li key={`${tip}-${index}`}>{tip}</li>
-                      ))}
-                    </ul>
-                  </article>
-                  <article className="ai-advice-card secondary">
-                    <header>
-                      <h3>Watch-outs</h3>
-                      <p>Potential risks detected</p>
-                    </header>
-                    {riskAdvice.length ? (
-                      <ul>
-                        {riskAdvice.map((risk, index) => (
-                          <li key={`${risk}-${index}`}>{risk}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="calories-empty">No risks detected this week.</p>
-                    )}
-                  </article>
-                </div>
-              </>
-            )}
-          </section>
-
-          <section className="calories-preferences">
-            <PreferencesForm preferences={preferences} onSave={handleSavePreferences} />
-            {preferences && needsPreferencePrompt(preferences) && (
-              <div className="preferences-alert" role="status">
-                <strong>Heads up:</strong> fill out dietary preferences, allergies, disliked ingredients, and meals-per-day to help AI craft better plans.
-              </div>
-            )}
           </section>
 
           <section className="calories-planner">
@@ -1086,53 +1243,39 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                 </article>
               </div>
             )}
-                 <section className="calories-history">
-            <header className="section-header">
-              <div>
-                <p className="calories-section-label">Historical insights</p>
-                <h2>Track deficit/surplus over time</h2>
-              </div>
-            </header>
-            {historyChart ? (
-              <div className="history-grid">
-                <div className="history-card">
-                  <h3>Calorie trend</h3>
-                  <Line data={historyChart.planLine} />
-                </div>
-                <div className="history-card">
-                  <h3>Macro totals</h3>
-                  <Bar
-                    data={{
-                        labels: ['Protein', 'Carbs', 'Fats'],
-                        datasets: [
-                          {
-                            label: 'Actual',
-                            data: [
-                            latestSnapshot?.totals.protein ?? 0,
-                            latestSnapshot?.totals.carbs ?? 0,
-                            latestSnapshot?.totals.fats ?? 0
-                          ],
-                          backgroundColor: 'rgba(59, 130, 246, 0.6)'
-                        },
-                        {
-                          label: 'Target',
-                          data: [
-                            preferences?.macronutrientTargets.protein ?? 0,
-                            preferences?.macronutrientTargets.carbs ?? 0,
-                            preferences?.macronutrientTargets.fats ?? 0
-                          ],
-                          backgroundColor: 'rgba(203, 213, 225, 0.7)'
-                        }
-                      ]
-                    }}
-                    options={{ responsive: true, plugins: { legend: { position: 'bottom' } } }}
-                  />
+            {selectedPlan && derivedPlanMetrics && (
+              <div className="planner-metrics">
+                {plannerMetricCards.map((card) => (
+                  <article key={card.title} className="highlight-card">
+                    <p className="highlight-title">{card.title}</p>
+                    <p className="highlight-value">{card.value}</p>
+                    <p className="highlight-detail">{card.detail}</p>
+                  </article>
+                ))}
+                <div className="planner-metrics-notes">
+                  {derivedPlanMetrics.weeklyTrends && (
+                    <p>
+                      Protein consistency is <strong>{derivedPlanMetrics.weeklyTrends.proteinConsistency}</strong>,
+                      fiber trend is <strong>{derivedPlanMetrics.weeklyTrends.fiberTrend}</strong>, and sugar trend is{' '}
+                      <strong>{derivedPlanMetrics.weeklyTrends.sugarTrend}</strong>.
+                    </p>
+                  )}
+                  {derivedPlanMetrics.micronutrientCoverage.deficiencies.length ? (
+                    <p>
+                      Micronutrient gaps:{' '}
+                      {derivedPlanMetrics.micronutrientCoverage.deficiencies
+                        .map((item) => formatMicronutrientLabel(item))
+                        .join(', ')}
+                    </p>
+                  ) : (
+                    <p>
+                      Micronutrient coverage averages{' '}
+                      <strong>{derivedPlanMetrics.micronutrientCoverage.percentage}%</strong> of your targets.
+                    </p>
+                  )}
                 </div>
               </div>
-            ) : (
-              <p className="calories-empty">No historical snapshots yet.</p>
             )}
-          </section>
           </section>
 
           <section className="calories-shopping">
@@ -1153,9 +1296,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
               onQuantityChange={handleUpdateListItem}
               onRemoveItem={handleRemoveListItem}
             />
-          </section>
-
-          {/* <section className="calories-history">
+                         <section className="calories-history">
             <header className="section-header">
               <div>
                 <p className="calories-section-label">Historical insights</p>
@@ -1201,15 +1342,23 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
             ) : (
               <p className="calories-empty">No historical snapshots yet.</p>
             )}
-          </section> */}
+          </section>
+          </section>
+
+      
         </main>
       </div>
       {recipeModal.open && recipeModal.recipe && (
         <RecipeModal
           recipe={recipeModal.recipe}
           servings={recipeModal.servings}
-          onClose={() => setRecipeModal({ open: false, recipe: null, servings: 1 })}
+          reviews={recipeModal.reviews}
+          reviewForm={reviewForm}
+          submittingReview={submittingReview}
+          onClose={closeRecipeModal}
           onServingsChange={(servings) => setRecipeModal((prev) => ({ ...prev, servings }))}
+          onReviewChange={handleReviewFormChange}
+          onSubmitReview={handleSubmitReview}
         />
       )}
     </div>
@@ -1697,11 +1846,26 @@ const ShoppingListPanel: React.FC<ShoppingListPanelProps> = ({
 interface RecipeModalProps {
   recipe: RecipeDetail;
   servings: number;
+  reviews: RecipeReview[];
+  reviewForm: { rating: number; comment: string };
+  submittingReview: boolean;
   onServingsChange: (value: number) => void;
   onClose: () => void;
+  onReviewChange: (field: keyof RecipeModalProps['reviewForm'], value: number | string) => void;
+  onSubmitReview: () => void;
 }
 
-const RecipeModal: React.FC<RecipeModalProps> = ({ recipe, servings, onServingsChange, onClose }) => {
+const RecipeModal: React.FC<RecipeModalProps> = ({
+  recipe,
+  servings,
+  reviews,
+  reviewForm,
+  submittingReview,
+  onServingsChange,
+  onClose,
+  onReviewChange,
+  onSubmitReview
+}) => {
   const scale = servings / (recipe.servings || 1);
   const scaledIngredients = recipe.ingredients.map((ingredient) => ({
     ...ingredient,
@@ -1767,6 +1931,63 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ recipe, servings, onServingsC
                 : recipe.instructions.split('. ').map((sentence, index) => <li key={index}>{sentence}</li>)}
             </ol>
           </section>
+          <section className="recipe-reviews">
+            <h4>Community reviews</h4>
+            {reviews.length ? (
+              <ul>
+                {reviews.slice(0, 3).map((review) => {
+                  const timestamp = review.createdAt
+                    ? new Date(review.createdAt.seconds * 1000)
+                    : null;
+                  return (
+                    <li key={review.id}>
+                      <strong>{'★'.repeat(review.rating)}</strong>
+                      {review.comment && <span> — {review.comment}</span>}
+                      {timestamp && (
+                        <span className="review-date">
+                          {' '}
+                          ({timestamp.toLocaleDateString()})
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p>No reviews yet. Be the first to share feedback!</p>
+            )}
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                onSubmitReview();
+              }}
+            >
+              <label>
+                Rating
+                <select
+                  value={reviewForm.rating}
+                  onChange={(e) => onReviewChange('rating', Number(e.target.value))}
+                >
+                  {[5, 4, 3, 2, 1].map((value) => (
+                    <option key={value} value={value}>
+                      {value} ★
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Comment (optional)
+                <textarea
+                  value={reviewForm.comment}
+                  onChange={(e) => onReviewChange('comment', e.target.value)}
+                  placeholder="Share preparation tips or substitutions"
+                />
+              </label>
+              <button type="submit" className="dashboard-hero-action dashboard-hero-action--small" disabled={submittingReview}>
+                {submittingReview ? 'Sending...' : 'Share review'}
+              </button>
+            </form>
+          </section>
         </div>
       </div>
     </div>
@@ -1781,6 +2002,150 @@ const formatTime = (iso: string, timeZone: string) =>
 
 const sumDayCalories = (day: MealPlan['days'][number]) =>
   day.meals.reduce((total, meal) => total + (meal.macros.calories ?? 0), 0);
+
+const DEFAULT_MICRONUTRIENT_TARGETS: Record<string, number> = {
+  vitaminD: 20,
+  vitaminB12: 2.4,
+  iron: 18,
+  magnesium: 420
+};
+
+const DEFAULT_MACRO_TARGETS: NutritionPreferences['macronutrientTargets'] = {
+  protein: 110,
+  carbs: 220,
+  fats: 70
+};
+
+type PlannerMetrics = {
+  nutritionalBalanceScore: number;
+  diversityIndex: number;
+  micronutrientCoverage: {
+    percentage: number;
+    deficiencies: string[];
+    excess: string[];
+  };
+  weeklyTrends: {
+    proteinConsistency: string;
+    fiberTrend: string;
+    sugarTrend: string;
+  };
+  sustainabilityMetrics: {
+    plantToAnimalRatio: number;
+    seasonalIngredientPercentage: number;
+  };
+};
+
+const aggregatePlanTotals = (plan: MealPlan) => {
+  return plan.days.reduce(
+    (acc, day) => {
+      day.meals.forEach((meal) => {
+        acc.calories += meal.macros.calories ?? 0;
+        acc.protein += meal.macros.protein ?? 0;
+        acc.carbs += meal.macros.carbs ?? 0;
+        acc.fats += meal.macros.fats ?? 0;
+        acc.fiber += meal.micronutrients?.fiber ?? 0;
+        acc.vitaminD += meal.micronutrients?.vitaminD ?? 0;
+        acc.vitaminB12 += meal.micronutrients?.vitaminB12 ?? 0;
+        acc.iron += meal.micronutrients?.iron ?? 0;
+        acc.magnesium += meal.micronutrients?.magnesium ?? 0;
+      });
+      return acc;
+    },
+    {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fats: 0,
+      fiber: 0,
+      vitaminD: 0,
+      vitaminB12: 0,
+      iron: 0,
+      magnesium: 0
+    }
+  );
+};
+
+const derivePlannerMetrics = (plan: MealPlan | null, prefs: NutritionPreferences | null): PlannerMetrics | null => {
+  if (!plan) return null;
+  const totals = aggregatePlanTotals(plan);
+  const meals = plan.days.flatMap((day) => day.meals);
+  const dayCount = Math.max(plan.days.length, 1);
+
+  const macroTargets = prefs?.macronutrientTargets ?? DEFAULT_MACRO_TARGETS;
+  const calorieTarget = prefs?.calorieTarget ?? Math.max(totals.calories / dayCount || 0, 1800);
+
+  const fallbackBalance = Math.max(
+    0,
+    Math.round(
+      100 -
+        Math.abs(totals.calories / dayCount - calorieTarget) / 5 -
+        (Math.abs(totals.protein / dayCount - macroTargets.protein) +
+          Math.abs(totals.carbs / dayCount - macroTargets.carbs) +
+          Math.abs(totals.fats / dayCount - macroTargets.fats)) /
+          3
+    )
+  );
+
+  const uniqueMeals = new Set(meals.map((meal) => meal.recipeId ?? meal.title));
+  const fallbackDiversity = meals.length ? Math.round(Math.min(1, uniqueMeals.size / meals.length) * 100) : 0;
+
+  const microTargets = prefs?.micronutrientTargets ?? DEFAULT_MICRONUTRIENT_TARGETS;
+  const microEntries = Object.entries(microTargets).map(([key, target]) => {
+    const average = (totals as Record<string, number>)[key] ? (totals as Record<string, number>)[key] / dayCount : 0;
+    const coverage = target ? average / target : 0;
+    return { key, coverage };
+  });
+  const fallbackCoverage = {
+    percentage: microEntries.length
+      ? Math.round(Math.min(1.5, microEntries.reduce((sum, entry) => sum + entry.coverage, 0) / microEntries.length) * 100)
+      : 0,
+    deficiencies: microEntries.filter((entry) => entry.coverage < 0.8).map((entry) => entry.key),
+    excess: microEntries.filter((entry) => entry.coverage > 1.25).map((entry) => entry.key)
+  };
+
+  const proteinRatio = macroTargets.protein
+    ? (totals.protein / dayCount) / macroTargets.protein
+    : 1;
+  const fiberAverage = totals.fiber / dayCount;
+  const sugarAverage = totals.carbs / dayCount;
+
+  const fallbackTrends = {
+    proteinConsistency: proteinRatio >= 0.95 ? 'high' : proteinRatio >= 0.75 ? 'moderate' : 'low',
+    fiberTrend: fiberAverage >= 25 ? 'increasing' : fiberAverage >= 15 ? 'steady' : 'declining',
+    sugarTrend: sugarAverage > macroTargets.carbs ? 'decreasing' : 'stable'
+  };
+
+  const plantKeywords = ['salad', 'bowl', 'tofu', 'lentil', 'bean', 'vegetable', 'veg', 'quinoa', 'plant'];
+  const animalKeywords = ['chicken', 'beef', 'pork', 'turkey', 'fish', 'egg', 'cheese', 'yogurt', 'salmon'];
+  const seasonalKeywords = ['seasonal', 'fresh', 'summer', 'spring', 'harvest'];
+
+  const plantMeals = meals.filter((meal) => plantKeywords.some((keyword) => meal.title?.toLowerCase().includes(keyword))).length;
+  const animalMeals = meals.filter((meal) => animalKeywords.some((keyword) => meal.title?.toLowerCase().includes(keyword))).length;
+  const seasonalMeals = meals.filter((meal) => seasonalKeywords.some((keyword) => meal.title?.toLowerCase().includes(keyword))).length;
+
+  const fallbackSustainability = {
+    plantToAnimalRatio: Number.isFinite(plantMeals / Math.max(animalMeals, 1))
+      ? Number((plantMeals / Math.max(animalMeals, 1)).toFixed(2))
+      : 0,
+    seasonalIngredientPercentage: meals.length ? Math.round((seasonalMeals / meals.length) * 100) : 0
+  };
+
+  return {
+    nutritionalBalanceScore: plan.nutritionalBalanceScore ?? fallbackBalance,
+    diversityIndex: plan.diversityIndex ?? fallbackDiversity,
+    micronutrientCoverage: {
+      percentage: plan.micronutrientCoverage?.percentage ?? fallbackCoverage.percentage,
+      deficiencies: plan.micronutrientCoverage?.deficiencies?.length
+        ? plan.micronutrientCoverage.deficiencies
+        : fallbackCoverage.deficiencies,
+      excess: plan.micronutrientCoverage?.excess?.length
+        ? plan.micronutrientCoverage.excess
+        : fallbackCoverage.excess
+    },
+    weeklyTrends: plan.weeklyTrends ?? fallbackTrends,
+    sustainabilityMetrics: plan.sustainabilityMetrics ?? fallbackSustainability
+  };
+};
 
 const needsPreferencePrompt = (prefs: NutritionPreferences | null) => {
   if (!prefs) return true;

@@ -10,6 +10,10 @@ import { getConsents } from "../repositories/consent.repo.js";
 import { logAiInsight, saveAiInsightVersion, getLatestAiInsight } from "../repositories/ai-insight.repo.js";
 import { forbidden, internalError, notFound, serviceUnavailable } from "../utils/api-error.js";
 import { logger } from "../utils/logger.js";
+import {
+  calculateNutritionByRecipeId,
+  calculateNutritionFromIngredients
+} from "./nutrition-functions.service.js";
 
 const AI_CONSENT = "ai_insights" satisfies (typeof CONSENT_TYPES)[number];
 
@@ -29,8 +33,9 @@ Timezone: {{timezone}}`,
   recipes: `Given the meal structure and retrieved recipe snippets, assign recipes (or short descriptions) to each meal. Ensure alignment with dietary restrictions and nutritional focus. Respond in JSON with keys meals (array) containing mealId, type, recipeId or description, and macro notes.
 Structure: {{structure}}
 Recipes: {{recipes}}
-Restrictions: {{restrictions}}`,
-  analytics: `Review the generated meal plan and provide insights: key benefits, potential risks, and improvement suggestions. Respond in JSON with keys highlights, risks, suggestions.
+Restrictions: {{restrictions}}
+When nutritional values are required, call the calculate_nutrition function.`,
+  analytics: `Review the generated meal plan and provide insights: key benefits, potential risks, and improvement suggestions. Respond in JSON with keys highlights, risks, suggestions. Use the calculate_nutrition function whenever you need precise macro/micro totals.
 Plan summary: {{planSummary}}`
 };
 
@@ -61,6 +66,67 @@ const FEW_SHOT_EXAMPLES: Record<PromptStep, Array<{ role: "user" | "assistant"; 
   analytics: []
 };
 
+type AiFunctionDefinition = {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+};
+
+const NUTRITION_FUNCTIONS: AiFunctionDefinition[] = [
+  {
+    name: "calculate_nutrition",
+    description:
+      "Calculates nutritional information (calories, macros, micronutrients) for a recipe or ingredient list using standardized grams/ml units.",
+    parameters: {
+      type: "object",
+      properties: {
+        recipeId: {
+          type: "string",
+          description: "The recipe identifier to resolve nutrition data from the recipe database."
+        },
+        servings: {
+          type: "number",
+          description: "How many servings should be evaluated for this recipe. Defaults to 1."
+        },
+        ingredients: {
+          type: "array",
+          description:
+            "Optional list of ingredients if no recipeId is available. Each ingredient must include nutrition per 100g.",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              name: { type: "string" },
+              quantity: { type: "number", description: "In grams or milliliters." },
+              unit: { type: "string", enum: ["g", "ml"] },
+              nutrition: {
+                type: "object",
+                properties: {
+                  calories: { type: "number" },
+                  protein: { type: "number" },
+                  carbs: { type: "number" },
+                  fats: { type: "number" },
+                  fiber: { type: "number" },
+                  vitaminD: { type: "number" },
+                  vitaminB12: { type: "number" },
+                  iron: { type: "number" },
+                  magnesium: { type: "number" }
+                },
+                required: ["calories", "protein", "carbs", "fats"]
+              }
+            },
+            required: ["name", "quantity", "unit", "nutrition"]
+          }
+        }
+      },
+      anyOf: [
+        { required: ["recipeId"] },
+        { required: ["ingredients"] }
+      ]
+    }
+  }
+];
+
 interface PromptOptions {
   step: PromptStep;
   userProfile: Record<string, unknown>;
@@ -80,6 +146,7 @@ interface PromptOptions {
   maxTokens?: number;
   model?: string;
   retryCount?: number;
+  functions?: AiFunctionDefinition[];
 }
 
 const formatPrompt = (template: string, params: Record<string, unknown>) =>
@@ -93,6 +160,80 @@ const defaultStepParams: Record<PromptStep, { temperature: number; topP: number;
   structure: { temperature: 0.3, topP: 0.85, maxTokens: 450 },
   recipes: { temperature: 0.6, topP: 0.95, maxTokens: 600 },
   analytics: { temperature: 0.35, topP: 0.8, maxTokens: 300 }
+};
+
+type ChatMessage = {
+  role: "system" | "user" | "assistant" | "tool";
+  content: string;
+  name?: string;
+  tool_call_id?: string;
+  tool_calls?: Array<{
+    id?: string;
+    function: {
+      name: string;
+      arguments: string;
+    };
+  }>;
+};
+
+const parseJsonArguments = (payload: string | null | undefined) => {
+  if (!payload) return {};
+  try {
+    return JSON.parse(payload) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+};
+
+const normalizeAiIngredients = (value: unknown) => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry, index) => {
+      const obj = entry as Record<string, unknown>;
+      const nutrition = (obj.nutrition ?? {}) as Record<string, unknown>;
+      const toNumber = (input: unknown, fallback = 0) => {
+        const parsed = Number(input);
+        return Number.isFinite(parsed) ? parsed : fallback;
+      };
+      const quantity = toNumber(obj.quantity, 0);
+      if (!quantity) {
+        return null;
+      }
+      return {
+        id: typeof obj.id === "string" ? obj.id : `ai-${index}`,
+        name: typeof obj.name === "string" ? obj.name : `ingredient-${index + 1}`,
+        quantity,
+        unit: obj.unit === "ml" ? "ml" : "g",
+        nutrition: {
+          calories: toNumber(nutrition.calories),
+          protein: toNumber(nutrition.protein),
+          carbs: toNumber(nutrition.carbs),
+          fats: toNumber(nutrition.fats),
+          fiber: toNumber(nutrition.fiber),
+          vitaminD: toNumber(nutrition.vitaminD),
+          vitaminB12: toNumber(nutrition.vitaminB12),
+          iron: toNumber(nutrition.iron),
+          magnesium: toNumber(nutrition.magnesium)
+        }
+      };
+    })
+    .filter((item): item is Parameters<typeof calculateNutritionFromIngredients>[0][number] => Boolean(item));
+};
+
+const executeAiFunctionCall = async (name: string, args: Record<string, unknown>) => {
+  if (name !== "calculate_nutrition") {
+    throw new Error(`Unsupported AI function: ${name}`);
+  }
+  const servingsRaw = Number(args.servings);
+  const servings = Number.isFinite(servingsRaw) && servingsRaw > 0 ? servingsRaw : 1;
+  if (typeof args.recipeId === "string" && args.recipeId.trim().length) {
+    return calculateNutritionByRecipeId(args.recipeId.trim(), servings);
+  }
+  const ingredients = normalizeAiIngredients(args.ingredients);
+  if (!ingredients.length) {
+    throw new Error("calculate_nutrition requires either a recipeId or a list of ingredients.");
+  }
+  return calculateNutritionFromIngredients(ingredients, servings);
 };
 
 export const runPromptStep = async (options: PromptOptions) => {
@@ -118,7 +259,7 @@ export const runPromptStep = async (options: PromptOptions) => {
       planSummary: options.planSummary ?? ""
     });
 
-    const messages = [
+    const messages: ChatMessage[] = [
       ...(FEW_SHOT_EXAMPLES[options.step] ?? []),
       { role: "user", content: prompt }
     ];
@@ -129,7 +270,8 @@ export const runPromptStep = async (options: PromptOptions) => {
       topP: params.topP,
       maxTokens: params.maxTokens,
       messages,
-      retryCount: options.retryCount ?? 2
+      retryCount: options.retryCount ?? 2,
+      functions: options.functions ?? NUTRITION_FUNCTIONS
     });
 };
 
@@ -138,36 +280,89 @@ interface InvokeAiModelOptions {
   temperature: number;
   topP: number;
   maxTokens: number;
-  messages: Array<{ role: string; content: string }>;
+  messages: ChatMessage[];
   retryCount?: number;
+  functions?: AiFunctionDefinition[];
 }
 
-const invokeAiModel = async ({ model, temperature, topP, maxTokens, messages, retryCount = 1 }: InvokeAiModelOptions) => {
+const extractToolCalls = (message: Record<string, unknown> | undefined) => {
+  if (!message) return [];
+  if (Array.isArray(message.tool_calls)) {
+    return message.tool_calls as ChatMessage["tool_calls"];
+  }
+  if (message.function_call) {
+    const fn = message.function_call as { name: string; arguments: string };
+    return [
+      {
+        id: (message as { id?: string }).id,
+        function: fn
+      }
+    ];
+  }
+  return [];
+};
+
+const invokeAiModel = async ({
+  model,
+  temperature,
+  topP,
+  maxTokens,
+  messages,
+  retryCount = 1,
+  functions
+}: InvokeAiModelOptions) => {
   if (!env.HF_API_URL || !env.HF_API_KEY) {
     throw serviceUnavailable("AI provider not configured");
   }
 
+  let conversation = [...messages];
   for (let attempt = 0; attempt <= retryCount; attempt++) {
     try {
-      const { data } = await axios.post(
-        env.HF_API_URL,
-        {
-          model,
-          temperature,
-          top_p: topP,
-          max_tokens: maxTokens,
-          messages
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${env.HF_API_KEY}`,
-            "Content-Type": "application/json"
+      for (let depth = 0; depth < 5; depth++) {
+        const { data } = await axios.post(
+          env.HF_API_URL,
+          {
+            model,
+            temperature,
+            top_p: topP,
+            max_tokens: maxTokens,
+            messages: conversation,
+            ...(functions && functions.length ? { functions } : {})
           },
-          timeout: 30_000
+          {
+            headers: {
+              Authorization: `Bearer ${env.HF_API_KEY}`,
+              "Content-Type": "application/json"
+            },
+            timeout: 30_000
+          }
+        );
+        const assistantMessage = data?.choices?.[0]?.message ?? {};
+        const toolCalls = extractToolCalls(assistantMessage);
+        const normalizedAssistant: ChatMessage = {
+          role: (assistantMessage.role as ChatMessage["role"]) ?? "assistant",
+          content: assistantMessage.content ?? "",
+          tool_calls: toolCalls?.length ? toolCalls : undefined
+        };
+        if (!toolCalls?.length) {
+          return { content: normalizedAssistant.content, usage: data?.usage };
         }
-      );
-      const content = data?.choices?.[0]?.message?.content ?? data?.generated_text ?? "";
-      return { content, usage: data?.usage };
+        conversation = [...conversation, normalizedAssistant];
+        for (const call of toolCalls) {
+          const args = parseJsonArguments(call?.function?.arguments);
+          const result = await executeAiFunctionCall(call?.function?.name ?? "", args);
+          conversation = [
+            ...conversation,
+            {
+              role: "tool",
+              name: call?.function?.name ?? "tool",
+              tool_call_id: call?.id,
+              content: JSON.stringify(result)
+            }
+          ];
+        }
+      }
+      throw new Error("AI invocation exceeded maximum tool-call depth");
     } catch (error) {
       if (attempt === retryCount) {
         throw error;

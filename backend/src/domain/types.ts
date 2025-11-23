@@ -351,6 +351,22 @@ export interface MealPlanDocument {
     risks: string[];
     suggestions: string[];
   };
+  nutritionalBalanceScore: number;
+  diversityIndex: number;
+  micronutrientCoverage: {
+    percentage: number;
+    deficiencies: string[];
+    excess: string[];
+  };
+  weeklyTrends: {
+    proteinConsistency: string;
+    fiberTrend: string;
+    sugarTrend: string;
+  };
+  sustainabilityMetrics: {
+    plantToAnimalRatio: number;
+    seasonalIngredientPercentage: number;
+  };
   ragReferences: string[];
   days: MealPlanDay[];
   createdAt: Timestamp;

@@ -64,6 +64,7 @@ const buildMealPlanDocument = async (
   const fallbackRecipeDocs = fallbackRecipes.length ? fallbackRecipes : FALLBACK_RECIPES;
 
   const days = aiPlan?.days ?? buildFallbackDays(options, preferences, fallbackRecipeDocs);
+  const planMetrics = buildMealPlanMetrics(days, preferences);
 
   if (!days.length) {
     throw serviceUnavailable("Failed to build meal plan days");
@@ -80,6 +81,11 @@ const buildMealPlanDocument = async (
     status: "active",
     strategySummary: aiPlan?.strategySummary ?? buildStrategySummary(preferences),
     analysis: aiPlan?.analysis,
+    nutritionalBalanceScore: planMetrics.nutritionalBalanceScore,
+    diversityIndex: planMetrics.diversityIndex,
+    micronutrientCoverage: planMetrics.micronutrientCoverage,
+    weeklyTrends: planMetrics.weeklyTrends,
+    sustainabilityMetrics: planMetrics.sustainabilityMetrics,
     ragReferences:
       aiPlan?.ragReferences ??
       fallbackRecipeDocs.slice(0, 5).map((recipe) => recipe.id),
@@ -286,4 +292,116 @@ const buildStrategySummary = (preferences: NutritionPreferencesDocument) => {
     `Allergens avoided: ${preferences.allergies.join(", ") || "none"}`,
     `Calories target: ${preferences.calorieTarget} kcal`
   ].join(" · ");
+};
+
+const buildMealPlanMetrics = (days: MealPlanDocument["days"], preferences: NutritionPreferencesDocument) => {
+  const meals = days.flatMap((day) => day.meals);
+  const totals = meals.reduce(
+    (acc, meal) => {
+      acc.calories += meal.macros.calories;
+      acc.protein += meal.macros.protein;
+      acc.carbs += meal.macros.carbs;
+      acc.fats += meal.macros.fats;
+      acc.fiber += meal.micronutrients?.fiber ?? 0;
+      acc.vitaminD += meal.micronutrients?.vitaminD ?? 0;
+      acc.vitaminB12 += meal.micronutrients?.vitaminB12 ?? 0;
+      acc.iron += meal.micronutrients?.iron ?? 0;
+      acc.magnesium += meal.micronutrients?.magnesium ?? 0;
+      return acc;
+    },
+    {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fats: 0,
+      fiber: 0,
+      vitaminD: 0,
+      vitaminB12: 0,
+      iron: 0,
+      magnesium: 0
+    }
+  );
+
+  const dayCount = Math.max(days.length, 1);
+  const averageCalories = totals.calories / dayCount;
+  const calorieDelta = Math.abs(averageCalories - preferences.calorieTarget);
+  const macroTargets = preferences.macronutrientTargets;
+  const macroVariance =
+    Math.abs(totals.protein / dayCount - macroTargets.protein) +
+    Math.abs(totals.carbs / dayCount - macroTargets.carbs) +
+    Math.abs(totals.fats / dayCount - macroTargets.fats);
+  const nutritionalBalanceScore = Math.max(0, Math.round(100 - calorieDelta / 5 - macroVariance / 3));
+
+  const uniqueMeals = new Set(meals.map((meal) => meal.recipeId ?? meal.title));
+  const diversityIndex = meals.length
+    ? Math.round(Math.min(1, uniqueMeals.size / meals.length) * 100)
+    : 0;
+
+  const targets = preferences.micronutrientTargets ?? {};
+  const coverageEntries = Object.entries(targets).map(([key, target]) => {
+    const achieved = totals[key as keyof typeof totals] ?? 0;
+    const coverage = target ? achieved / target : 0;
+    return { key, coverage };
+  });
+  const coveragePercentage = coverageEntries.length
+    ? Math.round(
+        Math.min(
+          1.5,
+          coverageEntries.reduce((sum, entry) => sum + entry.coverage, 0) / coverageEntries.length
+        ) * 100
+      )
+    : 0;
+  const deficiencies = coverageEntries
+    .filter((entry) => entry.coverage < 0.8)
+    .map((entry) => entry.key);
+  const excess = coverageEntries
+    .filter((entry) => entry.coverage > 1.25)
+    .map((entry) => entry.key);
+
+  const proteinConsistency =
+    totals.protein / dayCount >= macroTargets.protein * 0.95
+      ? "high"
+      : totals.protein / dayCount >= macroTargets.protein * 0.75
+        ? "moderate"
+        : "low";
+  const fiberTrend = totals.fiber / dayCount >= 25 ? "increasing" : "steady";
+  const sugarTrend = totals.carbs / dayCount >= macroTargets.carbs ? "decreasing" : "stable";
+
+  const plantKeywords = ["salad", "bowl", "tofu", "lentil", "bean", "vegetable", "veg", "quinoa"];
+  const animalKeywords = ["chicken", "beef", "pork", "turkey", "fish", "egg", "cheese", "yogurt"];
+  const seasonalKeywords = ["seasonal", "fresh", "summer", "spring", "harvest"];
+  const plantMeals = meals.filter((meal) =>
+    plantKeywords.some((keyword) => meal.title?.toLowerCase().includes(keyword))
+  ).length;
+  const animalMeals = meals.filter((meal) =>
+    animalKeywords.some((keyword) => meal.title?.toLowerCase().includes(keyword))
+  ).length;
+  const plantToAnimalRatio = Number(
+    ((plantMeals || 0) / Math.max(animalMeals || 1, 1)).toFixed(2)
+  );
+  const seasonalMeals = meals.filter((meal) =>
+    seasonalKeywords.some((keyword) => meal.title?.toLowerCase().includes(keyword))
+  ).length;
+  const seasonalIngredientPercentage = meals.length
+    ? Math.round((seasonalMeals / meals.length) * 100)
+    : 0;
+
+  return {
+    nutritionalBalanceScore,
+    diversityIndex,
+    micronutrientCoverage: {
+      percentage: coveragePercentage,
+      deficiencies,
+      excess
+    },
+    weeklyTrends: {
+      proteinConsistency,
+      fiberTrend,
+      sugarTrend
+    },
+    sustainabilityMetrics: {
+      plantToAnimalRatio: Number.isFinite(plantToAnimalRatio) ? plantToAnimalRatio : plantMeals ? plantMeals : 0,
+      seasonalIngredientPercentage
+    }
+  };
 };

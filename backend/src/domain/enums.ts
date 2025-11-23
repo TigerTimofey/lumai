@@ -30,7 +30,17 @@ export const DIETARY_PREFERENCES = [
   "pescatarian",
   "mediterranean",
   "keto",
-  "paleo"
+  "paleo",
+  "low_carb",
+  "low_fodmap",
+  "whole30",
+  "dash",
+  "plant_based",
+  "raw",
+  "diabetic_friendly",
+  "ayurvedic",
+  "gluten_aware",
+  "flexitarian"
 ] as const;
 
 export const DIETARY_RESTRICTIONS = [
@@ -40,7 +50,12 @@ export const DIETARY_RESTRICTIONS = [
   "nut_free",
   "soy_free",
   "egg_free",
-  "seafood_free"
+  "seafood_free",
+  "shellfish_free",
+  "sesame_free",
+  "corn_free",
+  "sulfite_free",
+  "citrus_free"
 ] as const;
 
 export const FITNESS_GOALS = [
