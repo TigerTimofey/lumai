@@ -21,43 +21,43 @@
         "ingredient_id": 478,
         "name": "Sweet Chili Drizzle 48",
         "category": "spice",
-        "quantity": 2.18,
-        "unit": "cup"
+        "quantity": 523.2,
+        "unit": "ml"
       },
       {
         "ingredient_id": 426,
         "name": "Nutty Crunch 43",
         "category": "grain",
-        "quantity": 1.32,
-        "unit": "tbsp"
+        "quantity": 19.8,
+        "unit": "g"
       },
       {
         "ingredient_id": 64,
         "name": "lentils",
         "category": "fruit",
-        "quantity": 0.92,
-        "unit": "cup"
+        "quantity": 220.8,
+        "unit": "g"
       },
       {
         "ingredient_id": 212,
         "name": "Citrus Zest 22",
         "category": "spice",
-        "quantity": 2.17,
-        "unit": "cup"
+        "quantity": 520.8,
+        "unit": "g"
       },
       {
         "ingredient_id": 431,
         "name": "Umami Paste 44",
         "category": "dairy",
-        "quantity": 1.46,
-        "unit": "l"
+        "quantity": 1460,
+        "unit": "ml"
       },
       {
         "ingredient_id": 399,
         "name": "Aromatic Rub 40",
         "category": "other",
-        "quantity": 1.35,
-        "unit": "tsp"
+        "quantity": 6.75,
+        "unit": "g"
       }
     ]
   },
@@ -76,57 +76,57 @@
         "ingredient_id": 28,
         "name": "bell pepper",
         "category": "grain",
-        "quantity": 0.84,
-        "unit": "tbsp"
+        "quantity": 12.6,
+        "unit": "g"
       },
       {
         "ingredient_id": 404,
         "name": "Seasoned Oil 41",
         "category": "vegetable",
-        "quantity": 0.73,
-        "unit": "tbsp"
+        "quantity": 10.95,
+        "unit": "ml"
       },
       {
         "ingredient_id": 86,
         "name": "mustard",
         "category": "fruit",
-        "quantity": 1.01,
-        "unit": "cup"
+        "quantity": 242.4,
+        "unit": "g"
       },
       {
         "ingredient_id": 439,
         "name": "Aromatic Rub 44",
         "category": "spice",
-        "quantity": 0.88,
-        "unit": "cup"
+        "quantity": 211.2,
+        "unit": "g"
       },
       {
         "ingredient_id": 139,
         "name": "Aromatic Rub 14",
         "category": "other",
-        "quantity": 0.82,
-        "unit": "kg"
+        "quantity": 820,
+        "unit": "g"
       },
       {
         "ingredient_id": 473,
         "name": "Toasted Spice Mix 48",
         "category": "sauce",
         "quantity": 1.31,
-        "unit": "g"
+        "unit": "ml"
       },
       {
         "ingredient_id": 187,
         "name": "Savory Glaze 19",
         "category": "meat",
-        "quantity": 2.5,
-        "unit": "tbsp"
+        "quantity": 37.5,
+        "unit": "ml"
       },
       {
         "ingredient_id": 52,
         "name": "cream",
         "category": "fruit",
         "quantity": 0.75,
-        "unit": "kg"
+        "unit": "ml"
       }
     ]
   },
@@ -146,49 +146,49 @@
         "name": "Sweet Chili Drizzle 12",
         "category": "fish",
         "quantity": 2.42,
-        "unit": "kg"
+        "unit": "ml"
       },
       {
         "ingredient_id": 224,
         "name": "Seasoned Oil 23",
         "category": "sauce",
-        "quantity": 1.55,
-        "unit": "tsp"
+        "quantity": 7.75,
+        "unit": "ml"
       },
       {
         "ingredient_id": 477,
         "name": "Savory Glaze 48",
         "category": "sauce",
-        "quantity": 1.55,
-        "unit": "cup"
+        "quantity": 372,
+        "unit": "ml"
       },
       {
         "ingredient_id": 263,
         "name": "Toasted Spice Mix 27",
         "category": "other",
-        "quantity": 1.14,
-        "unit": "l"
+        "quantity": 1140,
+        "unit": "ml"
       },
       {
         "ingredient_id": 378,
         "name": "Sweet Chili Drizzle 38",
         "category": "fish",
-        "quantity": 0.42,
-        "unit": "l"
+        "quantity": 420,
+        "unit": "ml"
       },
       {
         "ingredient_id": 172,
         "name": "Citrus Zest 18",
         "category": "sauce",
-        "quantity": 0.48,
-        "unit": "tsp"
+        "quantity": 2.4,
+        "unit": "ml"
       },
       {
         "ingredient_id": 168,
         "name": "Sweet Chili Drizzle 17",
         "category": "spice",
         "quantity": 2.16,
-        "unit": "kg"
+        "unit": "ml"
       }
     ]
   },
@@ -208,42 +208,42 @@
         "name": "butter",
         "category": "fish",
         "quantity": 1.68,
-        "unit": "pcs"
+        "unit": "g"
       },
       {
         "ingredient_id": 431,
         "name": "Umami Paste 44",
         "category": "dairy",
-        "quantity": 1.84,
-        "unit": "cup"
+        "quantity": 441.6,
+        "unit": "ml"
       },
       {
         "ingredient_id": 502,
         "name": "Citrus Zest 51",
         "category": "sauce",
-        "quantity": 0.65,
-        "unit": "tsp"
+        "quantity": 3.25,
+        "unit": "ml"
       },
       {
         "ingredient_id": 109,
         "name": "Aromatic Rub 11",
         "category": "spice",
         "quantity": 1.64,
-        "unit": "pcs"
+        "unit": "g"
       },
       {
         "ingredient_id": 444,
         "name": "Seasoned Oil 45",
         "category": "other",
-        "quantity": 1.3,
-        "unit": "tsp"
+        "quantity": 6.5,
+        "unit": "ml"
       },
       {
         "ingredient_id": 371,
         "name": "Umami Paste 38",
         "category": "meat",
-        "quantity": 0.98,
-        "unit": "l"
+        "quantity": 980,
+        "unit": "ml"
       }
     ]
   },
@@ -262,43 +262,43 @@
         "ingredient_id": 30,
         "name": "cumin",
         "category": "vegetable",
-        "quantity": 1.05,
-        "unit": "tsp"
+        "quantity": 5.25,
+        "unit": "g"
       },
       {
         "ingredient_id": 507,
         "name": "Savory Glaze 51",
         "category": "fruit",
-        "quantity": 1.02,
-        "unit": "tsp"
+        "quantity": 5.1,
+        "unit": "ml"
       },
       {
         "ingredient_id": 333,
         "name": "Toasted Spice Mix 34",
         "category": "dairy",
-        "quantity": 1.5,
-        "unit": "l"
+        "quantity": 1500,
+        "unit": "ml"
       },
       {
         "ingredient_id": 187,
         "name": "Savory Glaze 19",
         "category": "meat",
-        "quantity": 0.44,
-        "unit": "cup"
+        "quantity": 105.6,
+        "unit": "ml"
       },
       {
         "ingredient_id": 500,
         "name": "Herbal Blend 51",
         "category": "spice",
-        "quantity": 1.35,
-        "unit": "l"
+        "quantity": 1350,
+        "unit": "ml"
       },
       {
         "ingredient_id": 218,
         "name": "Sweet Chili Drizzle 22",
         "category": "other",
         "quantity": 1.8,
-        "unit": "pcs"
+        "unit": "ml"
       }
     ]
   },
@@ -317,15 +317,15 @@
         "ingredient_id": 378,
         "name": "Sweet Chili Drizzle 38",
         "category": "fish",
-        "quantity": 0.94,
-        "unit": "l"
+        "quantity": 940,
+        "unit": "ml"
       },
       {
         "ingredient_id": 485,
         "name": "Mixed Seeds 49",
         "category": "vegetable",
-        "quantity": 0.52,
-        "unit": "l"
+        "quantity": 520,
+        "unit": "ml"
       },
       {
         "ingredient_id": 353,
@@ -339,35 +339,35 @@
         "name": "Nutty Crunch 44",
         "category": "other",
         "quantity": 0.68,
-        "unit": "pcs"
+        "unit": "g"
       },
       {
         "ingredient_id": 339,
         "name": "Aromatic Rub 34",
         "category": "vegetable",
-        "quantity": 0.87,
-        "unit": "tsp"
+        "quantity": 4.35,
+        "unit": "g"
       },
       {
         "ingredient_id": 361,
         "name": "Umami Paste 37",
         "category": "fruit",
-        "quantity": 2.46,
-        "unit": "l"
+        "quantity": 2460,
+        "unit": "ml"
       },
       {
         "ingredient_id": 465,
         "name": "Mixed Seeds 47",
         "category": "fruit",
-        "quantity": 0.92,
-        "unit": "tbsp"
+        "quantity": 13.8,
+        "unit": "g"
       },
       {
         "ingredient_id": 278,
         "name": "Sweet Chili Drizzle 28",
         "category": "spice",
         "quantity": 0.65,
-        "unit": "g"
+        "unit": "ml"
       }
     ]
   },
@@ -386,29 +386,29 @@
         "ingredient_id": 503,
         "name": "Toasted Spice Mix 51",
         "category": "vegetable",
-        "quantity": 2.42,
-        "unit": "tsp"
+        "quantity": 12.1,
+        "unit": "g"
       },
       {
         "ingredient_id": 106,
         "name": "Nutty Crunch 11",
         "category": "fish",
         "quantity": 2.37,
-        "unit": "pcs"
+        "unit": "g"
       },
       {
         "ingredient_id": 13,
         "name": "butter",
         "category": "fish",
-        "quantity": 0.51,
-        "unit": "kg"
+        "quantity": 510,
+        "unit": "g"
       },
       {
         "ingredient_id": 292,
         "name": "Citrus Zest 30",
         "category": "meat",
-        "quantity": 1.15,
-        "unit": "kg"
+        "quantity": 1150,
+        "unit": "g"
       },
       {
         "ingredient_id": 481,
@@ -421,29 +421,29 @@
         "ingredient_id": 491,
         "name": "Umami Paste 50",
         "category": "fish",
-        "quantity": 0.59,
-        "unit": "tsp"
+        "quantity": 2.95,
+        "unit": "g"
       },
       {
         "ingredient_id": 452,
         "name": "Citrus Zest 46",
         "category": "sauce",
-        "quantity": 0.44,
-        "unit": "l"
+        "quantity": 440,
+        "unit": "ml"
       },
       {
         "ingredient_id": 349,
         "name": "Aromatic Rub 35",
         "category": "meat",
-        "quantity": 0.52,
-        "unit": "cup"
+        "quantity": 124.8,
+        "unit": "g"
       },
       {
         "ingredient_id": 189,
         "name": "Aromatic Rub 19",
         "category": "fish",
-        "quantity": 1.61,
-        "unit": "l"
+        "quantity": 1610,
+        "unit": "ml"
       }
     ]
   },
@@ -462,57 +462,57 @@
         "ingredient_id": 62,
         "name": "kidney beans",
         "category": "grain",
-        "quantity": 0.64,
-        "unit": "kg"
+        "quantity": 640,
+        "unit": "g"
       },
       {
         "ingredient_id": 102,
         "name": "Citrus Zest 11",
         "category": "other",
-        "quantity": 0.6,
-        "unit": "cup"
+        "quantity": 144,
+        "unit": "g"
       },
       {
         "ingredient_id": 213,
         "name": "Toasted Spice Mix 22",
         "category": "grain",
         "quantity": 1.26,
-        "unit": "pcs"
+        "unit": "g"
       },
       {
         "ingredient_id": 217,
         "name": "Savory Glaze 22",
         "category": "fruit",
-        "quantity": 0.91,
-        "unit": "l"
+        "quantity": 910,
+        "unit": "ml"
       },
       {
         "ingredient_id": 271,
         "name": "Umami Paste 28",
         "category": "fish",
-        "quantity": 0.9,
-        "unit": "tsp"
+        "quantity": 4.5,
+        "unit": "g"
       },
       {
         "ingredient_id": 84,
         "name": "ketchup",
         "category": "fruit",
         "quantity": 1.83,
-        "unit": "pcs"
+        "unit": "g"
       },
       {
         "ingredient_id": 161,
         "name": "Umami Paste 17",
         "category": "dairy",
-        "quantity": 0.41,
-        "unit": "l"
+        "quantity": 410,
+        "unit": "ml"
       },
       {
         "ingredient_id": 246,
         "name": "Nutty Crunch 25",
         "category": "dairy",
-        "quantity": 2.33,
-        "unit": "l"
+        "quantity": 2330,
+        "unit": "ml"
       }
     ]
   },
@@ -531,15 +531,15 @@
         "ingredient_id": 315,
         "name": "Mixed Seeds 32",
         "category": "vegetable",
-        "quantity": 1.8,
-        "unit": "cup"
+        "quantity": 432,
+        "unit": "g"
       },
       {
         "ingredient_id": 296,
         "name": "Nutty Crunch 30",
         "category": "other",
         "quantity": 2.37,
-        "unit": "pcs"
+        "unit": "g"
       },
       {
         "ingredient_id": 450,
@@ -552,8 +552,8 @@
         "ingredient_id": 128,
         "name": "Sweet Chili Drizzle 13",
         "category": "dairy",
-        "quantity": 2.25,
-        "unit": "tbsp"
+        "quantity": 33.75,
+        "unit": "ml"
       },
       {
         "ingredient_id": 480,
@@ -579,36 +579,36 @@
         "ingredient_id": 453,
         "name": "Toasted Spice Mix 46",
         "category": "sauce",
-        "quantity": 1.03,
-        "unit": "tbsp"
+        "quantity": 15.45,
+        "unit": "ml"
       },
       {
         "ingredient_id": 285,
         "name": "Mixed Seeds 29",
         "category": "dairy",
         "quantity": 0.97,
-        "unit": "kg"
+        "unit": "ml"
       },
       {
         "ingredient_id": 186,
         "name": "Nutty Crunch 19",
         "category": "fish",
-        "quantity": 2.18,
-        "unit": "tbsp"
+        "quantity": 32.7,
+        "unit": "g"
       },
       {
         "ingredient_id": 447,
         "name": "Savory Glaze 45",
         "category": "dairy",
         "quantity": 1.18,
-        "unit": "pcs"
+        "unit": "ml"
       },
       {
         "ingredient_id": 504,
         "name": "Seasoned Oil 51",
         "category": "sauce",
-        "quantity": 0.9,
-        "unit": "cup"
+        "quantity": 216,
+        "unit": "ml"
       },
       {
         "ingredient_id": 94,
@@ -621,8 +621,8 @@
         "ingredient_id": 482,
         "name": "Citrus Zest 49",
         "category": "fish",
-        "quantity": 1.27,
-        "unit": "tbsp"
+        "quantity": 19.05,
+        "unit": "g"
       }
     ]
   },
@@ -649,42 +649,42 @@
         "name": "Toasted Spice Mix 20",
         "category": "sauce",
         "quantity": 2.34,
-        "unit": "pcs"
+        "unit": "ml"
       },
       {
         "ingredient_id": 371,
         "name": "Umami Paste 38",
         "category": "meat",
         "quantity": 2.23,
-        "unit": "pcs"
+        "unit": "g"
       },
       {
         "ingredient_id": 511,
         "name": "Umami Paste 52",
         "category": "fruit",
-        "quantity": 0.52,
-        "unit": "l"
+        "quantity": 520,
+        "unit": "ml"
       },
       {
         "ingredient_id": 453,
         "name": "Toasted Spice Mix 46",
         "category": "sauce",
-        "quantity": 1.85,
-        "unit": "tsp"
+        "quantity": 9.25,
+        "unit": "ml"
       },
       {
         "ingredient_id": 53,
         "name": "yogurt",
         "category": "dairy",
-        "quantity": 1.49,
-        "unit": "cup"
+        "quantity": 357.6,
+        "unit": "ml"
       },
       {
         "ingredient_id": 209,
         "name": "Aromatic Rub 21",
         "category": "meat",
-        "quantity": 0.46,
-        "unit": "kg"
+        "quantity": 460,
+        "unit": "g"
       }
     ]
   },
@@ -703,50 +703,50 @@
         "ingredient_id": 250,
         "name": "Herbal Blend 26",
         "category": "other",
-        "quantity": 0.87,
-        "unit": "cup"
+        "quantity": 208.8,
+        "unit": "g"
       },
       {
         "ingredient_id": 468,
         "name": "Sweet Chili Drizzle 47",
         "category": "meat",
-        "quantity": 1.01,
-        "unit": "tsp"
+        "quantity": 5.05,
+        "unit": "ml"
       },
       {
         "ingredient_id": 149,
         "name": "Aromatic Rub 15",
         "category": "meat",
-        "quantity": 2.1,
-        "unit": "tsp"
+        "quantity": 10.5,
+        "unit": "g"
       },
       {
         "ingredient_id": 393,
         "name": "Toasted Spice Mix 40",
         "category": "dairy",
         "quantity": 1.88,
-        "unit": "pcs"
+        "unit": "ml"
       },
       {
         "ingredient_id": 196,
         "name": "Nutty Crunch 20",
         "category": "vegetable",
         "quantity": 2.2,
-        "unit": "pcs"
+        "unit": "g"
       },
       {
         "ingredient_id": 140,
         "name": "Herbal Blend 15",
         "category": "other",
-        "quantity": 1.46,
-        "unit": "tbsp"
+        "quantity": 21.9,
+        "unit": "g"
       },
       {
         "ingredient_id": 72,
         "name": "chicken wings",
         "category": "spice",
-        "quantity": 1,
-        "unit": "cup"
+        "quantity": 240,
+        "unit": "g"
       }
     ]
   },
@@ -786,15 +786,15 @@
         "ingredient_id": 5133,
         "name": "Mediterranean Infused Oil",
         "category": "sauce",
-        "quantity": 2.91,
-        "unit": "tbsp"
+        "quantity": 43.65,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5134,
         "name": "Mediterranean Herbal Crunch",
         "category": "spice",
-        "quantity": 1.86,
-        "unit": "tsp"
+        "quantity": 9.3,
+        "unit": "g"
       }
     ]
   },
@@ -834,15 +834,15 @@
         "ingredient_id": 5143,
         "name": "Thai Infused Oil",
         "category": "sauce",
-        "quantity": 1.42,
-        "unit": "tbsp"
+        "quantity": 21.3,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5144,
         "name": "Thai Herbal Crunch",
         "category": "spice",
-        "quantity": 1.92,
-        "unit": "tsp"
+        "quantity": 9.6,
+        "unit": "g"
       }
     ]
   },
@@ -882,15 +882,15 @@
         "ingredient_id": 5153,
         "name": "Indian Infused Oil",
         "category": "sauce",
-        "quantity": 1.04,
-        "unit": "tbsp"
+        "quantity": 15.6,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5154,
         "name": "Indian Herbal Crunch",
         "category": "spice",
-        "quantity": 0.4,
-        "unit": "tsp"
+        "quantity": 2,
+        "unit": "g"
       }
     ]
   },
@@ -930,15 +930,15 @@
         "ingredient_id": 5163,
         "name": "Nordic Infused Oil",
         "category": "sauce",
-        "quantity": 1.74,
-        "unit": "tbsp"
+        "quantity": 26.1,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5164,
         "name": "Nordic Herbal Crunch",
         "category": "spice",
-        "quantity": 1.55,
-        "unit": "tsp"
+        "quantity": 7.75,
+        "unit": "g"
       }
     ]
   },
@@ -978,15 +978,15 @@
         "ingredient_id": 5173,
         "name": "Peruvian Infused Oil",
         "category": "sauce",
-        "quantity": 0.94,
-        "unit": "tbsp"
+        "quantity": 14.1,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5174,
         "name": "Peruvian Herbal Crunch",
         "category": "spice",
-        "quantity": 0.84,
-        "unit": "tsp"
+        "quantity": 4.2,
+        "unit": "g"
       }
     ]
   },
@@ -1026,15 +1026,15 @@
         "ingredient_id": 5183,
         "name": "Moroccan Infused Oil",
         "category": "sauce",
-        "quantity": 0.93,
-        "unit": "tbsp"
+        "quantity": 13.95,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5184,
         "name": "Moroccan Herbal Crunch",
         "category": "spice",
-        "quantity": 0.84,
-        "unit": "tsp"
+        "quantity": 4.2,
+        "unit": "g"
       }
     ]
   },
@@ -1074,15 +1074,15 @@
         "ingredient_id": 5193,
         "name": "Coastal Infused Oil",
         "category": "sauce",
-        "quantity": 1.55,
-        "unit": "tbsp"
+        "quantity": 23.25,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5194,
         "name": "Coastal Herbal Crunch",
         "category": "spice",
-        "quantity": 1.19,
-        "unit": "tsp"
+        "quantity": 5.95,
+        "unit": "g"
       }
     ]
   },
@@ -1122,15 +1122,15 @@
         "ingredient_id": 5203,
         "name": "Korean Infused Oil",
         "category": "sauce",
-        "quantity": 2.37,
-        "unit": "tbsp"
+        "quantity": 35.55,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5204,
         "name": "Korean Herbal Crunch",
         "category": "spice",
-        "quantity": 1.74,
-        "unit": "tsp"
+        "quantity": 8.7,
+        "unit": "g"
       }
     ]
   },
@@ -1170,15 +1170,15 @@
         "ingredient_id": 5213,
         "name": "Mediterranean Infused Oil",
         "category": "sauce",
-        "quantity": 2.52,
-        "unit": "tbsp"
+        "quantity": 37.8,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5214,
         "name": "Mediterranean Herbal Crunch",
         "category": "spice",
-        "quantity": 1.94,
-        "unit": "tsp"
+        "quantity": 9.7,
+        "unit": "g"
       }
     ]
   },
@@ -1218,15 +1218,15 @@
         "ingredient_id": 5223,
         "name": "Thai Infused Oil",
         "category": "sauce",
-        "quantity": 1.91,
-        "unit": "tbsp"
+        "quantity": 28.65,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5224,
         "name": "Thai Herbal Crunch",
         "category": "spice",
-        "quantity": 0.38,
-        "unit": "tsp"
+        "quantity": 1.9,
+        "unit": "g"
       }
     ]
   },
@@ -1266,15 +1266,15 @@
         "ingredient_id": 5233,
         "name": "Indian Infused Oil",
         "category": "sauce",
-        "quantity": 2.26,
-        "unit": "tbsp"
+        "quantity": 33.9,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5234,
         "name": "Indian Herbal Crunch",
         "category": "spice",
-        "quantity": 0.6,
-        "unit": "tsp"
+        "quantity": 3,
+        "unit": "g"
       }
     ]
   },
@@ -1314,15 +1314,15 @@
         "ingredient_id": 5243,
         "name": "Nordic Infused Oil",
         "category": "sauce",
-        "quantity": 2.65,
-        "unit": "tbsp"
+        "quantity": 39.75,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5244,
         "name": "Nordic Herbal Crunch",
         "category": "spice",
-        "quantity": 1.24,
-        "unit": "tsp"
+        "quantity": 6.2,
+        "unit": "g"
       }
     ]
   },
@@ -1362,15 +1362,15 @@
         "ingredient_id": 5253,
         "name": "Peruvian Infused Oil",
         "category": "sauce",
-        "quantity": 2.64,
-        "unit": "tbsp"
+        "quantity": 39.6,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5254,
         "name": "Peruvian Herbal Crunch",
         "category": "spice",
-        "quantity": 1.58,
-        "unit": "tsp"
+        "quantity": 7.9,
+        "unit": "g"
       }
     ]
   },
@@ -1410,15 +1410,15 @@
         "ingredient_id": 5263,
         "name": "Moroccan Infused Oil",
         "category": "sauce",
-        "quantity": 1.5,
-        "unit": "tbsp"
+        "quantity": 22.5,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5264,
         "name": "Moroccan Herbal Crunch",
         "category": "spice",
-        "quantity": 0.51,
-        "unit": "tsp"
+        "quantity": 2.55,
+        "unit": "g"
       }
     ]
   },
@@ -1458,15 +1458,15 @@
         "ingredient_id": 5273,
         "name": "Coastal Infused Oil",
         "category": "sauce",
-        "quantity": 1.87,
-        "unit": "tbsp"
+        "quantity": 28.05,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5274,
         "name": "Coastal Herbal Crunch",
         "category": "spice",
-        "quantity": 0.28,
-        "unit": "tsp"
+        "quantity": 1.4,
+        "unit": "g"
       }
     ]
   },
@@ -1506,15 +1506,15 @@
         "ingredient_id": 5283,
         "name": "Korean Infused Oil",
         "category": "sauce",
-        "quantity": 0.89,
-        "unit": "tbsp"
+        "quantity": 13.35,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5284,
         "name": "Korean Herbal Crunch",
         "category": "spice",
-        "quantity": 1.49,
-        "unit": "tsp"
+        "quantity": 7.45,
+        "unit": "g"
       }
     ]
   },
@@ -1554,15 +1554,15 @@
         "ingredient_id": 5293,
         "name": "Mediterranean Infused Oil",
         "category": "sauce",
-        "quantity": 0.9,
-        "unit": "tbsp"
+        "quantity": 13.5,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5294,
         "name": "Mediterranean Herbal Crunch",
         "category": "spice",
-        "quantity": 1.13,
-        "unit": "tsp"
+        "quantity": 5.65,
+        "unit": "g"
       }
     ]
   },
@@ -1602,15 +1602,15 @@
         "ingredient_id": 5303,
         "name": "Thai Infused Oil",
         "category": "sauce",
-        "quantity": 2.58,
-        "unit": "tbsp"
+        "quantity": 38.7,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5304,
         "name": "Thai Herbal Crunch",
         "category": "spice",
-        "quantity": 1.71,
-        "unit": "tsp"
+        "quantity": 8.55,
+        "unit": "g"
       }
     ]
   },
@@ -1650,15 +1650,15 @@
         "ingredient_id": 5313,
         "name": "Indian Infused Oil",
         "category": "sauce",
-        "quantity": 2.34,
-        "unit": "tbsp"
+        "quantity": 35.1,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5314,
         "name": "Indian Herbal Crunch",
         "category": "spice",
-        "quantity": 1.38,
-        "unit": "tsp"
+        "quantity": 6.9,
+        "unit": "g"
       }
     ]
   },
@@ -1698,15 +1698,15 @@
         "ingredient_id": 5323,
         "name": "Nordic Infused Oil",
         "category": "sauce",
-        "quantity": 0.64,
-        "unit": "tbsp"
+        "quantity": 9.6,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5324,
         "name": "Nordic Herbal Crunch",
         "category": "spice",
-        "quantity": 0.95,
-        "unit": "tsp"
+        "quantity": 4.75,
+        "unit": "g"
       }
     ]
   },
@@ -1746,15 +1746,15 @@
         "ingredient_id": 5333,
         "name": "Peruvian Infused Oil",
         "category": "sauce",
-        "quantity": 2.16,
-        "unit": "tbsp"
+        "quantity": 32.4,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5334,
         "name": "Peruvian Herbal Crunch",
         "category": "spice",
-        "quantity": 1.21,
-        "unit": "tsp"
+        "quantity": 6.05,
+        "unit": "g"
       }
     ]
   },
@@ -1794,15 +1794,15 @@
         "ingredient_id": 5343,
         "name": "Moroccan Infused Oil",
         "category": "sauce",
-        "quantity": 1.43,
-        "unit": "tbsp"
+        "quantity": 21.45,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5344,
         "name": "Moroccan Herbal Crunch",
         "category": "spice",
-        "quantity": 1.79,
-        "unit": "tsp"
+        "quantity": 8.95,
+        "unit": "g"
       }
     ]
   },
@@ -1842,15 +1842,15 @@
         "ingredient_id": 5353,
         "name": "Coastal Infused Oil",
         "category": "sauce",
-        "quantity": 1.21,
-        "unit": "tbsp"
+        "quantity": 18.15,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5354,
         "name": "Coastal Herbal Crunch",
         "category": "spice",
-        "quantity": 0.83,
-        "unit": "tsp"
+        "quantity": 4.15,
+        "unit": "g"
       }
     ]
   },
@@ -1890,15 +1890,15 @@
         "ingredient_id": 5363,
         "name": "Korean Infused Oil",
         "category": "sauce",
-        "quantity": 1.69,
-        "unit": "tbsp"
+        "quantity": 25.35,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5364,
         "name": "Korean Herbal Crunch",
         "category": "spice",
-        "quantity": 0.54,
-        "unit": "tsp"
+        "quantity": 2.7,
+        "unit": "g"
       }
     ]
   },
@@ -1938,15 +1938,15 @@
         "ingredient_id": 5373,
         "name": "Mediterranean Infused Oil",
         "category": "sauce",
-        "quantity": 1.53,
-        "unit": "tbsp"
+        "quantity": 22.95,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5374,
         "name": "Mediterranean Herbal Crunch",
         "category": "spice",
-        "quantity": 0.38,
-        "unit": "tsp"
+        "quantity": 1.9,
+        "unit": "g"
       }
     ]
   },
@@ -1986,15 +1986,15 @@
         "ingredient_id": 5383,
         "name": "Thai Infused Oil",
         "category": "sauce",
-        "quantity": 0.72,
-        "unit": "tbsp"
+        "quantity": 10.8,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5384,
         "name": "Thai Herbal Crunch",
         "category": "spice",
-        "quantity": 0.87,
-        "unit": "tsp"
+        "quantity": 4.35,
+        "unit": "g"
       }
     ]
   },
@@ -2034,15 +2034,15 @@
         "ingredient_id": 5393,
         "name": "Indian Infused Oil",
         "category": "sauce",
-        "quantity": 2.12,
-        "unit": "tbsp"
+        "quantity": 31.8,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5394,
         "name": "Indian Herbal Crunch",
         "category": "spice",
-        "quantity": 1.78,
-        "unit": "tsp"
+        "quantity": 8.9,
+        "unit": "g"
       }
     ]
   },
@@ -2082,15 +2082,15 @@
         "ingredient_id": 5403,
         "name": "Nordic Infused Oil",
         "category": "sauce",
-        "quantity": 1.01,
-        "unit": "tbsp"
+        "quantity": 15.15,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5404,
         "name": "Nordic Herbal Crunch",
         "category": "spice",
-        "quantity": 0.41,
-        "unit": "tsp"
+        "quantity": 2.05,
+        "unit": "g"
       }
     ]
   },
@@ -2130,15 +2130,15 @@
         "ingredient_id": 5413,
         "name": "Peruvian Infused Oil",
         "category": "sauce",
-        "quantity": 2.37,
-        "unit": "tbsp"
+        "quantity": 35.55,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5414,
         "name": "Peruvian Herbal Crunch",
         "category": "spice",
-        "quantity": 1.73,
-        "unit": "tsp"
+        "quantity": 8.65,
+        "unit": "g"
       }
     ]
   },
@@ -2178,15 +2178,15 @@
         "ingredient_id": 5423,
         "name": "Moroccan Infused Oil",
         "category": "sauce",
-        "quantity": 0.85,
-        "unit": "tbsp"
+        "quantity": 12.75,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5424,
         "name": "Moroccan Herbal Crunch",
         "category": "spice",
-        "quantity": 1.1,
-        "unit": "tsp"
+        "quantity": 5.5,
+        "unit": "g"
       }
     ]
   },
@@ -2226,15 +2226,15 @@
         "ingredient_id": 5433,
         "name": "Coastal Infused Oil",
         "category": "sauce",
-        "quantity": 1.36,
-        "unit": "tbsp"
+        "quantity": 20.4,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5434,
         "name": "Coastal Herbal Crunch",
         "category": "spice",
-        "quantity": 0.6,
-        "unit": "tsp"
+        "quantity": 3,
+        "unit": "g"
       }
     ]
   },
@@ -2274,15 +2274,15 @@
         "ingredient_id": 5443,
         "name": "Korean Infused Oil",
         "category": "sauce",
-        "quantity": 1.29,
-        "unit": "tbsp"
+        "quantity": 19.35,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5444,
         "name": "Korean Herbal Crunch",
         "category": "spice",
-        "quantity": 0.96,
-        "unit": "tsp"
+        "quantity": 4.8,
+        "unit": "g"
       }
     ]
   },
@@ -2322,15 +2322,15 @@
         "ingredient_id": 5453,
         "name": "Mediterranean Infused Oil",
         "category": "sauce",
-        "quantity": 1.69,
-        "unit": "tbsp"
+        "quantity": 25.35,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5454,
         "name": "Mediterranean Herbal Crunch",
         "category": "spice",
-        "quantity": 1.54,
-        "unit": "tsp"
+        "quantity": 7.7,
+        "unit": "g"
       }
     ]
   },
@@ -2370,15 +2370,15 @@
         "ingredient_id": 5463,
         "name": "Thai Infused Oil",
         "category": "sauce",
-        "quantity": 1.6,
-        "unit": "tbsp"
+        "quantity": 24,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5464,
         "name": "Thai Herbal Crunch",
         "category": "spice",
-        "quantity": 1.51,
-        "unit": "tsp"
+        "quantity": 7.55,
+        "unit": "g"
       }
     ]
   },
@@ -2418,15 +2418,15 @@
         "ingredient_id": 5473,
         "name": "Indian Infused Oil",
         "category": "sauce",
-        "quantity": 1.55,
-        "unit": "tbsp"
+        "quantity": 23.25,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5474,
         "name": "Indian Herbal Crunch",
         "category": "spice",
-        "quantity": 0.56,
-        "unit": "tsp"
+        "quantity": 2.8,
+        "unit": "g"
       }
     ]
   },
@@ -2466,15 +2466,15 @@
         "ingredient_id": 5483,
         "name": "Nordic Infused Oil",
         "category": "sauce",
-        "quantity": 1.74,
-        "unit": "tbsp"
+        "quantity": 26.1,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5484,
         "name": "Nordic Herbal Crunch",
         "category": "spice",
-        "quantity": 0.8,
-        "unit": "tsp"
+        "quantity": 4,
+        "unit": "g"
       }
     ]
   },
@@ -2514,15 +2514,15 @@
         "ingredient_id": 5493,
         "name": "Peruvian Infused Oil",
         "category": "sauce",
-        "quantity": 1.86,
-        "unit": "tbsp"
+        "quantity": 27.9,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5494,
         "name": "Peruvian Herbal Crunch",
         "category": "spice",
-        "quantity": 0.82,
-        "unit": "tsp"
+        "quantity": 4.1,
+        "unit": "g"
       }
     ]
   },
@@ -2562,15 +2562,15 @@
         "ingredient_id": 5503,
         "name": "Moroccan Infused Oil",
         "category": "sauce",
-        "quantity": 1.39,
-        "unit": "tbsp"
+        "quantity": 20.85,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5504,
         "name": "Moroccan Herbal Crunch",
         "category": "spice",
-        "quantity": 0.27,
-        "unit": "tsp"
+        "quantity": 1.35,
+        "unit": "g"
       }
     ]
   },
@@ -2610,15 +2610,15 @@
         "ingredient_id": 5513,
         "name": "Coastal Infused Oil",
         "category": "sauce",
-        "quantity": 1.37,
-        "unit": "tbsp"
+        "quantity": 20.55,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5514,
         "name": "Coastal Herbal Crunch",
         "category": "spice",
-        "quantity": 1.56,
-        "unit": "tsp"
+        "quantity": 7.8,
+        "unit": "g"
       }
     ]
   },
@@ -2658,15 +2658,15 @@
         "ingredient_id": 5523,
         "name": "Korean Infused Oil",
         "category": "sauce",
-        "quantity": 0.78,
-        "unit": "tbsp"
+        "quantity": 11.7,
+        "unit": "ml"
       },
       {
         "ingredient_id": 5524,
         "name": "Korean Herbal Crunch",
         "category": "spice",
-        "quantity": 0.31,
-        "unit": "tsp"
+        "quantity": 1.55,
+        "unit": "g"
       }
     ]
   },
@@ -2709,15 +2709,15 @@
         "ingredient_id": 6004,
         "name": "Lime avocado dressing",
         "category": "sauce",
-        "quantity": 1.5,
-        "unit": "tbsp"
+        "quantity": 22.5,
+        "unit": "ml"
       },
       {
         "ingredient_id": 6005,
         "name": "Pumpkin seed crunch",
         "category": "spice",
-        "quantity": 1,
-        "unit": "tbsp"
+        "quantity": 15,
+        "unit": "g"
       }
     ]
   },
@@ -2739,8 +2739,8 @@
         "ingredient_id": 6010,
         "name": "Rye flatbread",
         "category": "grain",
-        "quantity": 1,
-        "unit": "piece"
+        "quantity": 85,
+        "unit": "g"
       },
       {
         "ingredient_id": 6011,
@@ -2761,7 +2761,7 @@
         "name": "Dill skyr yogurt",
         "category": "dairy",
         "quantity": 40,
-        "unit": "g"
+        "unit": "ml"
       },
       {
         "ingredient_id": 6014,
@@ -2798,7 +2798,7 @@
         "name": "Smoked paprika sofrito",
         "category": "sauce",
         "quantity": 120,
-        "unit": "g"
+        "unit": "ml"
       },
       {
         "ingredient_id": 6022,
@@ -2818,8 +2818,8 @@
         "ingredient_id": 6024,
         "name": "Herb olive oil",
         "category": "sauce",
-        "quantity": 1.2,
-        "unit": "tbsp"
+        "quantity": 18,
+        "unit": "ml"
       }
     ]
   },
@@ -2842,7 +2842,7 @@
         "name": "Lucuma chia pudding",
         "category": "dairy",
         "quantity": 110,
-        "unit": "g"
+        "unit": "ml"
       },
       {
         "ingredient_id": 6031,
@@ -2863,7 +2863,7 @@
         "name": "Maca yogurt whip",
         "category": "dairy",
         "quantity": 50,
-        "unit": "g"
+        "unit": "ml"
       }
     ]
   },
@@ -2906,8 +2906,8 @@
         "ingredient_id": 6043,
         "name": "Pomegranate herb drizzle",
         "category": "sauce",
-        "quantity": 1.4,
-        "unit": "tbsp"
+        "quantity": 21,
+        "unit": "ml"
       },
       {
         "ingredient_id": 6044,

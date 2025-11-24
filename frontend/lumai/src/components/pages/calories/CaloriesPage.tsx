@@ -1812,7 +1812,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                   value={recipeSearchQuery}
                   required
                   onChange={(e) => setRecipeSearchQuery(e.target.value)}
-                  placeholder="e.g., butter"
+                  placeholder="eg butter"
                 />
               </div>
               <div>
