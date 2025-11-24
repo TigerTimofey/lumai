@@ -59,6 +59,43 @@
         "quantity": 6.75,
         "unit": "g"
       }
+    ],
+    "meal": "snack",
+    "summary": "Mexican snack built around aromatic rub 34 and warm spices.",
+    "time": {
+      "prep": 14,
+      "cook": 32,
+      "total": 46
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "snack",
+      "Mexican",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/1.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prepare all ingredients as listed",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Heat oil or butter in a pan or pot",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Add main ingredients and cook until done",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Season to taste and serve warm",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -128,6 +165,43 @@
         "quantity": 0.75,
         "unit": "ml"
       }
+    ],
+    "meal": "dinner",
+    "summary": "Japanese dinner built around bell pepper and warm spices.",
+    "time": {
+      "prep": 30,
+      "cook": 26,
+      "total": 56
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "dinner",
+      "Japanese",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/2.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prepare all ingredients as listed",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Heat oil or butter in a pan or pot",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Add main ingredients and cook until done",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Season to taste and serve warm",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -190,6 +264,43 @@
         "quantity": 2.16,
         "unit": "ml"
       }
+    ],
+    "meal": "breakfast",
+    "summary": "Mexican breakfast built around sweet chili drizzle 12 and warm spices.",
+    "time": {
+      "prep": 44,
+      "cook": 24,
+      "total": 68
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "breakfast",
+      "Mexican",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/3.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prepare all ingredients as listed",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Heat oil or butter in a pan or pot",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Add main ingredients and cook until done",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Season to taste and serve warm",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -245,6 +356,43 @@
         "quantity": 980,
         "unit": "ml"
       }
+    ],
+    "meal": "snack",
+    "summary": "Middle Eastern snack built around butter and warm spices.",
+    "time": {
+      "prep": 28,
+      "cook": 13,
+      "total": 41
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "snack",
+      "Middle Eastern",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/4.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prepare all ingredients as listed",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Heat oil or butter in a pan or pot",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Add main ingredients and cook until done",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Season to taste and serve warm",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -299,6 +447,43 @@
         "category": "other",
         "quantity": 1.8,
         "unit": "ml"
+      }
+    ],
+    "meal": "snack",
+    "summary": "Mexican snack built around cumin and warm spices.",
+    "time": {
+      "prep": 41,
+      "cook": 83,
+      "total": 124
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "snack",
+      "Mexican",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/5.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prepare all ingredients as listed",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Heat oil or butter in a pan or pot",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Add main ingredients and cook until done",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Season to taste and serve warm",
+        "ingredients": []
       }
     ]
   },
@@ -368,6 +553,43 @@
         "category": "spice",
         "quantity": 0.65,
         "unit": "ml"
+      }
+    ],
+    "meal": "lunch",
+    "summary": "Indian lunch built around sweet chili drizzle 38 and warm spices.",
+    "time": {
+      "prep": 30,
+      "cook": 36,
+      "total": 66
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "lunch",
+      "Indian",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/6.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prepare all ingredients as listed",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Heat oil or butter in a pan or pot",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Add main ingredients and cook until done",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Season to taste and serve warm",
+        "ingredients": []
       }
     ]
   },
@@ -445,6 +667,43 @@
         "quantity": 1610,
         "unit": "ml"
       }
+    ],
+    "meal": "breakfast",
+    "summary": "Italian breakfast built around toasted spice mix 51 and warm spices.",
+    "time": {
+      "prep": 40,
+      "cook": 42,
+      "total": 82
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "breakfast",
+      "Italian",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/7.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prepare all ingredients as listed",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Heat oil or butter in a pan or pot",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Add main ingredients and cook until done",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Season to taste and serve warm",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -514,6 +773,43 @@
         "quantity": 2330,
         "unit": "ml"
       }
+    ],
+    "meal": "dinner",
+    "summary": "Thai dinner built around kidney beans and warm spices.",
+    "time": {
+      "prep": 42,
+      "cook": 59,
+      "total": 101
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "dinner",
+      "Thai",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/8.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prepare all ingredients as listed",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Heat oil or butter in a pan or pot",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Add main ingredients and cook until done",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Season to taste and serve warm",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -561,6 +857,43 @@
         "category": "vegetable",
         "quantity": 1.61,
         "unit": "g"
+      }
+    ],
+    "meal": "lunch",
+    "summary": "Mexican lunch built around mixed seeds 32 and warm spices.",
+    "time": {
+      "prep": 22,
+      "cook": 23,
+      "total": 45
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "lunch",
+      "Mexican",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/9.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prepare all ingredients as listed",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Heat oil or butter in a pan or pot",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Add main ingredients and cook until done",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Season to taste and serve warm",
+        "ingredients": []
       }
     ]
   },
@@ -624,6 +957,43 @@
         "quantity": 19.05,
         "unit": "g"
       }
+    ],
+    "meal": "breakfast",
+    "summary": "Mediterranean breakfast built around toasted spice mix 46 and warm spices.",
+    "time": {
+      "prep": 22,
+      "cook": 78,
+      "total": 100
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "breakfast",
+      "Mediterranean",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/10.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prepare all ingredients as listed",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Heat oil or butter in a pan or pot",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Add main ingredients and cook until done",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Season to taste and serve warm",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -685,6 +1055,43 @@
         "category": "meat",
         "quantity": 460,
         "unit": "g"
+      }
+    ],
+    "meal": "dessert",
+    "summary": "Japanese dessert built around vanilla extract and warm spices.",
+    "time": {
+      "prep": 5,
+      "cook": 89,
+      "total": 94
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "dessert",
+      "Japanese",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/11.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prepare all ingredients as listed",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Heat oil or butter in a pan or pot",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Add main ingredients and cook until done",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Season to taste and serve warm",
+        "ingredients": []
       }
     ]
   },
@@ -748,6 +1155,43 @@
         "quantity": 240,
         "unit": "g"
       }
+    ],
+    "meal": "dinner",
+    "summary": "Thai dinner built around herbal blend 26 and warm spices.",
+    "time": {
+      "prep": 37,
+      "cook": 39,
+      "total": 76
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "dinner",
+      "Thai",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/12.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prepare all ingredients as listed",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Heat oil or butter in a pan or pot",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Add main ingredients and cook until done",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Season to taste and serve warm",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -795,6 +1239,43 @@
         "category": "spice",
         "quantity": 9.3,
         "unit": "g"
+      }
+    ],
+    "meal": "breakfast",
+    "summary": "Mediterranean breakfast built around mediterranean garden vegetables and warm spices.",
+    "time": {
+      "prep": 29,
+      "cook": 21,
+      "total": 50
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "breakfast",
+      "Mediterranean",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/13.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -844,6 +1325,43 @@
         "quantity": 9.6,
         "unit": "g"
       }
+    ],
+    "meal": "lunch",
+    "summary": "Thai lunch built around thai garden vegetables and warm spices.",
+    "time": {
+      "prep": 33,
+      "cook": 24,
+      "total": 57
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "lunch",
+      "Thai",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/14.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -891,6 +1409,43 @@
         "category": "spice",
         "quantity": 2,
         "unit": "g"
+      }
+    ],
+    "meal": "dinner",
+    "summary": "Indian dinner built around indian garden vegetables and warm spices.",
+    "time": {
+      "prep": 29,
+      "cook": 33,
+      "total": 62
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "dinner",
+      "Indian",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/15.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -940,6 +1495,43 @@
         "quantity": 7.75,
         "unit": "g"
       }
+    ],
+    "meal": "snack",
+    "summary": "Nordic snack built around nordic garden vegetables and warm spices.",
+    "time": {
+      "prep": 31,
+      "cook": 41,
+      "total": 72
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "snack",
+      "Nordic",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/16.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -987,6 +1579,43 @@
         "category": "spice",
         "quantity": 4.2,
         "unit": "g"
+      }
+    ],
+    "meal": "breakfast",
+    "summary": "Peruvian breakfast built around peruvian garden vegetables and warm spices.",
+    "time": {
+      "prep": 17,
+      "cook": 15,
+      "total": 32
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "breakfast",
+      "Peruvian",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/17.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -1036,6 +1665,43 @@
         "quantity": 4.2,
         "unit": "g"
       }
+    ],
+    "meal": "lunch",
+    "summary": "Moroccan lunch built around moroccan garden vegetables and warm spices.",
+    "time": {
+      "prep": 15,
+      "cook": 38,
+      "total": 53
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "lunch",
+      "Moroccan",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/18.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -1083,6 +1749,43 @@
         "category": "spice",
         "quantity": 5.95,
         "unit": "g"
+      }
+    ],
+    "meal": "dinner",
+    "summary": "Coastal dinner built around coastal garden vegetables and warm spices.",
+    "time": {
+      "prep": 32,
+      "cook": 24,
+      "total": 56
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "dinner",
+      "Coastal",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/19.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -1132,6 +1835,43 @@
         "quantity": 8.7,
         "unit": "g"
       }
+    ],
+    "meal": "snack",
+    "summary": "Korean snack built around korean garden vegetables and warm spices.",
+    "time": {
+      "prep": 22,
+      "cook": 36,
+      "total": 58
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "snack",
+      "Korean",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/20.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -1179,6 +1919,43 @@
         "category": "spice",
         "quantity": 9.7,
         "unit": "g"
+      }
+    ],
+    "meal": "breakfast",
+    "summary": "Mediterranean breakfast built around mediterranean garden vegetables and warm spices.",
+    "time": {
+      "prep": 35,
+      "cook": 35,
+      "total": 70
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "breakfast",
+      "Mediterranean",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/21.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -1228,6 +2005,43 @@
         "quantity": 1.9,
         "unit": "g"
       }
+    ],
+    "meal": "lunch",
+    "summary": "Thai lunch built around thai garden vegetables and warm spices.",
+    "time": {
+      "prep": 10,
+      "cook": 41,
+      "total": 51
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "lunch",
+      "Thai",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/22.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -1275,6 +2089,43 @@
         "category": "spice",
         "quantity": 3,
         "unit": "g"
+      }
+    ],
+    "meal": "dinner",
+    "summary": "Indian dinner built around indian garden vegetables and warm spices.",
+    "time": {
+      "prep": 30,
+      "cook": 23,
+      "total": 53
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "dinner",
+      "Indian",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/23.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -1324,6 +2175,43 @@
         "quantity": 6.2,
         "unit": "g"
       }
+    ],
+    "meal": "snack",
+    "summary": "Nordic snack built around nordic garden vegetables and warm spices.",
+    "time": {
+      "prep": 30,
+      "cook": 32,
+      "total": 62
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "snack",
+      "Nordic",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/24.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -1371,6 +2259,43 @@
         "category": "spice",
         "quantity": 7.9,
         "unit": "g"
+      }
+    ],
+    "meal": "breakfast",
+    "summary": "Peruvian breakfast built around peruvian garden vegetables and warm spices.",
+    "time": {
+      "prep": 32,
+      "cook": 39,
+      "total": 71
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "breakfast",
+      "Peruvian",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/25.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -1420,6 +2345,43 @@
         "quantity": 2.55,
         "unit": "g"
       }
+    ],
+    "meal": "lunch",
+    "summary": "Moroccan lunch built around moroccan garden vegetables and warm spices.",
+    "time": {
+      "prep": 14,
+      "cook": 25,
+      "total": 39
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "lunch",
+      "Moroccan",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/26.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -1467,6 +2429,43 @@
         "category": "spice",
         "quantity": 1.4,
         "unit": "g"
+      }
+    ],
+    "meal": "dinner",
+    "summary": "Coastal dinner built around coastal garden vegetables and warm spices.",
+    "time": {
+      "prep": 17,
+      "cook": 27,
+      "total": 44
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "dinner",
+      "Coastal",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/27.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -1516,6 +2515,43 @@
         "quantity": 7.45,
         "unit": "g"
       }
+    ],
+    "meal": "snack",
+    "summary": "Korean snack built around korean garden vegetables and warm spices.",
+    "time": {
+      "prep": 29,
+      "cook": 36,
+      "total": 65
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "snack",
+      "Korean",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/28.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -1563,6 +2599,43 @@
         "category": "spice",
         "quantity": 5.65,
         "unit": "g"
+      }
+    ],
+    "meal": "breakfast",
+    "summary": "Mediterranean breakfast built around mediterranean garden vegetables and warm spices.",
+    "time": {
+      "prep": 13,
+      "cook": 41,
+      "total": 54
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "breakfast",
+      "Mediterranean",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/29.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -1612,6 +2685,43 @@
         "quantity": 8.55,
         "unit": "g"
       }
+    ],
+    "meal": "lunch",
+    "summary": "Thai lunch built around thai garden vegetables and warm spices.",
+    "time": {
+      "prep": 17,
+      "cook": 39,
+      "total": 56
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "lunch",
+      "Thai",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/30.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -1659,6 +2769,43 @@
         "category": "spice",
         "quantity": 6.9,
         "unit": "g"
+      }
+    ],
+    "meal": "dinner",
+    "summary": "Indian dinner built around indian garden vegetables and warm spices.",
+    "time": {
+      "prep": 35,
+      "cook": 13,
+      "total": 48
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "dinner",
+      "Indian",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/31.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -1708,6 +2855,43 @@
         "quantity": 4.75,
         "unit": "g"
       }
+    ],
+    "meal": "snack",
+    "summary": "Nordic snack built around nordic garden vegetables and warm spices.",
+    "time": {
+      "prep": 17,
+      "cook": 18,
+      "total": 35
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "snack",
+      "Nordic",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/32.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -1755,6 +2939,43 @@
         "category": "spice",
         "quantity": 6.05,
         "unit": "g"
+      }
+    ],
+    "meal": "breakfast",
+    "summary": "Peruvian breakfast built around peruvian garden vegetables and warm spices.",
+    "time": {
+      "prep": 29,
+      "cook": 30,
+      "total": 59
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "breakfast",
+      "Peruvian",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/33.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -1804,6 +3025,43 @@
         "quantity": 8.95,
         "unit": "g"
       }
+    ],
+    "meal": "lunch",
+    "summary": "Moroccan lunch built around moroccan garden vegetables and warm spices.",
+    "time": {
+      "prep": 33,
+      "cook": 29,
+      "total": 62
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "lunch",
+      "Moroccan",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/34.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -1851,6 +3109,43 @@
         "category": "spice",
         "quantity": 4.15,
         "unit": "g"
+      }
+    ],
+    "meal": "dinner",
+    "summary": "Coastal dinner built around coastal garden vegetables and warm spices.",
+    "time": {
+      "prep": 18,
+      "cook": 19,
+      "total": 37
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "dinner",
+      "Coastal",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/35.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -1900,6 +3195,43 @@
         "quantity": 2.7,
         "unit": "g"
       }
+    ],
+    "meal": "snack",
+    "summary": "Korean snack built around korean garden vegetables and warm spices.",
+    "time": {
+      "prep": 12,
+      "cook": 14,
+      "total": 26
+    },
+    "difficulty_level": "easy",
+    "dietary_tags": [
+      "snack",
+      "Korean",
+      "easy"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/36.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -1947,6 +3279,43 @@
         "category": "spice",
         "quantity": 1.9,
         "unit": "g"
+      }
+    ],
+    "meal": "breakfast",
+    "summary": "Mediterranean breakfast built around mediterranean garden vegetables and warm spices.",
+    "time": {
+      "prep": 12,
+      "cook": 32,
+      "total": 44
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "breakfast",
+      "Mediterranean",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/37.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -1996,6 +3365,43 @@
         "quantity": 4.35,
         "unit": "g"
       }
+    ],
+    "meal": "lunch",
+    "summary": "Thai lunch built around thai garden vegetables and warm spices.",
+    "time": {
+      "prep": 34,
+      "cook": 35,
+      "total": 69
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "lunch",
+      "Thai",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/38.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -2043,6 +3449,43 @@
         "category": "spice",
         "quantity": 8.9,
         "unit": "g"
+      }
+    ],
+    "meal": "dinner",
+    "summary": "Indian dinner built around indian garden vegetables and warm spices.",
+    "time": {
+      "prep": 11,
+      "cook": 39,
+      "total": 50
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "dinner",
+      "Indian",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/39.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -2092,6 +3535,43 @@
         "quantity": 2.05,
         "unit": "g"
       }
+    ],
+    "meal": "snack",
+    "summary": "Nordic snack built around nordic garden vegetables and warm spices.",
+    "time": {
+      "prep": 12,
+      "cook": 27,
+      "total": 39
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "snack",
+      "Nordic",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/40.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -2139,6 +3619,43 @@
         "category": "spice",
         "quantity": 8.65,
         "unit": "g"
+      }
+    ],
+    "meal": "breakfast",
+    "summary": "Peruvian breakfast built around peruvian garden vegetables and warm spices.",
+    "time": {
+      "prep": 18,
+      "cook": 31,
+      "total": 49
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "breakfast",
+      "Peruvian",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/41.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -2188,6 +3705,43 @@
         "quantity": 5.5,
         "unit": "g"
       }
+    ],
+    "meal": "lunch",
+    "summary": "Moroccan lunch built around moroccan garden vegetables and warm spices.",
+    "time": {
+      "prep": 19,
+      "cook": 41,
+      "total": 60
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "lunch",
+      "Moroccan",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/42.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -2235,6 +3789,43 @@
         "category": "spice",
         "quantity": 3,
         "unit": "g"
+      }
+    ],
+    "meal": "dinner",
+    "summary": "Coastal dinner built around coastal garden vegetables and warm spices.",
+    "time": {
+      "prep": 26,
+      "cook": 34,
+      "total": 60
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "dinner",
+      "Coastal",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/43.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -2284,6 +3875,43 @@
         "quantity": 4.8,
         "unit": "g"
       }
+    ],
+    "meal": "snack",
+    "summary": "Korean snack built around korean garden vegetables and warm spices.",
+    "time": {
+      "prep": 30,
+      "cook": 42,
+      "total": 72
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "snack",
+      "Korean",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/44.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -2331,6 +3959,43 @@
         "category": "spice",
         "quantity": 7.7,
         "unit": "g"
+      }
+    ],
+    "meal": "breakfast",
+    "summary": "Mediterranean breakfast built around mediterranean garden vegetables and warm spices.",
+    "time": {
+      "prep": 25,
+      "cook": 18,
+      "total": 43
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "breakfast",
+      "Mediterranean",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/45.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -2380,6 +4045,43 @@
         "quantity": 7.55,
         "unit": "g"
       }
+    ],
+    "meal": "lunch",
+    "summary": "Thai lunch built around thai garden vegetables and warm spices.",
+    "time": {
+      "prep": 31,
+      "cook": 12,
+      "total": 43
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "lunch",
+      "Thai",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/46.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -2427,6 +4129,43 @@
         "category": "spice",
         "quantity": 2.8,
         "unit": "g"
+      }
+    ],
+    "meal": "dinner",
+    "summary": "Indian dinner built around indian garden vegetables and warm spices.",
+    "time": {
+      "prep": 16,
+      "cook": 40,
+      "total": 56
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "dinner",
+      "Indian",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/47.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -2476,6 +4215,43 @@
         "quantity": 4,
         "unit": "g"
       }
+    ],
+    "meal": "snack",
+    "summary": "Nordic snack built around nordic garden vegetables and warm spices.",
+    "time": {
+      "prep": 18,
+      "cook": 37,
+      "total": 55
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "snack",
+      "Nordic",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/48.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -2523,6 +4299,43 @@
         "category": "spice",
         "quantity": 4.1,
         "unit": "g"
+      }
+    ],
+    "meal": "breakfast",
+    "summary": "Peruvian breakfast built around peruvian garden vegetables and warm spices.",
+    "time": {
+      "prep": 27,
+      "cook": 20,
+      "total": 47
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "breakfast",
+      "Peruvian",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/49.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -2572,6 +4385,43 @@
         "quantity": 1.35,
         "unit": "g"
       }
+    ],
+    "meal": "lunch",
+    "summary": "Moroccan lunch built around moroccan garden vegetables and warm spices.",
+    "time": {
+      "prep": 28,
+      "cook": 41,
+      "total": 69
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "lunch",
+      "Moroccan",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/50.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -2620,6 +4470,43 @@
         "quantity": 7.8,
         "unit": "g"
       }
+    ],
+    "meal": "dinner",
+    "summary": "Coastal dinner built around coastal garden vegetables and warm spices.",
+    "time": {
+      "prep": 10,
+      "cook": 24,
+      "total": 34
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "dinner",
+      "Coastal",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/51.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -2667,6 +4554,43 @@
         "category": "spice",
         "quantity": 1.55,
         "unit": "g"
+      }
+    ],
+    "meal": "snack",
+    "summary": "Korean snack built around korean garden vegetables and warm spices.",
+    "time": {
+      "prep": 35,
+      "cook": 26,
+      "total": 61
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "snack",
+      "Korean",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/52.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Prep produce and grains according to listed measurements",
+        "ingredients": []
+      },
+      {
+        "step": "Step 2",
+        "description": "Warm a sauté pan with infused oil and aromatics",
+        "ingredients": []
+      },
+      {
+        "step": "Step 3",
+        "description": "Combine protein and vegetables, cook until tender",
+        "ingredients": []
+      },
+      {
+        "step": "Step 4",
+        "description": "Finish with herbs, seeds, and serve immediately",
+        "ingredients": []
       }
     ]
   },
@@ -2719,6 +4643,28 @@
         "quantity": 15,
         "unit": "g"
       }
+    ],
+    "meal": "lunch",
+    "summary": "Californian lunch built around baby lettuces and warm spices.",
+    "time": {
+      "prep": 28,
+      "cook": 22,
+      "total": 50
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "lunch",
+      "Californian",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/53.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Toss greens with grains, roast vegetables, top with avocado-citrus dressing and seeds",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -2769,6 +4715,28 @@
         "category": "produce",
         "quantity": 30,
         "unit": "g"
+      }
+    ],
+    "meal": "breakfast",
+    "summary": "Nordic breakfast built around rye flatbread and warm spices.",
+    "time": {
+      "prep": 18,
+      "cook": 10,
+      "total": 28
+    },
+    "difficulty_level": "easy",
+    "dietary_tags": [
+      "breakfast",
+      "Nordic",
+      "easy"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/54.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Warm the rye wrap, fill with smoked fish alternative, pickled vegetables, and dill yogurt",
+        "ingredients": []
       }
     ]
   },
@@ -2821,6 +4789,28 @@
         "quantity": 18,
         "unit": "ml"
       }
+    ],
+    "meal": "dinner",
+    "summary": "Iberian dinner built around braised white beans and warm spices.",
+    "time": {
+      "prep": 35,
+      "cook": 40,
+      "total": 75
+    },
+    "difficulty_level": "advanced",
+    "dietary_tags": [
+      "dinner",
+      "Iberian",
+      "advanced"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/55.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Simmer slow-cooked legumes with smoked paprika vegetables, finish with herb oil",
+        "ingredients": []
+      }
     ]
   },
   {
@@ -2864,6 +4854,28 @@
         "category": "dairy",
         "quantity": 50,
         "unit": "ml"
+      }
+    ],
+    "meal": "snack",
+    "summary": "Andean snack built around lucuma chia pudding and warm spices.",
+    "time": {
+      "prep": 12,
+      "cook": 0,
+      "total": 12
+    },
+    "difficulty_level": "easy",
+    "dietary_tags": [
+      "snack",
+      "Andean",
+      "easy"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/56.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Layer chia-lucuma pudding with quinoa crunch, berries, and maca yogurt topping",
+        "ingredients": []
       }
     ]
   },
@@ -2915,6 +4927,28 @@
         "category": "produce",
         "quantity": 45,
         "unit": "g"
+      }
+    ],
+    "meal": "dinner",
+    "summary": "Levantine dinner built around sumac freekeh pilaf and warm spices.",
+    "time": {
+      "prep": 32,
+      "cook": 18,
+      "total": 50
+    },
+    "difficulty_level": "moderate",
+    "dietary_tags": [
+      "dinner",
+      "Levantine",
+      "moderate"
+    ],
+    "source": "AI nutrition studio",
+    "img": "/images/recipes/57.jpg",
+    "preparation": [
+      {
+        "step": "Step 1",
+        "description": "Layer freekeh pilaf, grilled halloumi-style tofu, roasted eggplant, and sumac drizzle",
+        "ingredients": []
       }
     ]
   }

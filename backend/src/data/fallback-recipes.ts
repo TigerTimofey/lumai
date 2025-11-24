@@ -49,8 +49,16 @@ const makeRecipe = (
   servings: 1,
   prepTimeMin: 10,
   cookTimeMin: 15,
+  time: {
+    prep: 10,
+    cook: 15,
+    total: 25
+  },
   instructions: steps.join(" "),
   summary,
+  difficultyLevel: "easy",
+  source: "AI nutrition studio",
+  img: `/images/recipes/${id}.jpg`,
   dietaryTags: ["balanced"],
   allergenTags: [],
   ingredients,

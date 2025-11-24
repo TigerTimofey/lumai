@@ -38,16 +38,35 @@ type RecipeFromJson = {
   name: string;
   cuisine: string;
   course: string;
+  meal?: string;
   servings: number;
   calories_est?: number;
+  summary?: string;
   instructions?: string;
   prep_time_min?: number;
   prepTimeMin?: number;
   cook_time_min?: number;
   cookTimeMin?: number;
+  time?: {
+    prep: number;
+    cook: number;
+    total: number;
+  };
+  difficulty_level?: string;
+  dietary_tags?: string[];
+  source?: string;
+  img?: string;
+  preparation?: Array<{
+    step: string;
+    description: string;
+    ingredients: string[];
+  }>;
   ingredients: Array<{
     ingredient_id: number | string;
     name: string;
+    category?: string;
+    quantity: number;
+    unit: string;
   }>;
 };
 
@@ -62,6 +81,19 @@ const recipePrepTimeIndex = typedRecipes.reduce<Record<string, number>>((acc, re
 }, {});
 const generateLocalId = () =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+
+const DEFAULT_RECIPE_IMAGE =
+  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=640&q=80';
+const RAPID_API_KEY = import.meta.env.VITE_RAPIDAPI_KEY ?? '';
+const RAPID_API_HOST = import.meta.env.VITE_RAPIDAPI_IMAGE_HOST ?? 'free-images-api.p.rapidapi.com';
+const RAPID_API_PATH = import.meta.env.VITE_RAPIDAPI_IMAGE_PATH ?? '/v2';
+
+const resolveRecipeImage = ({ img }: { img?: string }) => {
+  if (img && img.trim().length) {
+    return img;
+  }
+  return DEFAULT_RECIPE_IMAGE;
+};
 
 const SHOPPING_CATEGORIES = [
   { key: 'produce', label: 'Fresh produce', hints: ['produce', 'vegetable', 'fruit', 'greens'], icon: '🥬' },
@@ -394,16 +426,21 @@ type RecipeDetail = {
   id: string;
   title: string;
   cuisine: string;
+  meal?: string;
   summary: string;
   dietaryTags?: string[];
   ingredients: Array<{ id: string; name: string; quantity: number; unit: string; originalUnit?: string; originalQuantity?: number }>;
   preparation: Array<{ step: string; description: string; ingredients: string[] }>;
   instructions: string;
   servings: number;
+  time?: { prep: number; cook: number; total: number };
+  difficultyLevel?: string;
   macrosPerServing: { calories: number; protein: number; carbs: number; fats: number; fiber?: number };
   ratingAverage?: number;
   ratingCount?: number;
   prepTimeMin?: number;
+  source?: string;
+  img?: string;
 };
 
 type RecipeReview = {
@@ -465,22 +502,40 @@ const mapJsonRecipeToDetail = (recipeId: string): RecipeDetail | null => {
   const match = typedRecipes.find((recipe) => String(recipe.recipe_id) === String(recipeId));
   if (!match) return null;
   const caloriesFromJson = Number(match.calories_est ?? 0);
+  const summary =
+    match.summary ??
+    (match.course ? `Course: ${match.course}` : `Chef-crafted ${match.cuisine ?? 'global'} dish`);
+  const prepTime = match.prep_time_min ?? match.prepTimeMin ?? match.time?.prep ?? 0;
+  const cookTime = match.cook_time_min ?? match.cookTimeMin ?? match.time?.cook ?? 0;
+  const totalTime = match.time?.total ?? prepTime + cookTime;
   return {
     id: String(match.recipe_id),
     title: match.name,
     cuisine: match.cuisine || 'Unknown cuisine',
-    summary: match.course ? `Course: ${match.course}` : 'Recipe preview',
-    dietaryTags: match.course ? [match.course] : [],
+    meal: match.meal ?? match.course ?? 'meal',
+    summary,
+    dietaryTags: match.dietary_tags ?? (match.course ? [match.course] : []),
+    difficultyLevel: match.difficulty_level ?? (totalTime > 60 ? 'advanced' : totalTime > 30 ? 'moderate' : 'easy'),
     ingredients: match.ingredients.map((ingredient, index) => ({
       id: ingredient.ingredient_id ? String(ingredient.ingredient_id) : `${match.recipe_id}-${index}`,
       name: ingredient.name,
-      quantity: 1,
-      unit: 'unit'
+      quantity: ingredient.quantity ?? 1,
+      unit: ingredient.unit ?? 'g'
     })),
-    preparation: [],
+    preparation:
+      match.preparation && match.preparation.length
+        ? match.preparation
+        : [
+            {
+              step: 'Step 1',
+              description: match.instructions ?? 'Follow the cooking instructions provided.',
+              ingredients: []
+            }
+          ],
     instructions: match.instructions ?? '',
     servings: match.servings ?? 1,
-    prepTimeMin: match.prep_time_min ?? match.prepTimeMin ?? 0,
+    time: { prep: prepTime, cook: cookTime, total: totalTime },
+    prepTimeMin: prepTime,
     macrosPerServing: {
       calories: Number.isNaN(caloriesFromJson) ? 0 : caloriesFromJson,
       protein: 0,
@@ -488,6 +543,8 @@ const mapJsonRecipeToDetail = (recipeId: string): RecipeDetail | null => {
       fats: 0,
       fiber: 0
     },
+    source: match.source ?? 'AI nutrition studio',
+    img: match.img ?? '/images/recipes/default.jpg',
     ratingAverage: 0,
     ratingCount: 0
   };
@@ -1837,6 +1894,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                 {recipeSearchLoading ? 'Searching…' : 'Search recipes'}
               </button>
             </form>
+              <p className='calories-section-label'>FILTER</p>
             <div className="recipe-advanced-filters">
               <div>
                 <label htmlFor="recipeAllergens">Exclude allergens</label>
@@ -2072,12 +2130,18 @@ interface ProgressProps {
 const ProgressBar: React.FC<ProgressProps> = ({ label, value, target, percentage, unit, compact }) => {
   return (
     <div className={`progress-card ${compact ? 'progress-card-compact' : ''}`}>
+      <div className="progress-card-track-wrapper">
+        <div className="progress-bar-track" aria-valuemin={0} aria-valuemax={target} aria-valuenow={value}>
+          <div className="progress-bar-fill" style={{ width: `${Math.min(120, percentage)}%` }} />
+        </div>
+      </div>
       <div className="progress-card-header">
         <span>{label}</span>
-        <span>{Math.round(value)}{unit ? ` ${unit}` : ''} / {Math.round(target)}{unit ? ` ${unit}` : ''}</span>
-      </div>
-      <div className="progress-bar-track" aria-valuemin={0} aria-valuemax={target} aria-valuenow={value}>
-        <div className="progress-bar-fill" style={{ width: `${Math.min(120, percentage)}%` }} />
+        <span>
+          {Math.round(value)}
+          {unit ? ` ${unit}` : ''} / {Math.round(target)}
+          {unit ? ` ${unit}` : ''}
+        </span>
       </div>
     </div>
   );
@@ -2626,11 +2690,47 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
   const [substitutionIdeas, setSubstitutionIdeas] = useState<Record<string, IngredientSubstitutionSuggestion[]>>({});
   const [substitutionLoading, setSubstitutionLoading] = useState<Record<string, boolean>>({});
   const [substitutionError, setSubstitutionError] = useState<string | null>(null);
+  const [recipeImage, setRecipeImage] = useState(() => resolveRecipeImage({ img: recipe.img }));
   useEffect(() => {
     setSubstitutionIdeas({});
     setSubstitutionLoading({});
     setSubstitutionError(null);
-  }, [recipe.id]);
+    setRecipeImage(resolveRecipeImage({ img: recipe.img }));
+  }, [recipe.id, recipe.img]);
+  useEffect(() => {
+    if (!RAPID_API_KEY) return undefined;
+    let cancelled = false;
+    const fetchImage = async () => {
+      try {
+        const basePath = RAPID_API_PATH.endsWith('/') ? RAPID_API_PATH.slice(0, -1) : RAPID_API_PATH;
+        const query = encodeURIComponent(`${recipe.cuisine ?? ''} ${recipe.title}`.trim() || 'healthy meal');
+        const url = `https://${RAPID_API_HOST}${basePath}/${query}/1`;
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'X-RapidAPI-Key': RAPID_API_KEY,
+            'X-RapidAPI-Host': RAPID_API_HOST
+          }
+        });
+        const result = await response.json();
+        console.log('RapidAPI image response:', result);
+        const candidate =
+          result?.image ??
+          result?.results?.[0]?.image ??
+          result?.data?.[0]?.image ??
+          (Array.isArray(result?.diffrentSizes) ? result.diffrentSizes[0] : undefined);
+        if (!cancelled && candidate) {
+          setRecipeImage(candidate);
+        }
+      } catch (error) {
+        console.error('RapidAPI image fetch failed', error);
+      }
+    };
+    fetchImage();
+    return () => {
+      cancelled = true;
+    };
+  }, [recipe.id, recipe.title, recipe.cuisine]);
   const availabilityTokens = useMemo(() => tokenizeAvailability(availabilityNotes), [availabilityNotes]);
   const scale = servings / (recipe.servings || 1);
   const scaledIngredients = recipe.ingredients.map((ingredient) => ({
@@ -2698,7 +2798,10 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
   return (
     <div className="recipe-modal-backdrop" role="dialog" aria-modal>
       <div className="recipe-modal">
-        <header>
+        <header className="recipe-modal-header">
+          {recipeImage.length > 0 && (
+            <img src={recipeImage} alt={`${recipe.title}`} className="recipe-modal-thumb" loading="lazy" />
+          )}
           <div>
             <h3>{recipe.title}</h3>
             <p>{recipe.summary}</p>

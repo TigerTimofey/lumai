@@ -50,7 +50,10 @@ const envSchema = z.object({
     .optional()
     .transform((value) => (value ? Number(value) : 4000))
     .pipe(z.number().int().positive()),
-  FRONTEND_URL: z.string().url()
+  FRONTEND_URL: z.string().url(),
+  RAPIDAPI_KEY: z.string().optional(),
+  RAPIDAPI_IMAGE_HOST: z.string().optional(),
+  RAPIDAPI_IMAGE_PATH: z.string().optional()
 });
 
 type EnvConfig = z.infer<typeof envSchema>;

@@ -222,8 +222,16 @@ export interface RecipeDocument {
   servings: number;
   prepTimeMin: number;
   cookTimeMin: number;
+  time?: {
+    prep: number;
+    cook: number;
+    total: number;
+  };
   instructions: string;
   summary: string;
+  difficultyLevel?: "easy" | "moderate" | "advanced" | string;
+  source?: string;
+  img?: string;
   preparation?: Array<{
     step: string;
     description: string;
