@@ -1071,22 +1071,38 @@
 }
 
 .macro-pie-card {
-  background:transparent;
+  background: transparent;
   border-radius: 16px;
   margin-top: 10px;
   padding: 16px;
-  max-width: 300px;
   width: 100%;
-}
-
-.macro-pie-card canvas {
-  width: 150px !important;
-  height: 300px !important;
-  margin: 0 auto;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .macro-pie-card header {
   margin-bottom: 12px;
+}
+
+.macro-pie-chart {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
+}
+
+.macro-pie-card canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (min-width: 768px) {
+  .macro-pie-card {
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
 
 .recipe-search {

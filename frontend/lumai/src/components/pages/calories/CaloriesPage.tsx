@@ -1596,19 +1596,20 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                 <strong>Heads up:</strong> fill out dietary preferences, allergies, disliked ingredients, and meals-per-day to help AI craft better plans.
               </div>
             )}
-                         {macroPieChart && (
-                    <div className="macro-pie-card">
-                      <header>
-                        <h3>Macro breakdown</h3>
-                        <p>Distribution for your latest log</p>
-                      </header>
+                {macroPieChart && (
+                  <div className="macro-pie-card">
+                    <header>
+                      <h3>Macro breakdown</h3>
+                      <p>Distribution for your latest log</p>
+                    </header>
+                    <div className="macro-pie-chart">
                       <Doughnut
                         data={{
                           labels: macroPieChart.labels,
                           datasets: [
                             {
                               data: macroPieChart.data,
-                              backgroundColor: ['#0ea5e9', '#fbbf24', '#f97316'],
+                              backgroundColor: ["#0ea5e9", "#fbbf24", "#f97316"],
                               hoverOffset: 8
                             }
                           ]
@@ -1617,12 +1618,13 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                           maintainAspectRatio: false,
                           responsive: true,
                           plugins: {
-                            legend: { position: 'bottom' }
+                            legend: { position: "bottom" }
                           }
                         }}
                       />
                     </div>
-                  )}
+                  </div>
+                )}
             {micronutrientSummary?.coverage && (
               <article className="micronutrient-summary-card">
                     <header>
