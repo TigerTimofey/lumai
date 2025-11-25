@@ -12,6 +12,7 @@ const createIngredient = (
 ) => ({
   id,
   name,
+  label: name,
   quantity,
   unit,
   originalUnit: unit,

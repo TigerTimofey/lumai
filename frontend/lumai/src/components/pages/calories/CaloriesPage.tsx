@@ -429,7 +429,15 @@ type RecipeDetail = {
   meal?: string;
   summary: string;
   dietaryTags?: string[];
-  ingredients: Array<{ id: string; name: string; quantity: number; unit: string; originalUnit?: string; originalQuantity?: number }>;
+  ingredients: Array<{
+    id: string;
+    name: string;
+    label: string;
+    quantity: number;
+    unit: string;
+    originalUnit?: string;
+    originalQuantity?: number;
+  }>;
   preparation: Array<{ step: string; description: string; ingredients: string[] }>;
   instructions: string;
   servings: number;
@@ -473,6 +481,7 @@ const createManualMealForm = (): ManualMealForm => ({
 type RecipeIngredientPreview = {
   id?: string;
   name?: string;
+  label?: string;
 };
 
 type RecipeSearchMatch = {
@@ -519,6 +528,7 @@ const mapJsonRecipeToDetail = (recipeId: string): RecipeDetail | null => {
     ingredients: match.ingredients.map((ingredient, index) => ({
       id: ingredient.ingredient_id ? String(ingredient.ingredient_id) : `${match.recipe_id}-${index}`,
       name: ingredient.name,
+      label: ingredient.name,
       quantity: ingredient.quantity ?? 1,
       unit: ingredient.unit ?? 'g'
     })),

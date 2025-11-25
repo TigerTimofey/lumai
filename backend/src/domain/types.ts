@@ -206,6 +206,7 @@ export interface IngredientDocument {
 export interface RecipeIngredient {
   id: string;
   name: string;
+  label: string;
   quantity: number; // grams/ml standardized
   unit: "g" | "ml";
   originalUnit?: string;

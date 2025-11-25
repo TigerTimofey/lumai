@@ -230,6 +230,7 @@ const normalizeAiIngredients = (value: unknown) => {
       return {
         id: typeof obj.id === "string" ? obj.id : `ai-${index}`,
         name: typeof obj.name === "string" ? obj.name : `ingredient-${index + 1}`,
+        label: typeof obj.label === "string" ? obj.label : typeof obj.name === "string" ? obj.name : `ingredient-${index + 1}`,
         quantity,
         unit: obj.unit === "ml" ? "ml" : "g",
         nutrition: {

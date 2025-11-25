@@ -284,6 +284,7 @@ const main = async () => {
         return {
           id: ingredient.id,
           name: ingredient.name,
+          label: ingredient.name,
           quantity: Number(grams.toFixed(2)),
           unit: "g",
           originalQuantity: amount,
@@ -405,6 +406,7 @@ const main = async () => {
       ingredients: normalizedIngredients.map((ingredient) => ({
         id: ingredient.id,
         name: ingredient.name,
+        label: ingredient.label,
         quantity: ingredient.quantity,
         unit: "g",
         originalQuantity: ingredient.originalQuantity,
