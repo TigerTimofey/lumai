@@ -806,6 +806,80 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     ];
   }, [preferences, latestSnapshot]);
 
+  const intakeComparisons = useMemo(() => {
+    if (!preferences || !latestSnapshot) return null;
+    const macroTargets = preferences.macronutrientTargets ?? DEFAULT_MACRO_TARGETS;
+    const history = snapshots.length ? snapshots : latestSnapshot ? [latestSnapshot] : [];
+    const window = history.slice(0, 7);
+    const aggregated = window.reduce(
+      (acc, entry) => {
+        acc.calories += entry.totals.calories;
+        acc.protein += entry.totals.protein;
+        acc.carbs += entry.totals.carbs;
+        acc.fats += entry.totals.fats;
+        return acc;
+      },
+      { calories: 0, protein: 0, carbs: 0, fats: 0 }
+    );
+    const divisor = window.length || 1;
+    const weeklyAverages = {
+      calories: aggregated.calories / divisor,
+      protein: aggregated.protein / divisor,
+      carbs: aggregated.carbs / divisor,
+      fats: aggregated.fats / divisor
+    };
+    return {
+      daily: {
+        calories: {
+          actual: latestSnapshot.totals.calories,
+          target: preferences.calorieTarget,
+          delta: latestSnapshot.goalComparison.calorieDelta
+        },
+        macros: {
+          protein: {
+            actual: latestSnapshot.totals.protein,
+            target: macroTargets.protein,
+            delta: latestSnapshot.goalComparison.proteinDelta
+          },
+          carbs: {
+            actual: latestSnapshot.totals.carbs,
+            target: macroTargets.carbs,
+            delta: latestSnapshot.goalComparison.carbsDelta
+          },
+          fats: {
+            actual: latestSnapshot.totals.fats,
+            target: macroTargets.fats,
+            delta: latestSnapshot.goalComparison.fatsDelta
+          }
+        }
+      },
+      weekly: {
+        calories: {
+          actual: weeklyAverages.calories,
+          target: preferences.calorieTarget,
+          delta: weeklyAverages.calories - preferences.calorieTarget
+        },
+        macros: {
+          protein: {
+            actual: weeklyAverages.protein,
+            target: macroTargets.protein,
+            delta: weeklyAverages.protein - macroTargets.protein
+          },
+          carbs: {
+            actual: weeklyAverages.carbs,
+            target: macroTargets.carbs,
+            delta: weeklyAverages.carbs - macroTargets.carbs
+          },
+          fats: {
+            actual: weeklyAverages.fats,
+            target: macroTargets.fats,
+            delta: weeklyAverages.fats - macroTargets.fats
+          }
+        }
+      }
+    };
+  }, [preferences, latestSnapshot, snapshots]);
+
   const micronutrientChart = useMemo(() => {
     if (!preferences || !latestSnapshot) return null;
     const labels = ['Vitamin D', 'Vitamin B12', 'Iron', 'Magnesium'];
@@ -1499,6 +1573,63 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                     ))}
                   </div>
                 </div>
+
+                {intakeComparisons && (
+                  <div className="calories-comparison">
+                    <header>
+                      <p className="calories-section-label">Daily vs weekly intake</p>
+                      <h3>Compare your deficit/surplus</h3>
+                    </header>
+                    <div className="comparison-grid">
+                      {(["daily", "weekly"] as const).map((key) => {
+                        const entry = intakeComparisons[key];
+                        const macroLabels: Record<string, string> = {
+                          protein: "Protein",
+                          carbs: "Carbs",
+                          fats: "Fats"
+                        };
+                        return (
+                          <article key={key} className="comparison-card">
+                            <p className="comparison-title">
+                              {key === "daily" ? "Daily snapshot" : "7-day average"}
+                            </p>
+                            <p className="comparison-value">{Math.round(entry.calories.actual)} kcal</p>
+                            <p className="comparison-target">Target {Math.round(entry.calories.target)} kcal</p>
+                            <p
+                              className={`comparison-delta ${
+                                entry.calories.delta > 0 ? "is-surplus" : entry.calories.delta < 0 ? "is-deficit" : ""
+                              }`}
+                            >
+                              {describeDelta(entry.calories.delta, "kcal")}
+                            </p>
+                            <ul className="comparison-macros">
+                              {(Object.keys(entry.macros) as Array<keyof typeof entry.macros>).map((macro) => {
+                                const data = entry.macros[macro];
+                                return (
+                                  <li key={`${key}-${macro}`}>
+                                    <div>
+                                      <span className="comparison-macro-label">{macroLabels[macro]}</span>
+                                      <span className="comparison-macro-value">
+                                        {Math.round(data.actual)} g / {Math.round(data.target)} g
+                                      </span>
+                                    </div>
+                                    <span
+                                      className={`comparison-macro-delta ${
+                                        data.delta > 0 ? "is-surplus" : data.delta < 0 ? "is-deficit" : ""
+                                      }`}
+                                    >
+                                      {describeDelta(data.delta, "g")}
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 <div className="calories-charts">
                   <div className="micronutrient-card">
@@ -2997,6 +3128,13 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
       </div>
     </div>
   );
+};
+
+const describeDelta = (delta: number, unit: string) => {
+  if (!Number.isFinite(delta)) return "–";
+  const rounded = Math.round(delta);
+  if (rounded === 0) return "On target";
+  return `${Math.abs(rounded)} ${unit} ${rounded > 0 ? "surplus" : "deficit"}`;
 };
 
 const formatDate = (date: string, timeZone: string) =>
