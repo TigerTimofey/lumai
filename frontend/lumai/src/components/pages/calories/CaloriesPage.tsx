@@ -782,6 +782,23 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     return Math.min(120, Math.round((latestSnapshot.totals.calories / preferences.calorieTarget) * 100));
   }, [preferences, latestSnapshot]);
 
+  const calorieDeltaValue = useMemo(() => {
+    if (!preferences || !latestSnapshot || !preferences.calorieTarget) return null;
+    return latestSnapshot.totals.calories - preferences.calorieTarget;
+  }, [preferences, latestSnapshot]);
+
+  const calorieStatus = useMemo<ProgressProps["status"]>(() => {
+    if (calorieDeltaValue === null) return undefined;
+    if (calorieDeltaValue > 0) return "surplus";
+    if (calorieDeltaValue < 0) return "deficit";
+    return "neutral";
+  }, [calorieDeltaValue]);
+
+  const calorieDeltaLabel = useMemo(() => {
+    if (calorieDeltaValue === null) return undefined;
+    return describeDelta(calorieDeltaValue, "kcal");
+  }, [calorieDeltaValue]);
+
   const macroProgress = useMemo(() => {
     if (!preferences || !latestSnapshot) return null;
     return [
@@ -1559,6 +1576,8 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                       target={preferences?.calorieTarget ?? 0}
                       percentage={calorieProgress}
                       unit="kcal"
+                      status={calorieStatus}
+                      deltaLabel={calorieDeltaLabel}
                     />
                     {macroProgress?.map((macro) => (
                       <ProgressBar
@@ -2268,14 +2287,19 @@ interface ProgressProps {
   percentage: number;
   unit?: string;
   compact?: boolean;
+  status?: "surplus" | "deficit" | "neutral";
+  deltaLabel?: string;
 }
 
-const ProgressBar: React.FC<ProgressProps> = ({ label, value, target, percentage, unit, compact }) => {
+const ProgressBar: React.FC<ProgressProps> = ({ label, value, target, percentage, unit, compact, status, deltaLabel }) => {
+  const fillClass =
+    status === "surplus" ? "progress-bar-fill is-surplus" : status === "deficit" ? "progress-bar-fill is-deficit" : "progress-bar-fill";
+  const statusClass = status ? `progress-card-status status-${status}` : "progress-card-status";
   return (
     <div className={`progress-card ${compact ? 'progress-card-compact' : ''}`}>
       <div className="progress-card-track-wrapper">
         <div className="progress-bar-track" aria-valuemin={0} aria-valuemax={target} aria-valuenow={value}>
-          <div className="progress-bar-fill" style={{ width: `${Math.min(120, percentage)}%` }} />
+          <div className={fillClass} style={{ width: `${Math.min(120, percentage)}%` }} />
         </div>
       </div>
       <div className="progress-card-header">
@@ -2286,6 +2310,7 @@ const ProgressBar: React.FC<ProgressProps> = ({ label, value, target, percentage
           {unit ? ` ${unit}` : ''}
         </span>
       </div>
+      {deltaLabel && <p className={statusClass}>{deltaLabel}</p>}
     </div>
   );
 };
