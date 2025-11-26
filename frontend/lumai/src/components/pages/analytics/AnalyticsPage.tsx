@@ -1666,198 +1666,180 @@ const AnalyticsPage: React.FC<{ user: User }> = ({ user }) => {
             </article>
           )}
           
-          {progressChartSeries && (
-            <article className="analytics-panel analytics-panel--wide">
-              <header>
-                <h2>Progress Overview</h2>
-                <p>Combined view of weight trend, wellness score evolution, and activity level changes.</p>
-              </header>
-              <div className="analytics-chart">
-                <Line
-                  data={progressChartSeries}
-                  options={{
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: 'bottom',
-                        labels: {
-                          usePointStyle: true,
-                          padding: 20
-                        }
-                      }
-                    },
-                    scales: {
-                      weight: {
-                        type: 'linear',
-                        position: 'left',
-                        title: {
-                          display: true,
-                          text: 'Weight (kg)'
-                        },
-                        grid: {
-                          drawOnChartArea: false
-                        }
-                      },
-                      wellness: {
-                        type: 'linear',
-                        position: 'right',
-                        title: {
-                          display: true,
-                          text: 'Wellness Score'
-                        },
-                        min: 0,
-                        max: 100,
-                        grid: {
-                          drawOnChartArea: false
-                        }
-                      },
-                      activity: {
-                        type: 'linear',
-                        position: 'right',
-                        title: {
-                          display: true,
-                          text: 'Activity Score'
-                        },
-                        min: 0,
-                        max: 100,
-                        grid: {
-                          drawOnChartArea: false
-                        },
-                        ticks: {
-                          callback: function(value) {
-                            if (value === 20) return 'Sedentary';
-                            if (value === 40) return 'Light';
-                            if (value === 55) return 'Lightly Active';
-                            if (value === 70) return 'Moderate';
-                            if (value === 80) return 'Active';
-                            if (value === 90) return 'Very Active';
-                            if (value === 95) return 'Extra Active';
-                            return '';
+        {(progressChartSeries || wellnessSeries || weightTargetBar || trainingDoughnut || habitRadar) && (
+          <section className="analytics-progress-section" aria-labelledby="progress-charts-heading">
+            <header>
+              <p className="analytics-section-kicker">Historical analysis</p>
+              <h2 id="progress-charts-heading">Progress charts</h2>
+              <p>Track longer-term patterns in weight, wellness, training cadence, and sustainability.</p>
+            </header>
+            <div className="analytics-progress-grid">
+              {progressChartSeries && (
+                <article className="analytics-panel analytics-panel--wide">
+                  <header>
+                    <h3>Progress overview</h3>
+                    <p>Weight, wellness score, and activity plotted together for weekly insight.</p>
+                  </header>
+                  <div className="analytics-chart">
+                    <Line
+                      data={progressChartSeries}
+                      options={{
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            position: 'bottom',
+                            labels: {
+                              usePointStyle: true,
+                              padding: 20
+                            }
                           }
-                        }
-                      }
-                    },
-                    interaction: {
-                      mode: 'index',
-                      intersect: false
-                    },
-                    hover: {
-                      mode: 'index',
-                      intersect: false
-                    }
-                  }}
-                />
-              </div>
-            </article>
-          )}
-          
-          {wellnessSeries && (
-            <article className="analytics-panel">
-              <header>
-                <h2>Wellness score</h2>
-                <p>Overall balance based on BMI, activity, training cadence, and habits.</p>
-              </header>
-              <div className="analytics-chart">
-                <Line
-                  data={wellnessSeries}
-                  options={{
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                      y: {
-                        beginAtZero: true,
-                        suggestedMax: 100
-                      }
-                    }
-                  }}
-                />
-              </div>
-            </article>
-          )}
+                        },
+                        scales: {
+                          weight: {
+                            type: 'linear',
+                            position: 'left',
+                            title: { display: true, text: 'Weight (kg)' },
+                            grid: { drawOnChartArea: false }
+                          },
+                          wellness: {
+                            type: 'linear',
+                            position: 'right',
+                            title: { display: true, text: 'Wellness Score' },
+                            min: 0,
+                            max: 100,
+                            grid: { drawOnChartArea: false }
+                          },
+                          activity: {
+                            type: 'linear',
+                            position: 'right',
+                            title: { display: true, text: 'Activity Score' },
+                            min: 0,
+                            max: 100,
+                            grid: { drawOnChartArea: false },
+                            ticks: {
+                              callback(value) {
+                                if (value === 20) return 'Sedentary';
+                                if (value === 40) return 'Light';
+                                if (value === 55) return 'Lightly Active';
+                                if (value === 70) return 'Moderate';
+                                if (value === 80) return 'Active';
+                                if (value === 90) return 'Very Active';
+                                if (value === 95) return 'Extra Active';
+                                return '';
+                              }
+                            }
+                          }
+                        },
+                        interaction: { mode: 'index', intersect: false },
+                        hover: { mode: 'index', intersect: false }
+                      }}
+                    />
+                  </div>
+                </article>
+              )}
 
-         
-
-          {weightTargetBar && (
-            <article className="analytics-panel">
-              <header>
-                <h2>Goal alignment</h2>
-                <p>Compare your current weight with the target you set.</p>
-              </header>
-              <div className="analytics-chart">
-                {(() => {
-                  const datasetValues = (weightTargetBar.datasets[0].data as number[]).filter((v) => Number.isFinite(v));
-                  const suggestedMax = datasetValues.length > 0 ? Math.max(...datasetValues) + 5 : 10;
-                  return (
-                    <Bar
-                      data={weightTargetBar}
+              {wellnessSeries && (
+                <article className="analytics-panel">
+                  <header>
+                    <h3>Wellness score</h3>
+                    <p>Overall balance based on BMI, activity, training cadence, and habits.</p>
+                  </header>
+                  <div className="analytics-chart">
+                    <Line
+                      data={wellnessSeries}
                       options={{
                         maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
                           y: {
                             beginAtZero: true,
-                            suggestedMax
+                            suggestedMax: 100
                           }
                         }
                       }}
                     />
-                  );
-                })()}
-              </div>
-            </article>
-          )}
+                  </div>
+                </article>
+              )}
 
-       
+              {weightTargetBar && (
+                <article className="analytics-panel">
+                  <header>
+                    <h3>Goal alignment</h3>
+                    <p>Compare your current weight with your target goal.</p>
+                  </header>
+                  <div className="analytics-chart">
+                    {(() => {
+                      const datasetValues = (weightTargetBar.datasets[0].data as number[]).filter((v) => Number.isFinite(v));
+                      const suggestedMax = datasetValues.length > 0 ? Math.max(...datasetValues) + 5 : 10;
+                      return (
+                        <Bar
+                          data={weightTargetBar}
+                          options={{
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                              y: {
+                                beginAtZero: true,
+                                suggestedMax
+                              }
+                            }
+                          }}
+                        />
+                      );
+                    })()}
+                  </div>
+                </article>
+              )}
 
-          {trainingDoughnut && (
-            <article className="analytics-panel">
-              <header>
-                <h2>Training cadence</h2>
-                <p>{`Logged ${Number.isInteger(trainingDoughnut.attained) ? trainingDoughnut.attained : trainingDoughnut.attained.toFixed(1)} of ${Number.isInteger(trainingDoughnut.target) ? trainingDoughnut.target : trainingDoughnut.target.toFixed(1)} sessions this week`}</p>
-              </header>
-              <div className="analytics-chart analytics-chart--centered">
-                <Doughnut
-                  data={trainingDoughnut.data}
-                  options={{
-                    maintainAspectRatio: false,
-                    cutout: '65%',
-                    plugins: {
-                      legend: { position: 'bottom' }
-                    }
-                  }}
-                />
-              </div>
-            </article>
-          )}
+              {trainingDoughnut && (
+                <article className="analytics-panel">
+                  <header>
+                    <h3>Training cadence</h3>
+                    <p>{`Logged ${Number.isInteger(trainingDoughnut.attained) ? trainingDoughnut.attained : trainingDoughnut.attained.toFixed(1)} of ${Number.isInteger(trainingDoughnut.target) ? trainingDoughnut.target : trainingDoughnut.target.toFixed(1)} sessions this week.`}</p>
+                  </header>
+                  <div className="analytics-chart analytics-chart--centered">
+                    <Doughnut
+                      data={trainingDoughnut.data}
+                      options={{
+                        maintainAspectRatio: false,
+                        cutout: '65%',
+                        plugins: { legend: { position: 'bottom' } }
+                      }}
+                    />
+                  </div>
+                </article>
+              )}
 
-          {habitRadar && (
-            <article className="analytics-panel analytics-panel--wide analytics-panel--radar">
-              <header>
-                <h2>Wellness balance</h2>
-                <p>Sleep, hydration, stress, and activity signals from your latest data.</p>
-              </header>
-              <div className="analytics-chart">
-                <Radar
-                  data={habitRadar}
-                  options={{
-                    maintainAspectRatio: false,
-                    scales: {
-                      r: {
-                        beginAtZero: true,
-                        suggestedMax: 10,
-                        ticks: { showLabelBackdrop: false, stepSize: 2 }
-                      }
-                    },
-                    plugins: { legend: { display: false } }
-                  }}
-                />
-              </div>
-            </article>
-          )}
+              {habitRadar && (
+                <article className="analytics-panel analytics-panel--wide analytics-panel--radar">
+                  <header>
+                    <h3>Wellness balance</h3>
+                    <p>Sleep, hydration, stress, and activity signals from your latest data.</p>
+                  </header>
+                  <div className="analytics-chart">
+                    <Radar
+                      data={habitRadar}
+                      options={{
+                        maintainAspectRatio: false,
+                        scales: {
+                          r: {
+                            beginAtZero: true,
+                            suggestedMax: 10,
+                            ticks: { showLabelBackdrop: false, stepSize: 2 }
+                          }
+                        },
+                        plugins: { legend: { display: false } }
+                      }}
+                    />
+                  </div>
+                </article>
+              )}
+            </div>
+          </section>
+        )}
 
-          {comparisonMetrics.length > 0 && (
-            <ComparisonViewWidget metrics={comparisonMetrics} />
-          )}
+        {comparisonMetrics.length > 0 && <ComparisonViewWidget metrics={comparisonMetrics} />}
 
     
         </section>
