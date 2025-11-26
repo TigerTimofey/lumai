@@ -1038,6 +1038,55 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     return base;
   }, [analysis, latestSnapshot, preferences, micronutrientSummary]);
 
+  const aiSummary = useMemo(() => {
+    if (!preferences || !latestSnapshot) return null;
+    const achievements: string[] = [];
+    const concerns: string[] = [];
+    const macroNotes: string[] = [];
+
+    if (calorieDeltaValue !== null && preferences.calorieTarget) {
+      if (Math.abs(calorieDeltaValue) <= preferences.calorieTarget * 0.1) {
+        achievements.push("Calories stayed close to plan.");
+      } else if (calorieDeltaValue > 0) {
+        concerns.push(`Caloric surplus of ${describeDelta(calorieDeltaValue, "kcal")}.`);
+      } else {
+        concerns.push(`Caloric deficit of ${describeDelta(calorieDeltaValue, "kcal")}.`);
+      }
+    }
+
+    (macroProgress ?? []).forEach((macro) => {
+      if (!macro.target) return;
+      const ratio = macro.value / macro.target;
+      if (ratio >= 0.95 && ratio <= 1.05) {
+        achievements.push(`${macro.label} intake hit target.`);
+      } else if (ratio < 0.9) {
+        macroNotes.push(`${macro.label} is trending low (${Math.round(macro.value)}g vs ${macro.target}g).`);
+      } else if (ratio > 1.2) {
+        macroNotes.push(`${macro.label} is trending high (${Math.round(macro.value)}g vs ${macro.target}g).`);
+      }
+    });
+
+    if (riskAdvice.length) {
+      concerns.push(...riskAdvice.slice(0, 2));
+    } else if (!concerns.length) {
+      concerns.push("No major risks detected.");
+    }
+
+    if (!macroNotes.length) {
+      macroNotes.push("Macros are balanced within expected ranges.");
+    }
+
+    if (!achievements.length) {
+      achievements.push("Daily logging keeps insights personalized.");
+    }
+
+    return {
+      achievements: uniqueStrings(achievements).slice(0, 3),
+      concerns: uniqueStrings(concerns).slice(0, 3),
+      macroNotes: uniqueStrings(macroNotes).slice(0, 3)
+    };
+  }, [preferences, latestSnapshot, calorieDeltaValue, macroProgress, riskAdvice]);
+
   const flattenedMeals = useMemo(() => {
     if (!selectedPlan) return [];
     return selectedPlan.days.flatMap((day) =>
@@ -1660,6 +1709,41 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                       })}
                     </div>
                   </div>
+                )}
+
+                {aiSummary && (
+                  <section className="ai-summary">
+                    <header>
+                      <p className="calories-section-label">AI summary</p>
+                      <h3>Weekly nutrition brief</h3>
+                    </header>
+                    <div className="ai-summary-grid">
+                      <article>
+                        <h4>Key achievements</h4>
+                        <ul>
+                          {aiSummary.achievements.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </article>
+                      <article>
+                        <h4>Potential concerns</h4>
+                        <ul>
+                          {aiSummary.concerns.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </article>
+                      <article>
+                        <h4>Macro balance</h4>
+                        <ul>
+                          {aiSummary.macroNotes.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </article>
+                    </div>
+                  </section>
                 )}
 
                 {(weeklyDeltaChart || monthlyDeltaChart) && (

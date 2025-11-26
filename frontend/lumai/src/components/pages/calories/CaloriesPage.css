@@ -1226,6 +1226,48 @@
   text-align: right;
 }
 
+.ai-summary {
+  margin-top: 20px;
+  padding: 24px;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 15px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.ai-summary header {
+  margin-bottom: 16px;
+}
+
+.ai-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.ai-summary article {
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(248, 250, 252, 0.9);
+}
+
+.ai-summary article h4 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.ai-summary article ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #475569;
+  font-size: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .calories-trend-lines {
   margin-top: 20px;
   padding: 24px;
