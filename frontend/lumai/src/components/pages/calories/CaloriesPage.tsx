@@ -19,6 +19,7 @@ import UserSettingBar from '../dashboard/user-settings/userSettingBar';
 import './CaloriesPage.css';
 import recipesData from './receipts/recipes_with_ingredients.json';
 import { apiFetch } from '../../../utils/api';
+import { AiImprovementSection, type ImprovementData } from './AiImprovementSection';
 
 ChartJS.register(
   RadialLinearScale,
@@ -1038,6 +1039,112 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     return base;
   }, [analysis, latestSnapshot, preferences, micronutrientSummary]);
 
+  const aiImprovementSuggestions = useMemo<ImprovementData | null>(() => {
+    const suggestions: ImprovementData = { food: [], timing: [], portions: [], ingredients: [], plan: [] };
+
+    const nutrientIngredientMap: Record<string, string> = {
+      vitaminD: 'swap standard dairy for fortified yogurt or include salmon once this week',
+      vitaminB12: 'rotate in eggs, nutritional yeast, or cottage cheese for B12 support',
+      iron: 'use lentils, chickpeas, or spinach instead of low-iron sides',
+      magnesium: 'add pumpkin seeds, oats, or dark leafy greens to snacks'
+    };
+
+    const deficits = micronutrientSummary?.deficits ?? [];
+    if (micronutrientSummary?.recipeIdeas?.length) {
+      suggestions.food.push(`Add ${micronutrientSummary.recipeIdeas.slice(0, 2).join(', ')} to boost variety.`);
+    }
+    deficits.forEach((key) => {
+      if (nutrientIngredientMap[key]) {
+        suggestions.food.push(`Focus on foods rich in ${formatMicronutrientLabel(key)}: ${nutrientIngredientMap[key]}.`);
+        suggestions.ingredients.push(`Swap ingredients to raise ${formatMicronutrientLabel(key)} — ${nutrientIngredientMap[key]}.`);
+      }
+    });
+    if (!suggestions.food.length) {
+      suggestions.food.push('Rotate one high-fiber bowl or hearty salad at lunch to add phytonutrients.');
+    }
+
+    const parseHour = (value?: string) => {
+      if (!value) return null;
+      const date = new Date(value);
+      return Number.isFinite(date.getTime()) ? date.getHours() : null;
+    };
+    const mealTimes = preferences?.preferredMealTimes ?? {};
+    const breakfastHour = parseHour(mealTimes.breakfast);
+    const dinnerHour = parseHour(mealTimes.dinner);
+    if (typeof breakfastHour === 'number' && breakfastHour > 9) {
+      suggestions.timing.push('Consider shifting breakfast earlier to stabilize morning blood sugar.');
+    }
+    if (typeof dinnerHour === 'number' && dinnerHour > 20) {
+      suggestions.timing.push('Move dinner 30 minutes earlier to improve evening digestion.');
+    }
+    if ((preferences?.mealsPerDay ?? 0) < 4) {
+      suggestions.timing.push('Add a light mid-afternoon snack to avoid late-night cravings.');
+    }
+    if (!suggestions.timing.length) {
+      suggestions.timing.push('Keep consistent spacing (~4 hours) between meals to reduce energy dips.');
+    }
+
+    (macroProgress ?? []).forEach((macro) => {
+      if (!macro.target) return;
+      const ratio = macro.value / macro.target;
+      if (ratio < 0.9) {
+        suggestions.portions.push(`Increase ${macro.label.toLowerCase()} portions by ~15% using lean, whole-food sources.`);
+      } else if (ratio > 1.2) {
+        suggestions.portions.push(`Trim ${macro.label.toLowerCase()} portions slightly or use lighter cooking methods.`);
+      }
+    });
+    if (calorieDeltaValue !== null) {
+      if (calorieDeltaValue > 150) {
+        suggestions.portions.push('Serve slightly smaller portions at dinner to offset the caloric surplus.');
+      } else if (calorieDeltaValue < -150) {
+        suggestions.portions.push('Scale up breakfast or add healthy fats to close the calorie gap.');
+      }
+    }
+    if (!suggestions.portions.length) {
+      suggestions.portions.push('Maintain current portion sizes—macros are tracking well.');
+    }
+
+    if (!suggestions.ingredients.length) {
+      suggestions.ingredients.push('Swap refined grains for quinoa or farro to add fiber without extra prep.');
+      if ((preferences?.allergies.length ?? 0) > 0) {
+        suggestions.ingredients.push('Revisit pantry staples to ensure allergen-free alternatives are stocked.');
+      }
+    }
+
+    if (analysis?.suggestions?.length) {
+      suggestions.plan.push(...analysis.suggestions.slice(0, 2));
+    }
+    if (derivedPlanMetrics) {
+      if (derivedPlanMetrics.diversityIndex < 70) {
+        suggestions.plan.push('Rotate in new cuisines to lift meal diversity above 70%.');
+      }
+      if (derivedPlanMetrics.weeklyTrends.proteinConsistency === 'low') {
+        suggestions.plan.push('Ask the planner for an extra protein-focused dinner midweek.');
+      }
+      if (derivedPlanMetrics.sustainabilityMetrics.plantToAnimalRatio < 1) {
+        suggestions.plan.push('Swap one animal-based entrée for a plant-forward bowl to balance the ratio.');
+      }
+    }
+    if (!suggestions.plan.length) {
+      suggestions.plan.push('Use the regenerate button on at least one dinner to explore new meal ideas.');
+    }
+
+    return {
+      food: uniqueStrings(suggestions.food).slice(0, 3),
+      timing: uniqueStrings(suggestions.timing).slice(0, 2),
+      portions: uniqueStrings(suggestions.portions).slice(0, 2),
+      ingredients: uniqueStrings(suggestions.ingredients).slice(0, 2),
+      plan: uniqueStrings(suggestions.plan).slice(0, 2)
+    };
+  }, [
+    micronutrientSummary,
+    preferences,
+    macroProgress,
+    calorieDeltaValue,
+    analysis?.suggestions,
+    derivedPlanMetrics
+  ]);
+
   const aiSummary = useMemo(() => {
     if (!preferences || !latestSnapshot) return null;
     const achievements: string[] = [];
@@ -1884,6 +1991,8 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                     )}
                   </article>
                 </div>
+
+                {aiImprovementSuggestions && <AiImprovementSection data={aiImprovementSuggestions} />}
               </>
             )}
           </section>

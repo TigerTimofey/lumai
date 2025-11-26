@@ -1268,6 +1268,51 @@
   gap: 6px;
 }
 
+.ai-improvement-section {
+  margin-top: 20px;
+  padding: 24px;
+  border-radius: 24px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 15px 30px rgba(15, 23, 42, 0.06);
+}
+
+.ai-improvement-section header {
+  margin-bottom: 16px;
+}
+
+.ai-improvement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.ai-improvement-card {
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(248, 250, 252, 0.95);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ai-improvement-card h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.ai-improvement-card ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #475569;
+  font-size: 0.92rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .calories-trend-lines {
   margin-top: 20px;
   padding: 24px;
