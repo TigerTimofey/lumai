@@ -1226,6 +1226,48 @@
   text-align: right;
 }
 
+.calories-trend-lines {
+  margin-top: 20px;
+  padding: 24px;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.calories-trend-lines header {
+  margin-bottom: 16px;
+}
+
+.trend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.trend-card {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(249, 250, 251, 0.95);
+  height: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trend-card h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.trend-card canvas {
+  flex: 0 0 auto;
+  height: 180px !important;
+  width: 100% !important;
+}
+
 .recipe-search {
   background: #fff;
   border-radius: 24px;

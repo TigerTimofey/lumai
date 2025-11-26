@@ -728,7 +728,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
       try {
         const [prefs, snapshotResponse, planResponse, listResponse, micronutrientResp] = await Promise.all([
           apiFetch<NutritionPreferences>('/nutrition/preferences'),
-          apiFetch<{ snapshots: NutritionSnapshot[] }>('/nutrition/snapshots?limit=7'),
+          apiFetch<{ snapshots: NutritionSnapshot[] }>('/nutrition/snapshots?limit=30'),
           apiFetch<{ plans: MealPlan[] }>('/nutrition/meal-plans?limit=3'),
           apiFetch<{ lists: ShoppingList[] }>('/nutrition/shopping-lists?limit=3'),
           apiFetch<MicronutrientSummary>('/nutrition/micronutrients/summary')
@@ -1070,7 +1070,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
 
   const refreshSnapshots = useCallback(async () => {
     try {
-      const snapshotResponse = await apiFetch<{ snapshots: NutritionSnapshot[] }>('/nutrition/snapshots?limit=7');
+      const snapshotResponse = await apiFetch<{ snapshots: NutritionSnapshot[] }>('/nutrition/snapshots?limit=30');
       setSnapshot(snapshotResponse.snapshots?.[0] ?? null);
       setSnapshots(snapshotResponse.snapshots ?? []);
     } catch (error) {
@@ -1519,6 +1519,18 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
     };
   }, [preferences, snapshot, snapshots]);
 
+  const weeklyDeltaChart = useMemo(() => {
+    if (!preferences?.calorieTarget || !snapshots.length) return null;
+    const entries = snapshots.slice(0, 7);
+    return buildCalorieDeltaChart(entries, preferences.calorieTarget, preferences.timezone);
+  }, [preferences, snapshots]);
+
+  const monthlyDeltaChart = useMemo(() => {
+    if (!preferences?.calorieTarget || !snapshots.length) return null;
+    const entries = snapshots.slice(0, 30);
+    return buildCalorieDeltaChart(entries, preferences.calorieTarget, preferences.timezone);
+  }, [preferences, snapshots]);
+
   return (
     <div className="dashboard-shell">
       <SideNav activeKey="nutrition" />
@@ -1648,6 +1660,59 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                       })}
                     </div>
                   </div>
+                )}
+
+                {(weeklyDeltaChart || monthlyDeltaChart) && (
+                  <section className="calories-trend-lines">
+                    <header>
+                      <p className="calories-section-label">Caloric trend</p>
+                      <h3>Daily surplus/deficit over time</h3>
+                    </header>
+                    <div className="trend-grid">
+                      {weeklyDeltaChart && (
+                        <article className="trend-card">
+                          <h4>Last 7 days</h4>
+                          <Line
+                            data={weeklyDeltaChart}
+                            options={{
+                              maintainAspectRatio: false,
+                              plugins: { legend: { display: false } },
+                              scales: {
+                                y: {
+                                  grid: { color: 'rgba(15, 23, 42, 0.08)' },
+                                  ticks: { callback: (value) => `${value} kcal` }
+                                },
+                                x: {
+                                  grid: { display: false }
+                                }
+                              }
+                            }}
+                          />
+                        </article>
+                      )}
+                      {monthlyDeltaChart && (
+                        <article className="trend-card">
+                          <h4>Last 30 days</h4>
+                          <Line
+                            data={monthlyDeltaChart}
+                            options={{
+                              maintainAspectRatio: false,
+                              plugins: { legend: { display: false } },
+                              scales: {
+                                y: {
+                                  grid: { color: 'rgba(15, 23, 42, 0.08)' },
+                                  ticks: { callback: (value) => `${value} kcal` }
+                                },
+                                x: {
+                                  grid: { display: false }
+                                }
+                              }
+                            }}
+                          />
+                        </article>
+                      )}
+                    </div>
+                  </section>
                 )}
 
                 <div className="calories-charts">
@@ -3155,12 +3220,40 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
   );
 };
 
+const buildCalorieDeltaChart = (entries: NutritionSnapshot[], target: number, timeZone: string) => {
+  const filtered = entries.filter((entry) => typeof entry.totals.calories === 'number' && entry.date);
+  if (!filtered.length) return null;
+  const ordered = [...filtered].reverse();
+  const labels = ordered.map((entry) => formatShortDate(entry.date, timeZone));
+  const deltas = ordered.map((entry) => Math.round((entry.totals.calories ?? 0) - target));
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Daily calorie delta',
+        data: deltas,
+        borderColor: 'rgba(139, 92, 246, 1)',
+        backgroundColor: 'rgba(139, 92, 246, 0.2)',
+        fill: true,
+        tension: 0.35,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: deltas.map((value) => (value >= 0 ? '#dc2626' : '#0ea5e9')),
+        pointBorderWidth: 0
+      }
+    ]
+  };
+};
+
 const describeDelta = (delta: number, unit: string) => {
   if (!Number.isFinite(delta)) return "–";
   const rounded = Math.round(delta);
   if (rounded === 0) return "On target";
   return `${Math.abs(rounded)} ${unit} ${rounded > 0 ? "surplus" : "deficit"}`;
 };
+
+const formatShortDate = (date: string, timeZone: string) =>
+  new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', timeZone }).format(new Date(date));
 
 const formatDate = (date: string, timeZone: string) =>
   new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeZone }).format(new Date(date));
