@@ -69,7 +69,7 @@ export const generateIngredientSubstitutions = async (
     ingredient,
     availability: availability || "unspecified",
     recipeTitle: recipe ? `${recipe.title} (${recipe.cuisine ?? "Any cuisine"})` : "Custom recipe",
-    recipeSummary: recipe?.summary ?? recipe?.course ?? "",
+    recipeSummary: recipe?.summary ?? recipe?.meal ?? "",
     recipeMacros: recipe ? formatMacrosSummary(recipe.macrosPerServing) : "",
     restrictions: (preferences?.dietaryRestrictions ?? []).join(", "),
     temperature: 0.5,
