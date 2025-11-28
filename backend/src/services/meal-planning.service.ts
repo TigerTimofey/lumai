@@ -9,7 +9,11 @@ import type {
 import {
   createMealPlan,
   getMealPlan,
+  getMealPlanVersion,
+  listMealPlanVersions,
   listMealPlans,
+  replaceMealPlan,
+  saveMealPlanVersion,
   updateMealPlan
 } from "../repositories/calories.repo.js";
 import { fetchNutritionPreferences } from "./nutrition-preferences.service.js";
@@ -115,6 +119,11 @@ const buildFallbackDays = (
 export const generateMealPlan = async (userId: string, options: GeneratePlanOptions) => {
   const planDoc = await buildMealPlanDocument(userId, options);
   await createMealPlan(userId, planDoc);
+  const storedPlan = await getMealPlan(userId, planDoc.id);
+  if (storedPlan) {
+    await saveMealPlanVersion(userId, storedPlan);
+    return storedPlan;
+  }
   return planDoc;
 };
 
@@ -129,12 +138,15 @@ export const regenerateMealPlan = async (userId: string, planId: string) => {
     duration: existing.duration,
     startDate: existing.startDate
   }, planId, existing.version + 1);
-  await updateMealPlan(userId, planId, {
+  const payload: MealPlanDocument = {
     ...regenerated,
     version: existing.version + 1,
+    createdAt: existing.createdAt,
     updatedAt: Timestamp.now()
-  });
-  return getMealPlan(userId, planId);
+  };
+  await replaceMealPlan(userId, payload);
+  await saveMealPlanVersion(userId, payload);
+  return payload;
 };
 
 export const regenerateMeal = async (
@@ -210,6 +222,28 @@ export const swapMeals = async (userId: string, planId: string, sourceDate: stri
   targetDay.meals[targetIndex] = temp;
   await updateMealPlan(userId, planId, { days: plan.days });
   return getMealPlan(userId, planId);
+};
+
+export const listMealPlanVersionsForUser = (userId: string, planId: string, limit = 10) =>
+  listMealPlanVersions(userId, planId, limit);
+
+export const restoreMealPlanVersion = async (userId: string, planId: string, version: number) => {
+  const currentPlan = await getMealPlan(userId, planId);
+  const versionDoc = await getMealPlanVersion(userId, planId, version);
+  if (!versionDoc) {
+    throw notFound("Meal plan version not found");
+  }
+  if (currentPlan && currentPlan.version !== version) {
+    await saveMealPlanVersion(userId, currentPlan);
+  }
+  const { storedAt: _storedAt, sourceVersion: _sourceVersion, ...snapshot } = versionDoc;
+  const restoredPlan: MealPlanDocument = {
+    ...snapshot,
+    restoredFromVersion: snapshot.restoredFromVersion,
+    updatedAt: Timestamp.now()
+  };
+  await replaceMealPlan(userId, restoredPlan);
+  return restoredPlan;
 };
 
 export const addManualMeal = async (

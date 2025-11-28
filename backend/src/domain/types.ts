@@ -384,6 +384,12 @@ export interface MealPlanDocument {
   days: MealPlanDay[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  restoredFromVersion?: number;
+}
+
+export interface MealPlanVersionDocument extends MealPlanDocument {
+  sourceVersion: number;
+  storedAt: Timestamp;
 }
 
 export interface ShoppingListItem {

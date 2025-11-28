@@ -240,6 +240,8 @@ type MealPlan = {
   startDate: string;
   endDate: string;
   timezone: string;
+  version?: number;
+  restoredFromVersion?: number;
   strategySummary: string;
   analysis?: MealPlanAnalysis;
   nutritionalBalanceScore: number;
@@ -485,6 +487,16 @@ type RecipeIngredientPreview = {
   label?: string;
 };
 
+type MealPlanVersionMeta = {
+  version: number;
+  storedAt: string;
+  startDate: string;
+  endDate: string;
+  duration: 'daily' | 'weekly';
+  restoredFromVersion?: number;
+  createdAt?: string;
+};
+
 type RecipeSearchMatch = {
   recipe: {
     id: string;
@@ -586,7 +598,7 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   const [swapSource, setSwapSource] = useState<string>('');
   const [swapTarget, setSwapTarget] = useState<string>('');
   const [manualMeals, setManualMeals] = useState<Record<string, ManualMealForm>>({});
-  const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
+  const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({ __planHistory: true });
   const [pendingMealLog, setPendingMealLog] = useState<{ key: string; action: 'log' | 'unlog' } | null>(null);
   const [micronutrientSummary, setMicronutrientSummary] = useState<MicronutrientSummary | null>(null);
   const [micronutrientFocus, setMicronutrientFocus] = useState<string>('');
@@ -611,6 +623,9 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   const [recipeSearchError, setRecipeSearchError] = useState<string | null>(null);
   const [recipeReplaceLoading, setRecipeReplaceLoading] = useState<string | null>(null);
   const [ingredientAvailability, setIngredientAvailability] = useState('');
+  const [planVersions, setPlanVersions] = useState<MealPlanVersionMeta[]>([]);
+  const [planVersionsLoading, setPlanVersionsLoading] = useState(false);
+  const [planVersionsError, setPlanVersionsError] = useState<string | null>(null);
 
   const selectedPlan = mealPlans.find((plan) => plan.id === selectedPlanId) ?? null;
 
@@ -772,6 +787,15 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
   useEffect(() => {
     setSwapSource('');
   }, [selectedPlanId]);
+
+  useEffect(() => {
+    if (!selectedPlanId) {
+      setAnalysis(null);
+      return;
+    }
+    const plan = mealPlans.find((entry) => entry.id === selectedPlanId) ?? null;
+    setAnalysis(plan?.analysis ?? null);
+  }, [mealPlans, selectedPlanId]);
 
   const handleGoToNutrition = () => {
     window.history.pushState({}, '', '/nutrition');
@@ -1213,10 +1237,42 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
 
   const fetchMealPlans = useCallback(async () => {
     const response = await apiFetch<{ plans: MealPlan[] }>('/nutrition/meal-plans?limit=3');
-    setMealPlans(response.plans ?? []);
-    setSelectedPlanId((prev) => prev ?? response.plans?.[0]?.id ?? null);
-    setAnalysis(response.plans?.[0]?.analysis ?? null);
+    const plans = response.plans ?? [];
+    setMealPlans(plans);
+    setSelectedPlanId((prev) => {
+      if (prev && plans.some((plan) => plan.id === prev)) return prev;
+      return plans[0]?.id ?? null;
+    });
   }, []);
+
+  const fetchPlanVersions = useCallback(async (planId: string | null) => {
+    if (!planId) {
+      setPlanVersions([]);
+      return;
+    }
+    setPlanVersionsLoading(true);
+    setPlanVersionsError(null);
+    try {
+      const response = await apiFetch<{ versions: MealPlanVersionMeta[] }>(
+        `/nutrition/meal-plans/${planId}/versions?limit=5`
+      );
+      setPlanVersions(response.versions ?? []);
+    } catch (err) {
+      console.warn('Failed to load plan versions', err);
+      setPlanVersions([]);
+      setPlanVersionsError('Unable to load plan history.');
+    } finally {
+      setPlanVersionsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selectedPlanId) {
+      setPlanVersions([]);
+      return;
+    }
+    void fetchPlanVersions(selectedPlanId);
+  }, [selectedPlanId, mealPlans, fetchPlanVersions]);
 
   const fetchShoppingListsData = useCallback(async () => {
     const response = await apiFetch<{ lists: ShoppingList[] }>('/nutrition/shopping-lists?limit=3');
@@ -1306,6 +1362,35 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
       setPlannerLoading(false);
     }
   };
+
+  const handleRestorePlanVersion = useCallback(
+    async (planId: string, version: number) => {
+      setPlannerLoading(true);
+      try {
+        await apiFetch(`/nutrition/meal-plans/${planId}/versions/${version}/restore`, { method: 'POST' });
+        await fetchMealPlans();
+        await fetchPlanVersions(planId);
+        await refreshSnapshots();
+        setError(null);
+      } catch (err) {
+        console.error('Failed to restore meal plan version', err);
+        setError(err instanceof Error ? err.message : 'Failed to restore meal plan version');
+      } finally {
+        setPlannerLoading(false);
+      }
+    },
+    [fetchMealPlans, fetchPlanVersions, refreshSnapshots]
+  );
+
+  const latestRestorableVersion = useMemo(() => {
+    const currentVersion = selectedPlan?.version ?? null;
+    return planVersions.find((entry) => entry.version !== currentVersion) ?? null;
+  }, [planVersions, selectedPlan?.version]);
+
+  const handleRestoreLatestVersion = useCallback(() => {
+    if (!selectedPlanId || !latestRestorableVersion) return;
+    void handleRestorePlanVersion(selectedPlanId, latestRestorableVersion.version);
+  }, [handleRestorePlanVersion, latestRestorableVersion, selectedPlanId]);
 
   const getManualMealForDate = useCallback(
     (date: string) => manualMeals[date] ?? createManualMealForm(),
@@ -2138,11 +2223,70 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
               plannerLoading={plannerLoading}
               micronutrientFocus={micronutrientFocus}
               onMicronutrientFocusChange={setMicronutrientFocus}
+              onRestorePreviousVersion={handleRestoreLatestVersion}
+              canRestorePreviousVersion={Boolean(latestRestorableVersion)}
             />
+            {selectedPlanId && (
+              <section className="plan-history-card">
+                <header className="plan-history-header">
+                  <h3>Plan history</h3>
+                  <div className="plan-history-actions">
+                    <p>Restore a previous version if you need to roll back AI changes.</p>
+                    <button
+                      type="button"
+                      className="dashboard-hero-action dashboard-hero-action--ghost"
+                      onClick={() =>
+                        setExpandedDays((prev) => ({
+                          ...prev,
+                          __planHistory: !prev.__planHistory
+                        }))
+                      }
+                    >
+                      {expandedDays.__planHistory ? 'Collapse' : 'Expand'}
+                    </button>
+                  </div>
+                </header>
+                {planVersionsLoading ? (
+                  <p className="calories-empty">Loading plan versions…</p>
+                ) : expandedDays.__planHistory && planVersions.length ? (
+                  <ul className="plan-history-list">
+                    {planVersions.map((version) => {
+                      const isCurrent = version.version === selectedPlan?.version;
+                      return (
+                      <li key={version.version}>
+                        <div>
+                          <strong>
+                            {formatDate(version.startDate, selectedPlan?.timezone ?? preferences?.timezone ?? 'UTC')} –{' '}
+                            {formatDate(version.endDate, selectedPlan?.timezone ?? preferences?.timezone ?? 'UTC')}
+                          </strong>
+                          <span>{formatDateTime(version.storedAt)}</span>
+                          {version.restoredFromVersion && (
+                            <em>Restored from version {version.restoredFromVersion}</em>
+                          )}
+                          {isCurrent && <em>Current version</em>}
+                        </div>
+                        <button
+                          type="button"
+                          className="dashboard-hero-action dashboard-hero-action--ghost"
+                          disabled={plannerLoading || isCurrent}
+                          onClick={() => handleRestorePlanVersion(selectedPlanId, version.version)}
+                        >
+                          {isCurrent ? 'Active' : 'Restore'}
+                        </button>
+                      </li>
+                    );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="calories-empty">No plan history yet. Generate or regenerate to start saving versions.</p>
+                )}
+                {planVersionsError && <p className="plan-history-error">{planVersionsError}</p>}
+              </section>
+            )}
             <MealCalendar
               plan={selectedPlan}
               timezone={selectedPlan?.timezone ?? preferences?.timezone ?? 'UTC'}
-              onRegenerateMeal={(date, mealId) => selectedPlanId && handleRegenerateMeal(selectedPlanId, date, mealId)}
+              onRegenerateMeal={handleRegenerateMeal}
               onManualMealAdd={(date, manual) => selectedPlanId && handleManualMealAdd(selectedPlanId, date, manual)}
               manualMeals={manualMeals}
               onManualMealChange={updateManualMeal}
@@ -2728,6 +2872,8 @@ interface PlannerControlsProps {
   plannerLoading: boolean;
   micronutrientFocus: string;
   onMicronutrientFocusChange: (value: string) => void;
+  onRestorePreviousVersion: () => void;
+  canRestorePreviousVersion: boolean;
 }
 
 const PlannerControls: React.FC<PlannerControlsProps> = ({
@@ -2742,7 +2888,9 @@ const PlannerControls: React.FC<PlannerControlsProps> = ({
   flattenedMeals,
   plannerLoading,
   micronutrientFocus,
-  onMicronutrientFocusChange
+  onMicronutrientFocusChange,
+  onRestorePreviousVersion,
+  canRestorePreviousVersion
 }) => {
   const planOptions = mealPlans.map((plan) => ({
     id: plan.id,
@@ -2758,6 +2906,18 @@ const PlannerControls: React.FC<PlannerControlsProps> = ({
             <option key={option.id} value={option.id}>{option.label}</option>
           ))}
         </select>
+        <button
+          type="button"
+          className="dashboard-hero-action dashboard-hero-action--ghost"
+          onClick={onRestorePreviousVersion}
+          disabled={!canRestorePreviousVersion || plannerLoading}
+          style={{ marginTop: 8 }}
+        >
+          Restore previous version
+        </button>
+        {!canRestorePreviousVersion && (
+          <p className="planner-hint">Versions appear here after you regenerate a plan.</p>
+        )}
       </div>
       <div className="swap-row">
         <div>
@@ -2803,7 +2963,7 @@ const formatSwapValue = (meal: { value: { day: string; mealId: string } }) =>
 interface MealCalendarProps {
   plan: MealPlan | null;
   timezone: string;
-  onRegenerateMeal: (date: string, mealId: string) => void;
+  onRegenerateMeal: (planId: string, date: string, mealId: string) => void;
   onManualMealAdd: (date: string, manualMeal: ManualMealForm) => void;
   manualMeals: Record<string, ManualMealForm>;
   onManualMealChange: (date: string, field: keyof ManualMealForm, value: string | number) => void;
@@ -2908,7 +3068,13 @@ const MealCalendar: React.FC<MealCalendarProps> = ({
                             Recipe
                           </button>
                         )}
-                        <button type="button" className="dashboard-hero-action dashboard-hero-action--small" onClick={() => onRegenerateMeal(day.date, meal.id)}>Generate alternative</button>
+                        <button
+                          type="button"
+                          className="dashboard-hero-action dashboard-hero-action--small"
+                          onClick={() => onRegenerateMeal(plan.id, day.date, meal.id)}
+                        >
+                          Generate alternative
+                        </button>
                       </div>
                     </div>
                   );
@@ -3453,6 +3619,9 @@ const formatDate = (date: string, timeZone: string) =>
 
 const formatTime = (iso: string, timeZone: string) =>
   new Intl.DateTimeFormat(undefined, { timeStyle: 'short', timeZone }).format(new Date(iso));
+
+const formatDateTime = (iso: string) =>
+  new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
 
 const sumDayCalories = (day: MealPlan['days'][number]) =>
   day.meals.reduce((total, meal) => total + (meal.macros.calories ?? 0), 0);

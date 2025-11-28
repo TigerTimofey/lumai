@@ -3,6 +3,7 @@ import { firestore } from "../config/firebase.js";
 import type {
   NutritionPreferencesDocument,
   MealPlanDocument,
+  MealPlanVersionDocument,
   ShoppingListDocument,
   NutritionalSnapshotDocument
 } from "../domain/types.js";
@@ -14,6 +15,9 @@ const preferencesDoc = (userId: string) =>
 
 const mealPlansCollection = (userId: string) =>
   caloriesCollection().doc(userId).collection("mealPlans");
+
+const mealPlanVersionsCollection = (userId: string, planId: string) =>
+  mealPlansCollection(userId).doc(planId).collection("versions");
 
 const shoppingListCollection = (userId: string) =>
   caloriesCollection().doc(userId).collection("shoppingLists");
@@ -71,6 +75,18 @@ export const updateMealPlan = async (
     );
 };
 
+export const replaceMealPlan = async (userId: string, plan: MealPlanDocument) => {
+  await mealPlansCollection(userId)
+    .doc(plan.id)
+    .set(
+      {
+        ...plan,
+        updatedAt: Timestamp.now()
+      },
+      { merge: false }
+    );
+};
+
 export const getMealPlan = async (userId: string, planId: string) => {
   const snapshot = await mealPlansCollection(userId).doc(planId).get();
   return snapshot.exists ? (snapshot.data() as MealPlanDocument) : null;
@@ -82,6 +98,29 @@ export const listMealPlans = async (userId: string, limit = 10) => {
     .limit(limit)
     .get();
   return snapshot.docs.map((doc) => doc.data() as MealPlanDocument);
+};
+
+export const saveMealPlanVersion = async (userId: string, plan: MealPlanDocument) => {
+  await mealPlanVersionsCollection(userId, plan.id)
+    .doc(String(plan.version))
+    .set({
+      ...plan,
+      sourceVersion: plan.version,
+      storedAt: Timestamp.now()
+    } as MealPlanVersionDocument);
+};
+
+export const listMealPlanVersions = async (userId: string, planId: string, limit = 10) => {
+  const snapshot = await mealPlanVersionsCollection(userId, planId)
+    .orderBy("storedAt", "desc")
+    .limit(limit)
+    .get();
+  return snapshot.docs.map((doc) => doc.data() as MealPlanVersionDocument);
+};
+
+export const getMealPlanVersion = async (userId: string, planId: string, version: number) => {
+  const doc = await mealPlanVersionsCollection(userId, planId).doc(String(version)).get();
+  return doc.exists ? (doc.data() as MealPlanVersionDocument) : null;
 };
 
 export const saveShoppingList = async (

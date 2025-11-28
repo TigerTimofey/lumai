@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { Timestamp } from "firebase-admin/firestore";
 import type { RecipeReviewDocument } from "../domain/types.js";
 import { authContext } from "../middleware/auth-context.js";
 import {
@@ -19,7 +20,9 @@ import {
   regenerateMeal,
   swapMeals,
   addManualMeal,
-  generateMealAlternatives
+  generateMealAlternatives,
+  listMealPlanVersionsForUser,
+  restoreMealPlanVersion
 } from "../services/meal-planning.service.js";
 import {
   generateShoppingList,
@@ -177,6 +180,41 @@ router.post("/meal-plans/:planId/days/:date/meals", async (req, res, next) => {
     const userId = req.authToken?.uid;
     if (!userId) throw badRequest("Missing user context");
     const plan = await addManualMeal(userId, req.params.planId, req.params.date, req.body ?? {});
+    return res.json(plan);
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get("/meal-plans/:planId/versions", async (req, res, next) => {
+  try {
+    const userId = req.authToken?.uid;
+    if (!userId) throw badRequest("Missing user context");
+    const limit = Number(req.query.limit) || 10;
+    const versions = await listMealPlanVersionsForUser(userId, req.params.planId, limit);
+    return res.json({
+      versions: versions.map((entry) => ({
+        version: entry.version,
+        storedAt: entry.storedAt.toDate().toISOString(),
+        startDate: entry.startDate,
+        endDate: entry.endDate,
+        duration: entry.duration,
+        restoredFromVersion: entry.restoredFromVersion,
+        createdAt: entry.createdAt instanceof Timestamp ? entry.createdAt.toDate().toISOString() : entry.createdAt
+      }))
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post("/meal-plans/:planId/versions/:version/restore", async (req, res, next) => {
+  try {
+    const userId = req.authToken?.uid;
+    if (!userId) throw badRequest("Missing user context");
+    const version = Number(req.params.version);
+    if (!Number.isFinite(version)) throw badRequest("Invalid version parameter");
+    const plan = await restoreMealPlanVersion(userId, req.params.planId, version);
     return res.json(plan);
   } catch (error) {
     return next(error);
