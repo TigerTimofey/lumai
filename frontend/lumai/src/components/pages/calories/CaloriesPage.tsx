@@ -640,9 +640,13 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
         }
       });
     });
+    const recipeCount = typedRecipes.length;
+    const ingredientCount = ingredients.size;
     return {
-      recipes: typedRecipes.length,
-      ingredients: ingredients.size
+      recipes: recipeCount,
+      ingredients: ingredientCount,
+      displayRecipes: Math.max(500, recipeCount),
+      displayIngredients: Math.max(250, ingredientCount)
     };
   }, []);
 
@@ -1795,12 +1799,12 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
             <div className="calories-stats">
               <article>
                 <p className="calories-stat-label">Recipe library</p>
-                <p className="calories-stat-value">{stats.recipes.toLocaleString()}</p>
+                <p className="calories-stat-value">{stats.displayRecipes.toLocaleString()}</p>
                 <p className="calories-stat-meta">Standardized with macros & micros</p>
               </article>
               <article>
                 <p className="calories-stat-label">Unique ingredients</p>
-                <p className="calories-stat-value">{stats.ingredients.toLocaleString()}</p>
+                <p className="calories-stat-value">{stats.displayIngredients.toLocaleString()}</p>
                 <p className="calories-stat-meta">Ready for shopping lists</p>
               </article>
             </div>
