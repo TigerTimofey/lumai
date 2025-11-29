@@ -2,6 +2,7 @@ import type { User } from 'firebase/auth';
 
 import SideNav from '../../navigation/SideNav';
 import './Dashboard.css';
+import { useCallback } from 'react';
 import UserSettingBar from './user-settings/userSettingBar';
 import TwoFactorWidget from './security/TwoFactorWidget';
 import SessionWidget from './security/SessionWidget';
@@ -27,6 +28,10 @@ const Dashboard = ({ user }: DashboardProps) => {
     year: 'numeric',
   }).format(new Date());
   const userRegisteredAt = user.metadata?.creationTime ? new Date(user.metadata.creationTime) : null;
+  const handleOpenNutrition = useCallback(() => {
+    window.history.pushState({}, '', '/nutrition');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, []);
 
   return (
     <div className="dashboard-shell">
@@ -43,6 +48,18 @@ const Dashboard = ({ user }: DashboardProps) => {
               </div>
 
             </header>
+            <section className="calories-hero calories-hero--dashboard">
+              <div>
+                <p className="calories-eyebrow">Nutrition companion</p>
+                <h2 className="calories-title">Meal planning hub</h2>
+                <p className="calories-subtitle">
+                  Explore personalized plans powered by our RAG recipe library and nutrition analytics.
+                </p>
+                <button type="button" className="calories-cta" onClick={handleOpenNutrition}>
+                  Open nutrition workspace
+                </button>
+              </div>
+            </section>
 
             <DashboardWorkoutWidget uid={user.uid} registeredAt={userRegisteredAt} />
             <DailyNutritionWidget />

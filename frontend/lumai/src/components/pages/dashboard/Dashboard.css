@@ -147,6 +147,10 @@
   font-size: 0.95rem;
 }
 
+.calories-hero--dashboard {
+  margin-bottom: 24px;
+}
+
 .profile-completion-banner {
   display: flex;
   align-items: center;
