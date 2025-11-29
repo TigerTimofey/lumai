@@ -39,6 +39,7 @@ import {
 } from "../services/nutrition-snapshot.service.js";
 import { getMicronutrientSummary } from "../services/nutrition-analytics.service.js";
 import { generateIngredientSubstitutions } from "../services/ingredient-substitution.service.js";
+import { createRecipeFeedback } from "../repositories/calories.repo.js";
 import { badRequest, notFound } from "../utils/api-error.js";
 
 const router = Router();
@@ -192,17 +193,18 @@ router.get("/meal-plans/:planId/versions", async (req, res, next) => {
     if (!userId) throw badRequest("Missing user context");
     const limit = Number(req.query.limit) || 10;
     const versions = await listMealPlanVersionsForUser(userId, req.params.planId, limit);
-    return res.json({
-      versions: versions.map((entry) => ({
-        version: entry.version,
-        storedAt: entry.storedAt.toDate().toISOString(),
-        startDate: entry.startDate,
-        endDate: entry.endDate,
-        duration: entry.duration,
-        restoredFromVersion: entry.restoredFromVersion,
-        createdAt: entry.createdAt instanceof Timestamp ? entry.createdAt.toDate().toISOString() : entry.createdAt
-      }))
-    });
+        return res.json({
+          versions: versions.map((entry) => ({
+            version: entry.version,
+            storedAt: entry.storedAt.toDate().toISOString(),
+            startDate: entry.startDate,
+            endDate: entry.endDate,
+            duration: entry.duration,
+            restoredFromVersion: entry.restoredFromVersion,
+            createdAt: entry.createdAt instanceof Timestamp ? entry.createdAt.toDate().toISOString() : entry.createdAt,
+            preferenceHistorySummary: entry.preferenceHistorySummary
+          }))
+        });
   } catch (error) {
     return next(error);
   }
@@ -390,6 +392,25 @@ router.post("/recipes/:id/reviews", async (req, res, next) => {
     }
     const reviewId = await createReview(req.params.id, userId, Number(rating), comment);
     return res.status(201).json({ reviewId });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post("/recipes/:id/feedback", async (req, res, next) => {
+  try {
+    const userId = req.authToken?.uid;
+    const feedbackType = req.body?.feedbackType?.toString();
+    if (!feedbackType || !["like", "dislike", "issue", "suggestion"].includes(feedbackType)) {
+      throw badRequest("feedbackType must be one of like, dislike, issue, suggestion");
+    }
+    await createRecipeFeedback({
+      recipeId: req.params.id,
+      userId,
+      feedbackType: feedbackType as any,
+      comment: req.body?.comment?.toString()
+    });
+    return res.status(201).json({ message: "Feedback recorded" });
   } catch (error) {
     return next(error);
   }

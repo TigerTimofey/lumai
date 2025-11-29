@@ -264,6 +264,7 @@ type MealPlan = {
     date: string;
     meals: MealPlanMeal[];
   }[];
+  preferenceHistorySummary?: string;
 };
 
 type MealPlanMeal = {
@@ -495,6 +496,7 @@ type MealPlanVersionMeta = {
   duration: 'daily' | 'weekly';
   restoredFromVersion?: number;
   createdAt?: string;
+  preferenceHistorySummary?: string;
 };
 
 type RecipeSearchMatch = {
@@ -2246,6 +2248,9 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                     </button>
                   </div>
                 </header>
+                {selectedPlan?.preferenceHistorySummary && (
+                  <p className="plan-history-note">{selectedPlan.preferenceHistorySummary}</p>
+                )}
                 {planVersionsLoading ? (
                   <p className="calories-empty">Loading plan versions…</p>
                 ) : expandedDays.__planHistory && planVersions.length ? (
@@ -2260,6 +2265,9 @@ const CaloriesPage: React.FC<{ user: User }> = ({ user }) => {
                             {formatDate(version.endDate, selectedPlan?.timezone ?? preferences?.timezone ?? 'UTC')}
                           </strong>
                           <span>{formatDateTime(version.storedAt)}</span>
+                          {version.preferenceHistorySummary && (
+                            <span className="plan-history-note">{version.preferenceHistorySummary}</span>
+                          )}
                           {version.restoredFromVersion && (
                             <em>Restored from version {version.restoredFromVersion}</em>
                           )}
@@ -3283,6 +3291,10 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
   const [substitutionLoading, setSubstitutionLoading] = useState<Record<string, boolean>>({});
   const [substitutionError, setSubstitutionError] = useState<string | null>(null);
   const [recipeImage, setRecipeImage] = useState(() => resolveRecipeImage({ img: recipe.img }));
+  const [feedbackType, setFeedbackType] = useState<'like' | 'dislike' | 'issue' | 'suggestion'>('like');
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   useEffect(() => {
     setSubstitutionIdeas({});
     setSubstitutionLoading({});
@@ -3386,6 +3398,28 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
             .filter(Boolean);
           return chunks && chunks.length ? chunks : ["Follow standard preparation steps described in the recipe notes."];
         })();
+
+  const handleSubmitFeedback = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setFeedbackSubmitting(true);
+    setFeedbackMessage(null);
+    try {
+      await apiFetch(`/nutrition/recipes/${recipe.id}/feedback`, {
+        method: 'POST',
+        body: JSON.stringify({
+          feedbackType,
+          comment: feedbackComment || undefined
+        })
+      });
+      setFeedbackMessage('Thanks for helping improve our recipes!');
+      setFeedbackComment('');
+    } catch (error) {
+      console.error(error);
+      setFeedbackMessage('Unable to send feedback. Please try again later.');
+    } finally {
+      setFeedbackSubmitting(false);
+    }
+  };
 
   return (
     <div className="recipe-modal-backdrop" role="dialog" aria-modal>
@@ -3515,6 +3549,33 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
                 <li>No instructions provided.</li>
               )}
             </ol>
+          </section>
+          <section className="recipe-feedback">
+            <h4>Help improve recipes</h4>
+            <p>Share quick feedback so we can tune future RAG suggestions.</p>
+            <form onSubmit={handleSubmitFeedback}>
+              <label>
+                Feedback type
+                <select value={feedbackType} onChange={(e) => setFeedbackType(e.target.value as typeof feedbackType)}>
+                  <option value="like">Great match</option>
+                  <option value="dislike">Not relevant</option>
+                  <option value="issue">Data issue</option>
+                  <option value="suggestion">Suggest similar recipes</option>
+                </select>
+              </label>
+              <label>
+                Comment (optional)
+                <textarea
+                  value={feedbackComment}
+                  onChange={(e) => setFeedbackComment(e.target.value)}
+                  placeholder="e.g., incorrect macros or want more vegan options"
+                />
+              </label>
+              <button type="submit" className="dashboard-hero-action dashboard-hero-action--small" disabled={feedbackSubmitting}>
+                {feedbackSubmitting ? 'Sending…' : 'Send feedback'}
+              </button>
+            </form>
+            {feedbackMessage && <p className="recipe-feedback-message">{feedbackMessage}</p>}
           </section>
           {/* <section className="recipe-reviews">
             <h4>Community reviews</h4>

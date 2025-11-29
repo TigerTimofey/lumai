@@ -52,6 +52,13 @@ Frontend will be available on `http://localhost:4173`.
 
 ---
 
+## Community-driven RAG
+
+- Every recipe modal includes a “Help improve recipes” form. When users submit feedback (like/dislike/issues/suggestions), it’s stored in Firestore (`recipe_feedback`) so we can triage hallucinations and expand the RAG dataset.
+- Preference history is persisted automatically (see plan history card) so meal plans can reference prior calorie/diet changes when generating future recommendations.
+
+---
+
 ## 1. Prerequisites
 
 - **Node.js 20+** (use `nvm` or the official installer)

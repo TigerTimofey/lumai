@@ -297,6 +297,15 @@ export interface RecipeReviewDocument {
   moderatedAt?: Timestamp;
 }
 
+export interface RecipeFeedbackDocument {
+  id: string;
+  recipeId: string;
+  userId?: string;
+  feedbackType: "like" | "dislike" | "issue" | "suggestion";
+  comment?: string;
+  createdAt: Timestamp;
+}
+
 export interface NutritionPreferencesDocument {
   userId: string;
   timezone: string;
@@ -385,6 +394,7 @@ export interface MealPlanDocument {
   createdAt: Timestamp;
   updatedAt: Timestamp;
   restoredFromVersion?: number;
+  preferenceHistorySummary?: string;
 }
 
 export interface MealPlanVersionDocument extends MealPlanDocument {
@@ -409,6 +419,19 @@ export interface ShoppingListDocument {
   items: ShoppingListItem[];
   generatedAt: Timestamp;
   updatedAt: Timestamp;
+}
+
+export interface PreferenceHistoryEntry {
+  id: string;
+  source?: string;
+  calorieTarget: number;
+  mealsPerDay: number;
+  dietaryPreferences: string[];
+  dietaryRestrictions: string[];
+  allergies: string[];
+  dislikedIngredients: string[];
+  cuisinePreferences: string[];
+  createdAt: Timestamp;
 }
 
 export interface NutritionalSnapshotDocument {

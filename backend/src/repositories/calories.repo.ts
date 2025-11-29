@@ -5,7 +5,9 @@ import type {
   MealPlanDocument,
   MealPlanVersionDocument,
   ShoppingListDocument,
-  NutritionalSnapshotDocument
+  NutritionalSnapshotDocument,
+  PreferenceHistoryEntry,
+  RecipeFeedbackDocument
 } from "../domain/types.js";
 
 const caloriesCollection = () => firestore().collection("calories");
@@ -24,6 +26,11 @@ const shoppingListCollection = (userId: string) =>
 
 const snapshotsCollection = (userId: string) =>
   caloriesCollection().doc(userId).collection("nutritionLogs");
+
+const preferenceHistoryCollection = (userId: string) =>
+  caloriesCollection().doc(userId).collection("preferenceHistory");
+
+const recipeFeedbackCollection = () => firestore().collection("recipe_feedback");
 
 export const getNutritionPreferences = async (userId: string) => {
   const snapshot = await preferencesDoc(userId).get();
@@ -211,4 +218,41 @@ export const listSnapshotsInRange = async (userId: string, startDate: string, en
     .endAt(endDate)
     .get();
   return snapshot.docs.map((doc) => doc.data() as NutritionalSnapshotDocument);
+};
+
+export const addPreferenceHistoryEntry = async (
+  userId: string,
+  entry: Omit<PreferenceHistoryEntry, "id" | "createdAt">
+) => {
+  await preferenceHistoryCollection(userId).add({
+    ...entry,
+    createdAt: Timestamp.now()
+  });
+};
+
+export const listPreferenceHistory = async (userId: string, limit = 5) => {
+  const snapshot = await preferenceHistoryCollection(userId)
+    .orderBy("createdAt", "desc")
+    .limit(limit)
+    .get();
+  return snapshot.docs.map(
+    (doc) =>
+      ({
+        id: doc.id,
+        ...(doc.data() as Omit<PreferenceHistoryEntry, "id">)
+      }) as PreferenceHistoryEntry
+  );
+};
+
+export const createRecipeFeedback = async (
+  feedback: Omit<RecipeFeedbackDocument, "id" | "createdAt">
+) => {
+  const doc = recipeFeedbackCollection().doc();
+  const payload: RecipeFeedbackDocument = {
+    ...feedback,
+    id: doc.id,
+    createdAt: Timestamp.now()
+  };
+  await doc.set(payload);
+  return payload;
 };
