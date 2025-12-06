@@ -55,3 +55,8 @@ Endpoints:
 ## 7. Micronutrient analytics
 Backend: `GET /api/nutrition/micronutrients/summary` aggregates latest snapshot, highlights deficits, and suggests recipes.
 Frontend: "Micronutrient focus" card + regeneration filter.
+
+## 8. Conversational assistant
+- `GET /api/assistant/conversation` – returns the stored chat history + context summary per user.
+- `POST /api/assistant/chat` – routes user prompts through the system prompt while enabling function-calling so the model can fetch real Firestore data (health metrics, meal plans, recipes, visualizations, etc.). Tool responses always contain live values—no fabrication is allowed.
+- Conversation state is persisted in `assistant_conversations` with automatic summarisation when the history grows, keeping token usage in check.

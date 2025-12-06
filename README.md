@@ -177,6 +177,7 @@ Open http://localhost:5173 in your browser. Authentication, dashboards, analytic
 - **Dashboard Widgets** – React components for health summaries, AI insights, workout logging, consent modals, etc.
 - **Rate Limiting** – Both AI-specific and global API throttling to prevent rapid-fire abuse
 - **Error Feedback** – Frontend toast listener shows API errors instantly
+- **Conversational Assistant** – `/assistant/chat` endpoint plus the new Assistant page let users query their profile, nutrition, and visualizations through a contextual chat that only surfaces data pulled directly from Firestore.
 
 ---
 

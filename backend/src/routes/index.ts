@@ -8,6 +8,7 @@ import analyticsRoutes from "./analytics.routes.js";
 import healthSummaryRoutes from "./health-summary.routes.js";
 import goalProgressRoutes from "./goal-progress.routes.js";
 import nutritionRoutes from "./nutrition.routes.js";
+import assistantRoutes from "./assistant.routes.js";
 import { apiRateLimit } from "../middleware/api-rate-limit.js";
 
 const router = Router();
@@ -27,5 +28,6 @@ router.use("/export", exportRoutes);
 router.use("/health-summary", healthSummaryRoutes);
 router.use("/goal-progress", goalProgressRoutes);
 router.use("/nutrition", nutritionRoutes);
+router.use("/assistant", assistantRoutes);
 
 export default router;
