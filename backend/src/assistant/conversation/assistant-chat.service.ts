@@ -76,15 +76,29 @@ const detectVisualizationRequest = (message: string): { type: VisualizationType;
     return null;
   }
 
-  let type: VisualizationType = "weight_trend";
-  if (normalized.includes("protein")) {
-    type = "protein_vs_target";
-  } else if (normalized.includes("macro")) {
+  const wantsPie = /\bpie\b/.test(normalized);
+  const wantsBar = /\bbar\b/.test(normalized);
+  const wantsLine = /\bline\b/.test(normalized) || /\btrend\b/.test(normalized);
+
+  let type: VisualizationType | null = null;
+  if (normalized.includes("macro") || normalized.includes("macronutrient") || wantsPie) {
     type = "macro_breakdown";
+  } else if (normalized.includes("protein")) {
+    type = "protein_vs_target";
   } else if (normalized.includes("sleep")) {
     type = "sleep_vs_target";
-  } else if (normalized.includes("weight")) {
+  } else if (normalized.includes("weight") || wantsLine) {
     type = "weight_trend";
+  } else if (wantsBar) {
+    type = "protein_vs_target";
+  } else if (wantsLine) {
+    type = "weight_trend";
+  } else if (wantsPie) {
+    type = "macro_breakdown";
+  }
+
+  if (!type) {
+    return null;
   }
 
   const period = resolveTimePeriod(message, "30d");
