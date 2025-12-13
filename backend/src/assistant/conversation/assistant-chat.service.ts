@@ -235,15 +235,35 @@ export const runAssistantChat = async ({
   };
   let pendingVisualizations: VisualizationPayload[] = [];
 
-  const appendForcedToolCalls = async () => {
+  const buildMetricCallArgs = () => {
     if (!requestedMetrics.length) {
+      return [];
+    }
+    if (requestedMetrics.length > 1) {
+      const metricsArray = [...new Set(requestedMetrics)];
+      return [
+        {
+          metric_type: metricsArray[0] ?? "weight",
+          metrics: metricsArray,
+          time_period: resolveTimePeriod(
+            trimmed,
+            metricsArray.includes("wellness_score") ? "30d" : "current"
+          )
+        }
+      ];
+    }
+    return requestedMetrics.map((metric) => ({
+      metric_type: metric,
+      time_period: resolveTimePeriod(trimmed, metric === "wellness_score" ? "30d" : "current")
+    }));
+  };
+
+  const appendForcedToolCalls = async () => {
+    const callArgsList = buildMetricCallArgs();
+    if (!callArgsList.length) {
       return;
     }
-    for (const metric of requestedMetrics) {
-      const args = {
-        metric_type: metric,
-        time_period: resolveTimePeriod(trimmed, metric === "wellness_score" ? "30d" : "current")
-      };
+    for (const args of callArgsList) {
       const callId = `prefetch-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       const traceIndex =
         trace.functionCalls.push({

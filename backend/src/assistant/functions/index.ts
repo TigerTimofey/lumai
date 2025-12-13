@@ -107,6 +107,16 @@ const buildSnapshotFromProfile = (profile: Awaited<ReturnType<typeof getProfile>
   };
 };
 
+interface MetricEntry {
+  metricType: MetricType;
+  unit: string;
+  updatedAt: string;
+  currentValue: number | null;
+  history: Array<{ date: string; value: number; label?: string }>;
+  status: "ok" | "not_found";
+  heightCm?: number | null;
+}
+
 const buildSnapshotFromProcessedMetrics = (entry: ProcessedMetricsDocument | null): ProfileSnapshot | null => {
   if (!entry) return null;
   const metrics = asRecord(entry.userMetrics);
@@ -261,6 +271,14 @@ const assistantFunctionDefinitions: AssistantFunctionDefinition[] = [
           enum: ["weight", "bmi", "height", "wellness_score", "overview"],
           description: "Metric to retrieve."
         },
+        metrics: {
+          type: "array",
+          description: "Optional list of metrics to retrieve together.",
+          items: {
+            type: "string",
+            enum: ["weight", "bmi", "height", "wellness_score"]
+          }
+        },
         time_period: {
           type: "string",
           enum: ["current", "7d", "30d", "90d"],
@@ -351,8 +369,20 @@ const assistantFunctionDefinitions: AssistantFunctionDefinition[] = [
 const getHealthMetrics: AssistantFunctionHandler = async (params, context) => {
   const rawMetric = typeof params.metric_type === "string" ? params.metric_type : "weight";
   const metric: MetricType = isMetricType(rawMetric) ? rawMetric : "weight";
+  const requestedMetrics = Array.isArray(params.metrics)
+    ? (params.metrics as string[]).filter((entry): entry is MetricType => isMetricType(entry))
+    : [];
+  if (!requestedMetrics.length) {
+    requestedMetrics.push(metric);
+  }
+  const uniqueMetrics = [...new Set(requestedMetrics)];
+  const isMultiRequest = uniqueMetrics.length > 1;
   const period =
-    typeof params.time_period === "string" ? params.time_period : metric === "wellness_score" ? "30d" : "current";
+    typeof params.time_period === "string"
+      ? params.time_period
+      : uniqueMetrics.includes("wellness_score")
+        ? "30d"
+        : "current";
 
   const snapshot = await loadProfileSnapshot(context.userId);
   if (!snapshot) {
@@ -362,12 +392,13 @@ const getHealthMetrics: AssistantFunctionHandler = async (params, context) => {
     };
   }
 
-  const { physicalMetrics, normalized, goals, updatedAt } = snapshot;
-  const weightValue = normalized.weightKg ?? physicalMetrics.weight;
-  const heightValue = normalized.heightCm ?? physicalMetrics.height;
-  const bmiValue = normalized.bmi ?? computeBmi(weightValue, heightValue);
+  const { physicalMetrics, normalized, updatedAt } = snapshot;
+  const goalsData = snapshot.goals;
 
-  if (metric === "overview") {
+  if (uniqueMetrics.length === 1 && uniqueMetrics[0] === "overview") {
+    const weightValue = normalized.weightKg ?? physicalMetrics.weight;
+    const heightValue = normalized.heightCm ?? physicalMetrics.height;
+    const bmiValue = normalized.bmi ?? computeBmi(weightValue, heightValue);
     return {
       status: "ok",
       metricType: "overview",
@@ -376,12 +407,35 @@ const getHealthMetrics: AssistantFunctionHandler = async (params, context) => {
         weightKg: weightValue ?? null,
         bmi: bmiValue ?? null,
         heightCm: heightValue ?? null,
-        goals
+        goals: goalsData
       }
     };
   }
 
-  if (metric === "wellness_score") {
+  const weightValue = normalized.weightKg ?? physicalMetrics.weight;
+  const heightValue = normalized.heightCm ?? physicalMetrics.height;
+  const bmiValue = normalized.bmi ?? computeBmi(weightValue, heightValue);
+
+  const needsHistory =
+    period !== "current" && uniqueMetrics.some((entry) => entry === "weight" || entry === "bmi");
+  const snapshots = needsHistory
+    ? await listProcessedMetrics(context.userId, resolveHistoryLimit(period))
+    : [];
+
+  const buildHistory = (target: "weight" | "bmi") => {
+    if (!snapshots.length) {
+      return [];
+    }
+    return snapshots
+      .map((entry) => ({
+        date: entry.createdAt.toDate().toISOString().slice(0, 10),
+        value: extractSnapshotMetric(entry, target)
+      }))
+      .filter((point) => point.value != null)
+      .reverse() as Array<{ date: string; value: number }>;
+  };
+
+  const buildWellnessMetric = async (): Promise<MetricEntry> => {
     const [weeklySummary, monthlySummary] = await Promise.all([
       generateWeeklySummary(context.userId).catch(() => null),
       period === "90d" || period === "30d" ? generateMonthlySummary(context.userId).catch(() => null) : null
@@ -390,7 +444,7 @@ const getHealthMetrics: AssistantFunctionHandler = async (params, context) => {
       weeklySummary?.metrics.averageWellnessScore ??
       monthlySummary?.metrics.averageWellnessScore ??
       null;
-    const history = [];
+    const history: Array<{ date: string; value: number; label?: string }> = [];
     if (weeklySummary?.metrics.averageWellnessScore != null) {
       history.push({
         date: weeklySummary.endDate.toISOString().slice(0, 10),
@@ -406,52 +460,92 @@ const getHealthMetrics: AssistantFunctionHandler = async (params, context) => {
       });
     }
     return {
-      status: currentValue != null ? "ok" : "not_found",
       metricType: "wellness_score",
       unit: "score",
       updatedAt,
       currentValue,
-      history
+      history,
+      status: currentValue != null ? "ok" : "not_found"
     };
-  }
+  };
 
-  if (metric === "height") {
-    const currentHeight = heightValue ?? null;
-    return {
-      status: currentHeight != null ? "ok" : "not_found",
-      metricType: "height",
-      unit: "cm",
+  const metricBuilders: Record<MetricType, () => Promise<MetricEntry>> = {
+    weight: async () => {
+      const currentValue = weightValue ?? null;
+      return {
+        metricType: "weight",
+        unit: "kg",
+        updatedAt,
+        currentValue,
+        history: period !== "current" ? buildHistory("weight") : [],
+        status: currentValue != null ? "ok" : "not_found"
+      };
+    },
+    bmi: async () => {
+      const currentValue = bmiValue ?? null;
+      return {
+        metricType: "bmi",
+        unit: "",
+        updatedAt,
+        currentValue,
+        history: period !== "current" ? buildHistory("bmi") : [],
+        status: currentValue != null ? "ok" : "not_found"
+      };
+    },
+    height: async () => {
+      const currentHeight = heightValue ?? null;
+      return {
+        metricType: "height",
+        unit: "cm",
+        updatedAt,
+        currentValue: currentHeight,
+        history: [],
+        status: currentHeight != null ? "ok" : "not_found",
+        heightCm: currentHeight
+      };
+    },
+    wellness_score: buildWellnessMetric,
+    overview: async () => ({
+      metricType: "overview",
+      unit: "",
       updatedAt,
-      currentValue: currentHeight,
+      currentValue: null,
       history: [],
-      heightCm: currentHeight
+      status: "ok"
+    })
+  };
+
+  const metricEntries = await Promise.all(uniqueMetrics.map((entry) => metricBuilders[entry]()));
+
+  if (!isMultiRequest) {
+    const entry = metricEntries[0];
+    if (entry.metricType === "height") {
+      return {
+        status: entry.status,
+        metricType: entry.metricType,
+        unit: entry.unit,
+        updatedAt: entry.updatedAt,
+        currentValue: entry.currentValue,
+        history: entry.history,
+        heightCm: entry.heightCm ?? null
+      };
+    }
+    return {
+      status: entry.status,
+      metricType: entry.metricType,
+      unit: entry.unit,
+      updatedAt: entry.updatedAt,
+      currentValue: entry.currentValue,
+      history: entry.history
     };
   }
 
-  const currentValue =
-    metric === "weight"
-      ? weightValue ?? null
-      : bmiValue ?? null;
-
-  let history: Array<{ date: string; value: number }> = [];
-  if (period !== "current" && (metric === "weight" || metric === "bmi")) {
-    const snapshots = await listProcessedMetrics(context.userId, resolveHistoryLimit(period));
-    history = snapshots
-      .map((entry) => ({
-        date: entry.createdAt.toDate().toISOString().slice(0, 10),
-        value: extractSnapshotMetric(entry, metric === "weight" ? "weight" : "bmi")
-      }))
-      .filter((point) => point.value != null)
-      .reverse() as Array<{ date: string; value: number }>;
-  }
-
+  const aggregatedStatus = metricEntries.some((entry) => entry.status === "ok") ? "ok" : "not_found";
   return {
-    status: currentValue != null ? "ok" : "not_found",
-    metricType: metric,
-    unit: metric === "weight" ? "kg" : "",
+    status: aggregatedStatus,
+    metricType: "multiple",
     updatedAt,
-    currentValue,
-    history
+    metrics: metricEntries.map(({ status, ...rest }) => rest)
   };
 };
 
