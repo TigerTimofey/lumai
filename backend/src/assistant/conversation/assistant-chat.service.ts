@@ -562,6 +562,7 @@ const extractVisualizationPayload = (payload: unknown): VisualizationPayload | n
 
 const stripFunctionCallArtifacts = (input: string) => {
   let result = input;
+  result = result.replace(/^\s*"{[^}]+}"\s*/g, "");
   const marker = /assistantcommentary to=functions\.[^\s{]+/gi;
   let match: RegExpExecArray | null;
   while ((match = marker.exec(result))) {
