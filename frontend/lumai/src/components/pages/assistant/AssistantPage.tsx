@@ -258,6 +258,14 @@ const AssistantPage = ({ user }: AssistantPageProps) => {
                   rows={2}
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                      event.preventDefault();
+                      if (!loading && input.trim()) {
+                        void sendMessage();
+                      }
+                    }
+                  }}
                   disabled={loading}
                 />
                 <button type="submit" className="assistant-send" disabled={loading || !input.trim()}>
