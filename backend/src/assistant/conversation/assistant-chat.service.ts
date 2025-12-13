@@ -26,6 +26,7 @@ const sanitize = (value: string) => value.replace(/\s+/g, " ").trim();
 
 type HealthMetricRequest = "weight" | "height" | "bmi" | "wellness_score";
 type MetricTimePeriod = "current" | "7d" | "30d" | "90d";
+type ResponseMode = "concise" | "detailed";
 
 const detectMetricRequests = (message: string): HealthMetricRequest[] => {
   const normalized = message.toLowerCase();
@@ -91,6 +92,24 @@ const detectVisualizationRequest = (message: string): { type: VisualizationType;
     type,
     timePeriod: period === "current" ? undefined : period
   };
+};
+
+const detectResponseMode = (message: string): ResponseMode | null => {
+  const normalized = message.toLowerCase();
+  if (/\b(concise|brief|short version|tl;dr|summary)\b/.test(normalized)) {
+    return "concise";
+  }
+  if (/\b(detailed|in-depth|elaborate|explain more|long form)\b/.test(normalized)) {
+    return "detailed";
+  }
+  return null;
+};
+
+const buildResponseModeInstruction = (mode: ResponseMode) => {
+  if (mode === "concise") {
+    return "The user requested a concise reply. Limit the response to the essential metrics with at most two short paragraphs or bullet lists, and avoid extended explanations.";
+  }
+  return "The user requested a detailed reply. Provide richer context, rationale, and next steps while still grounding every statement in the fetched data.";
 };
 
 const extractDebugMetadata = (functionName: string, payload: unknown) => {
@@ -218,6 +237,7 @@ export const runAssistantChat = async ({
     content: trimmed,
     createdAt: new Date()
   };
+  const responseMode = detectResponseMode(trimmed);
   const requestedMetrics = detectMetricRequests(trimmed);
   const wantsGoalProgress = shouldFetchGoalProgress(trimmed);
   const visualizationRequest = detectVisualizationRequest(trimmed);
@@ -225,6 +245,14 @@ export const runAssistantChat = async ({
   const contextMessages = state.messages.slice(-MAX_CONTEXT_MESSAGES);
   const requestMessages: ChatMessage[] = [
     { role: "system", content: buildSystemPrompt({ userName }) },
+    ...(responseMode
+      ? [
+          {
+            role: "system" as const,
+            content: buildResponseModeInstruction(responseMode)
+          }
+        ]
+      : []),
     ...(state.summary
       ? [
           {
