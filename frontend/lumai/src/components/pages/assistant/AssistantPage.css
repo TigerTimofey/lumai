@@ -113,6 +113,11 @@
   color: var(--color-text, #1b1b1f);
 }
 
+.assistant-message--thinking {
+  opacity: 0.8;
+  font-style: italic;
+}
+
 .assistant-message-content {
   display: flex;
   gap: 8px;

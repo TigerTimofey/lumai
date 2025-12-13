@@ -172,6 +172,14 @@ const AssistantPage = ({ user }: AssistantPageProps) => {
   const sendMessage = useCallback(async () => {
     const trimmed = input.trim();
     if (!trimmed) return;
+    const localMessage: ConversationMessage = {
+      id: `local-${Date.now()}`,
+      role: 'user',
+      content: trimmed,
+      createdAt: new Date().toISOString()
+    };
+    setMessages((prev) => [...prev, localMessage]);
+    setInput('');
     setLoading(true);
     setError(null);
     try {
@@ -181,8 +189,8 @@ const AssistantPage = ({ user }: AssistantPageProps) => {
       });
       setMessages(response.messages ?? []);
       logTrace(response.trace);
-      setInput('');
     } catch (err) {
+      setMessages((prev) => prev.filter((message) => message.id !== localMessage.id));
       const message = err instanceof Error ? err.message : 'Unable to send message.';
       setError(message);
     } finally {
@@ -248,6 +256,15 @@ const AssistantPage = ({ user }: AssistantPageProps) => {
                     <time dateTime={message.createdAt}>{formatTimestamp(message.createdAt)}</time>
                   </article>
                 ))}
+                {loading && (
+                  <article className="assistant-message assistant assistant-message--thinking">
+                    <div className="assistant-message-content">
+                      <div className="assistant-message-body">
+                        <p><span>Lumai is thinking…</span></p>
+                      </div>
+                    </div>
+                  </article>
+                )}
                 <div ref={bottomRef} />
               </div>
               <form className="assistant-input-bar" onSubmit={handleSubmit}>
@@ -269,7 +286,7 @@ const AssistantPage = ({ user }: AssistantPageProps) => {
                   disabled={loading}
                 />
                 <button type="submit" className="assistant-send" disabled={loading || !input.trim()}>
-                  {loading ? 'Sending…' : 'Send'}
+                  {loading ? 'Thinking...' : 'Send'}
                 </button>
               </form>
             </section>
