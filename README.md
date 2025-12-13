@@ -194,6 +194,32 @@ Open http://localhost:5173 in your browser. Authentication, dashboards, analytic
 
 ---
 
+## 7. AI Assistant Documentation
+
+The conversational assistant is documented here to keep setup/usage instructions, system prompt strategy, and implementation notes in a single place.
+
+### 7.1 System prompt engineering strategy
+- The full prompt definition lives in [`backend/src/assistant/prompt/system-prompt.ts`](backend/src/assistant/prompt/system-prompt.ts).
+- Structured sections define tone, formatting, guardrails, and personalization rules; few-shot examples are bundled in [`prompt/examples.ts`](backend/src/assistant/prompt/examples.ts) to reinforce follow-up handling.
+
+### 7.2 AI model selection rationale
+- Model configuration (`HF_MODEL`, temp/top-p defaults, retry logic) is centralized in [`backend/src/services/ai.service.ts`](backend/src/services/ai.service.ts) and [`backend/src/assistant/conversation/model.ts`](backend/src/assistant/conversation/model.ts).
+- The defaults target Hugging Face Inference to balance latency and deterministic JSON/tool-calling behavior; swapping providers only requires env changes.
+
+### 7.3 Conversation management approach
+- The two-layer architecture (conversation layer + data access layer) is implemented under [`backend/src/assistant/**`](backend/src/assistant).
+- State persists in Firestore via [`assistant/context/conversation-store.ts`](backend/src/assistant/context/conversation-store.ts), which handles history summaries and windowing; frontend state in [`AssistantPage.tsx`](frontend/lumai/src/components/pages/assistant/AssistantPage.tsx) mirrors the server stream with optimistic updates and a typing indicator.
+
+### 7.4 Error handling methods
+- All assistant routes rely on the shared API error helpers in [`backend/src/utils/api-error.ts`](backend/src/utils/api-error.ts); conversation services catch provider errors and return user-friendly fallbacks.
+- Frontend displays toast errors via the global `ApiErrorToast` component and shows inline error banners/states in the assistant chat if a request fails.
+
+### 7.5 Function calling implementation details
+- Function schemas and validators are codified in [`backend/src/assistant/functions/index.ts`](backend/src/assistant/functions/index.ts) covering health metrics, nutrition data, visualizations, etc.
+- Tool-call parsing + execution is handled by [`assistant/conversation/model.ts`](backend/src/assistant/conversation/model.ts), with visualization payloads rendered client-side through Chart.js components (`VisualizationChart.tsx`).
+
+---
+
 ## 7. Testing & Manual Verification
 
 Automated tests are minimal today, so rely on manual verification:

@@ -24,6 +24,66 @@ const toChatMessage = (message: AssistantMessage): ChatMessage => ({
 
 const sanitize = (value: string) => value.replace(/\s+/g, " ").trim();
 
+type HealthMetricRequest = "weight" | "height" | "bmi" | "wellness_score";
+
+const detectMetricRequests = (message: string): HealthMetricRequest[] => {
+  const normalized = message.toLowerCase();
+  const metrics: HealthMetricRequest[] = [];
+  if (/\bweight\b/.test(normalized)) {
+    metrics.push("weight");
+  }
+  if (/\bheight\b/.test(normalized)) {
+    metrics.push("height");
+  }
+  if (/\bbmi\b/.test(normalized) || /body mass index/.test(normalized)) {
+    metrics.push("bmi");
+  }
+  if (/\bwellness\b/.test(normalized)) {
+    metrics.push("wellness_score");
+  }
+  return [...new Set(metrics)];
+};
+
+const extractDebugMetadata = (functionName: string, payload: unknown) => {
+  if (functionName !== "get_health_metrics" || !payload || typeof payload !== "object") {
+    return null;
+  }
+
+  const gather = (entry: Record<string, unknown>) => {
+    const debug: Record<string, number | null> = {};
+    const metricType = typeof entry.metricType === "string" ? entry.metricType : "";
+    if (metricType === "multiple" && Array.isArray(entry.metrics)) {
+      entry.metrics.forEach((nested) => {
+        if (nested && typeof nested === "object") {
+          Object.assign(debug, gather(nested as Record<string, unknown>));
+        }
+      });
+    }
+    if (metricType === "overview" && entry.metrics && typeof entry.metrics === "object") {
+      const overviewMetrics = entry.metrics as Record<string, unknown>;
+      if (typeof overviewMetrics.weightKg === "number") {
+        debug.weightKg = overviewMetrics.weightKg;
+      }
+      if (typeof overviewMetrics.heightCm === "number") {
+        debug.heightCm = overviewMetrics.heightCm;
+      }
+    }
+    if (metricType === "weight" && typeof entry.currentValue === "number") {
+      debug.weightKg = entry.currentValue;
+    }
+    if (metricType === "bmi" && typeof entry.currentValue === "number") {
+      debug.bmi = entry.currentValue;
+    }
+    if (typeof entry.heightCm === "number") {
+      debug.heightCm = entry.heightCm;
+    }
+    return debug;
+  };
+
+  const aggregated = gather(payload as Record<string, unknown>);
+  return Object.keys(aggregated).length ? aggregated : null;
+};
+
 const summarizeConversation = async (
   messages: AssistantMessage[],
   previousSummary: string | null
@@ -109,6 +169,7 @@ export const runAssistantChat = async ({
     content: trimmed,
     createdAt: new Date()
   };
+  const requestedMetrics = detectMetricRequests(trimmed);
 
   const contextMessages = state.messages.slice(-MAX_CONTEXT_MESSAGES);
   const requestMessages: ChatMessage[] = [
@@ -134,6 +195,66 @@ export const runAssistantChat = async ({
   };
   let pendingVisualizations: VisualizationPayload[] = [];
 
+  const appendForcedToolCalls = async () => {
+    if (!requestedMetrics.length) {
+      return;
+    }
+    for (const metric of requestedMetrics) {
+      const args = {
+        metric_type: metric,
+        time_period: metric === "wellness_score" ? "30d" : "current"
+      };
+      const callId = `prefetch-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const traceIndex =
+        trace.functionCalls.push({
+          name: "get_health_metrics",
+          arguments: args,
+          status: "pending"
+        }) - 1;
+      try {
+        const result = await executeAssistantFunction("get_health_metrics", args, { userId, userName });
+        const visualization = extractVisualizationPayload(result);
+        const debugInfo = extractDebugMetadata("get_health_metrics", result);
+        trace.functionCalls[traceIndex] = {
+          ...trace.functionCalls[traceIndex],
+          status: "ok",
+          resultPreview: summarizeFunctionResult(result),
+          ...(visualization ? { visualization } : {}),
+          ...(debugInfo ? { debug: debugInfo } : {})
+        };
+        if (visualization) {
+          pendingVisualizations = [...pendingVisualizations, visualization];
+        }
+        requestMessages.push({
+          role: "assistant",
+          content: "",
+          tool_calls: [
+            {
+              id: callId,
+              function: {
+                name: "get_health_metrics",
+                arguments: JSON.stringify(args)
+              }
+            }
+          ]
+        });
+        requestMessages.push({
+          role: "tool",
+          name: "get_health_metrics",
+          tool_call_id: callId,
+          content: JSON.stringify(result ?? {})
+        });
+      } catch (error) {
+        trace.functionCalls[traceIndex] = {
+          ...trace.functionCalls[traceIndex],
+          status: "error",
+          resultPreview: error instanceof Error ? error.message : "Unknown error"
+        };
+      }
+    }
+  };
+  await appendForcedToolCalls();
+
   const tracedExecutor = async (
     name: string,
     args: Record<string, unknown>,
@@ -147,11 +268,13 @@ export const runAssistantChat = async ({
     try {
       const result = await executeAssistantFunction(name, args, context);
       const visualization = extractVisualizationPayload(result);
+      const debugInfo = extractDebugMetadata(name, result);
       trace.functionCalls[entryIndex] = {
         ...trace.functionCalls[entryIndex],
         status: "ok",
         resultPreview: summarizeFunctionResult(result),
-        ...(visualization ? { visualization } : {})
+        ...(visualization ? { visualization } : {}),
+        ...(debugInfo ? { debug: debugInfo } : {})
       };
       if (visualization) {
         pendingVisualizations = [...pendingVisualizations, visualization];

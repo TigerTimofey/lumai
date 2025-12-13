@@ -35,6 +35,7 @@ interface AssistantTraceCall {
   status: TraceStatus;
   resultPreview?: string;
   visualization?: VisualizationPayload;
+  debug?: Record<string, unknown>;
 }
 
 interface AssistantTrace {
@@ -343,6 +344,19 @@ const logTrace = (trace?: AssistantTrace) => {
       console.log('Arguments:', call.arguments);
       if (call.resultPreview) {
         console.log('Result preview:', call.resultPreview);
+      }
+      if (call.debug) {
+        const debugMetrics = call.debug as { weightKg?: unknown; heightCm?: unknown; bmi?: unknown };
+        const weightValue = typeof debugMetrics.weightKg === 'number' ? debugMetrics.weightKg : null;
+        const heightValue = typeof debugMetrics.heightCm === 'number' ? debugMetrics.heightCm : null;
+        const bmiValue = typeof debugMetrics.bmi === 'number' ? debugMetrics.bmi : null;
+        if (weightValue != null || heightValue != null || bmiValue != null) {
+          console.log('Firebase metrics:', {
+            weightKg: weightValue,
+            heightCm: heightValue,
+            bmi: bmiValue
+          });
+        }
       }
       if (call.visualization) {
         console.log('Visualization data:', call.visualization);

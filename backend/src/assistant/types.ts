@@ -49,6 +49,7 @@ export interface AssistantFunctionCallTrace {
   status: "pending" | "ok" | "error";
   resultPreview?: string;
   visualization?: VisualizationPayload;
+  debug?: Record<string, unknown>;
 }
 
 export interface AssistantTrace {

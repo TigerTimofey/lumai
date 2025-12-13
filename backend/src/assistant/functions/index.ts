@@ -1,4 +1,5 @@
 import { getProfile } from "../../repositories/profile.repo.js";
+import { getUserById } from "../../repositories/user.repo.js";
 import { listProcessedMetrics } from "../../repositories/processed-metrics.repo.js";
 import { generateGoalProgress } from "../../services/goal-progress.service.js";
 import { listUserMealPlans } from "../../services/meal-planning.service.js";
@@ -12,7 +13,7 @@ import {
 } from "../visualizations/chart-builder.js";
 import type { AssistantFunctionContext } from "../types.js";
 import type { AssistantFunctionDefinition } from "../conversation/model.js";
-import type { MealPlanDay, MealPlanMeal } from "../../domain/types.js";
+import type { MealPlanDay, MealPlanMeal, ProcessedMetricsDocument } from "../../domain/types.js";
 
 type AssistantFunctionHandler = (
   params: Record<string, unknown>,
@@ -43,6 +44,184 @@ const resolveHistoryLimit = (period?: string) => {
   }
 };
 
+const computeBmi = (weightKg: number | null | undefined, heightCm: number | null | undefined) => {
+  if (weightKg == null || heightCm == null) {
+    return null;
+  }
+  const meters = heightCm / 100;
+  if (!Number.isFinite(meters) || meters <= 0) {
+    return null;
+  }
+  return Number((weightKg / (meters * meters)).toFixed(1));
+};
+
+const asRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+
+interface ProfileSnapshot {
+  normalized: {
+    weightKg: number | null;
+    heightCm: number | null;
+    bmi: number | null;
+  };
+  physicalMetrics: {
+    weight: number | null;
+    height: number | null;
+    bmi: number | null;
+  };
+  goals: Record<string, unknown>;
+  updatedAt: string;
+}
+
+const buildSnapshotFromProfile = (profile: Awaited<ReturnType<typeof getProfile>>): ProfileSnapshot => {
+  const normalizedMetrics = (profile?.current.normalized ?? {}) as Record<string, unknown>;
+  const physicalMetrics = (profile?.current.physicalMetrics ?? {}) as Record<string, unknown>;
+  const goals = (profile?.current.goals ?? {}) as Record<string, unknown>;
+
+  const normalizedWeight = toNumber(
+    normalizedMetrics.weightKg ?? normalizedMetrics.weight_kg ?? physicalMetrics.weight
+  );
+  const normalizedHeight = toNumber(
+    normalizedMetrics.heightCm ??
+      normalizedMetrics.height_cm ??
+      physicalMetrics.height ??
+      physicalMetrics.height_cm
+  );
+  const normalizedBmi =
+    toNumber(normalizedMetrics.bmi ?? physicalMetrics.bmi) ??
+    computeBmi(normalizedWeight, normalizedHeight);
+
+  return {
+    normalized: {
+      weightKg: normalizedWeight,
+      heightCm: normalizedHeight,
+      bmi: normalizedBmi
+    },
+    physicalMetrics: {
+      weight: toNumber(physicalMetrics.weight),
+      height: toNumber(physicalMetrics.height ?? physicalMetrics.height_cm),
+      bmi: toNumber(physicalMetrics.bmi)
+    },
+    goals,
+    updatedAt: profile?.current.updatedAt ? profile.current.updatedAt.toDate().toISOString() : new Date().toISOString()
+  };
+};
+
+const buildSnapshotFromProcessedMetrics = (entry: ProcessedMetricsDocument | null): ProfileSnapshot | null => {
+  if (!entry) return null;
+  const metrics = asRecord(entry.userMetrics);
+  const current = asRecord(metrics.current_state);
+  const normalized = asRecord(current.normalized);
+  const target = asRecord(metrics.target_state);
+  const goals = asRecord(metrics.goals);
+  const metadata = asRecord(metrics.metadata);
+
+  const weight =
+    toNumber(current.weight_kg ?? current.weightKg) ??
+    toNumber(normalized.weightKg ?? normalized.weight_kg);
+  const height =
+    toNumber(current.height_cm ?? current.heightCm ?? current.height) ??
+    toNumber(normalized.heightCm ?? normalized.height_cm);
+  const bmi =
+    toNumber(current.bmi ?? normalized.bmi) ??
+    computeBmi(weight, height);
+
+  const resolvedGoals: Record<string, unknown> = {
+    ...goals
+  };
+  const targetWeight = toNumber(target.weight_kg ?? target.weightKg);
+  if (targetWeight != null && !Number.isNaN(targetWeight)) {
+    resolvedGoals.targetWeightKg = targetWeight;
+  }
+  if (target.activity_level ?? target.activityLevel) {
+    resolvedGoals.targetActivityLevel = target.activity_level ?? target.activityLevel;
+  }
+
+  if (weight == null && height == null && bmi == null) {
+    return null;
+  }
+
+  const updatedAt =
+    (typeof metadata.generated_at === "string" ? metadata.generated_at : null) ??
+    entry.createdAt.toDate().toISOString();
+
+  return {
+    normalized: {
+      weightKg: weight,
+      heightCm: height,
+      bmi
+    },
+    physicalMetrics: {
+      weight,
+      height,
+      bmi
+    },
+    goals: resolvedGoals,
+    updatedAt
+  };
+};
+
+const buildSnapshotFromUserDoc = (user: Awaited<ReturnType<typeof getUserById>>): ProfileSnapshot | null => {
+  if (!user) return null;
+  const required = asRecord(user.requiredProfile);
+  const additional = asRecord(user.additionalProfile);
+
+  const weight =
+    toNumber(required.weight ?? required.weight_kg) ??
+    toNumber(additional.weight ?? additional.weight_kg);
+  const height =
+    toNumber(required.height ?? required.heightCm ?? required.height_cm) ??
+    toNumber(additional.height ?? additional.heightCm ?? additional.height_cm);
+
+  if (weight == null && height == null) {
+    return null;
+  }
+
+  const bmi =
+    toNumber(required.bmi ?? additional.bmi) ??
+    computeBmi(weight, height);
+
+  const resolveGoals = (...candidates: unknown[]): Record<string, unknown> => {
+    for (const candidate of candidates) {
+      if (candidate && typeof candidate === "object") {
+        return candidate as Record<string, unknown>;
+      }
+    }
+    return {};
+  };
+  const goals = resolveGoals(additional.goals, required.goals);
+
+  return {
+    normalized: {
+      weightKg: weight,
+      heightCm: height,
+      bmi
+    },
+    physicalMetrics: {
+      weight,
+      height,
+      bmi
+    },
+    goals,
+    updatedAt: (user.updatedAt ?? user.createdAt).toDate().toISOString()
+  };
+};
+
+const loadProfileSnapshot = async (userId: string): Promise<ProfileSnapshot | null> => {
+  const [latestProcessed] = await listProcessedMetrics(userId, 1);
+  const processedSnapshot = buildSnapshotFromProcessedMetrics(latestProcessed ?? null);
+  if (processedSnapshot) {
+    return processedSnapshot;
+  }
+
+  const profile = await getProfile(userId);
+  if (profile) {
+    return buildSnapshotFromProfile(profile);
+  }
+  const userDoc = await getUserById(userId);
+  return buildSnapshotFromUserDoc(userDoc);
+};
+
 const extractSnapshotMetric = (
   doc: Awaited<ReturnType<typeof listProcessedMetrics>>[number],
   metric: "weight" | "bmi"
@@ -61,6 +240,15 @@ const extractSnapshotMetric = (
   return toNumber(current.bmi) ?? toNumber(normalized.bmi);
 };
 
+type MetricType = "weight" | "bmi" | "height" | "wellness_score" | "overview";
+
+const isMetricType = (value: string): value is MetricType =>
+  value === "weight" ||
+  value === "bmi" ||
+  value === "height" ||
+  value === "wellness_score" ||
+  value === "overview";
+
 const assistantFunctionDefinitions: AssistantFunctionDefinition[] = [
   {
     name: "get_health_metrics",
@@ -70,7 +258,7 @@ const assistantFunctionDefinitions: AssistantFunctionDefinition[] = [
       properties: {
         metric_type: {
           type: "string",
-          enum: ["weight", "bmi", "wellness_score", "overview"],
+          enum: ["weight", "bmi", "height", "wellness_score", "overview"],
           description: "Metric to retrieve."
         },
         time_period: {
@@ -161,20 +349,23 @@ const assistantFunctionDefinitions: AssistantFunctionDefinition[] = [
 ];
 
 const getHealthMetrics: AssistantFunctionHandler = async (params, context) => {
-  const metric = typeof params.metric_type === "string" ? params.metric_type : "weight";
+  const rawMetric = typeof params.metric_type === "string" ? params.metric_type : "weight";
+  const metric: MetricType = isMetricType(rawMetric) ? rawMetric : "weight";
   const period =
     typeof params.time_period === "string" ? params.time_period : metric === "wellness_score" ? "30d" : "current";
 
-  const profile = await getProfile(context.userId);
-  if (!profile) {
+  const snapshot = await loadProfileSnapshot(context.userId);
+  if (!snapshot) {
     return {
       status: "not_found",
       reason: "No profile available."
     };
   }
 
-  const { physicalMetrics, normalized } = profile.current;
-  const updatedAt = profile.current.updatedAt.toDate().toISOString();
+  const { physicalMetrics, normalized, goals, updatedAt } = snapshot;
+  const weightValue = normalized.weightKg ?? physicalMetrics.weight;
+  const heightValue = normalized.heightCm ?? physicalMetrics.height;
+  const bmiValue = normalized.bmi ?? computeBmi(weightValue, heightValue);
 
   if (metric === "overview") {
     return {
@@ -182,10 +373,10 @@ const getHealthMetrics: AssistantFunctionHandler = async (params, context) => {
       metricType: "overview",
       updatedAt,
       metrics: {
-        weightKg: normalized?.weightKg ?? physicalMetrics.weight,
-        bmi: normalized?.bmi ?? null,
-        heightCm: normalized?.heightCm ?? physicalMetrics.height,
-        goals: profile.current.goals
+        weightKg: weightValue ?? null,
+        bmi: bmiValue ?? null,
+        heightCm: heightValue ?? null,
+        goals
       }
     };
   }
@@ -224,13 +415,26 @@ const getHealthMetrics: AssistantFunctionHandler = async (params, context) => {
     };
   }
 
+  if (metric === "height") {
+    const currentHeight = heightValue ?? null;
+    return {
+      status: currentHeight != null ? "ok" : "not_found",
+      metricType: "height",
+      unit: "cm",
+      updatedAt,
+      currentValue: currentHeight,
+      history: [],
+      heightCm: currentHeight
+    };
+  }
+
   const currentValue =
     metric === "weight"
-      ? normalized?.weightKg ?? physicalMetrics.weight
-      : normalized?.bmi ?? null;
+      ? weightValue ?? null
+      : bmiValue ?? null;
 
   let history: Array<{ date: string; value: number }> = [];
-  if (period !== "current") {
+  if (period !== "current" && (metric === "weight" || metric === "bmi")) {
     const snapshots = await listProcessedMetrics(context.userId, resolveHistoryLimit(period));
     history = snapshots
       .map((entry) => ({
