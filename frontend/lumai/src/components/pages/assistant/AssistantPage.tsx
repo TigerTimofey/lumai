@@ -123,12 +123,13 @@ interface AssistantPageProps {
 
 const AssistantPage = ({ user }: AssistantPageProps) => {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
-  const [summary, setSummary] = useState<string | null>(null);
+  // const [summary, setSummary] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const greeting = useMemo(() => {
     return user.displayName ?? user.email ?? 'there';
@@ -140,7 +141,6 @@ const AssistantPage = ({ user }: AssistantPageProps) => {
       .then((snapshot) => {
         if (!active) return;
         setMessages(snapshot.messages ?? []);
-        setSummary(snapshot.summary ?? null);
         setError(null);
       })
       .catch((err) => {
@@ -155,10 +155,19 @@ const AssistantPage = ({ user }: AssistantPageProps) => {
     };
   }, []);
 
+  const scrollToBottom = useCallback(() => {
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, []);
+
   useEffect(() => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages]);
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   const sendMessage = useCallback(async () => {
     const trimmed = input.trim();
@@ -171,7 +180,6 @@ const AssistantPage = ({ user }: AssistantPageProps) => {
         body: JSON.stringify({ message: trimmed })
       });
       setMessages(response.messages ?? []);
-      setSummary(response.summary ?? null);
       logTrace(response.trace);
       setInput('');
     } catch (err) {
@@ -196,96 +204,95 @@ const AssistantPage = ({ user }: AssistantPageProps) => {
   return (
     <div className="assistant-shell">
       <SideNav activeKey="assistant" />
-      <div className="assistant-canvas">
-        <header className="assistant-header">
-          <span className="assistant-eyebrow">Lumai assistant</span>
-          <h1 className="assistant-title">Hi {greeting.split(' ')[0]}, how can I help?</h1>
-          <p className="assistant-subtitle">
-            Ask about your metrics, nutrition history, or get personalized wellness coaching powered by your real data.
-          </p>
-        </header>
+      <div className="dashboard-canvas">
+        <main className="assistant-main" role="main">
+          <header className="assistant-header">
+            <span className="assistant-eyebrow">Lumai assistant</span>
+            <h1 className="assistant-title">Hi {greeting.split(' ')[0]}, how can I help?</h1>
+            <p className="assistant-subtitle">
+              Ask about your metrics, nutrition history, or get personalized wellness coaching powered by your real data.
+            </p>
+          </header>
 
-        <div className="assistant-grid">
-          <section className="assistant-chat-card" aria-label="Chat conversation">
-            <div className="assistant-messages" ref={scrollRef}>
-              {error && <div className="assistant-error">{error}</div>}
-              {initializing && !messages.length && (
-                <div className="assistant-loading-bar">Loading conversation…</div>
-              )}
-              {!initializing && !messages.length && !error && (
-                <div className="assistant-empty">
-                  <p>No conversation yet. Ask anything about your health data to get started.</p>
-                </div>
-              )}
-              {messages.map((message) => (
-                <article
-                  key={message.id}
-                  className={`assistant-message ${message.role}`}
-                >
-                  <div className="assistant-message-content">
-                    <div className="assistant-message-body">
-                      {renderContent(message.content, message.id)}
-                    </div>
+          <div className="assistant-grid">
+            <section className="assistant-chat-card" aria-label="Chat conversation">
+              <div className="assistant-messages" ref={scrollRef}>
+                {error && <div className="assistant-error">{error}</div>}
+                {initializing && !messages.length && (
+                  <div className="assistant-loading-bar">Loading conversation…</div>
+                )}
+                {!initializing && !messages.length && !error && (
+                  <div className="assistant-empty">
+                    <p>No conversation yet. Ask anything about your health data to get started.</p>
                   </div>
-                  {message.metadata?.visualizations?.map((visualization, index) => (
-                    <VisualizationChart
-                      key={`${message.id}-viz-${index}`}
-                      visualization={visualization}
-                    />
-                  ))}
-                  <time dateTime={message.createdAt}>{formatTimestamp(message.createdAt)}</time>
-                </article>
-              ))}
-            </div>
-            <form className="assistant-input-bar" onSubmit={handleSubmit}>
-              <textarea
-                name="message"
-                className="assistant-input"
-                placeholder="Ask about your progress, nutrition, or goals…"
-                rows={2}
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                disabled={loading}
-              />
-              <button type="submit" className="assistant-send" disabled={loading || !input.trim()}>
-                {loading ? 'Sending…' : 'Send'}
-              </button>
-            </form>
-          </section>
-
-          <aside className="assistant-context-panel">
-            <article className="assistant-context-card">
-              <h3>Conversation summary</h3>
-              <p>
-                {summary
-                  ? summary
-                  : 'No prior context yet. The assistant will summarize longer chats automatically.'}
-              </p>
-            </article>
-            <article className="assistant-context-card">
-              <h3>Quick prompts</h3>
-              <div className="assistant-quick-prompts">
-                {QUICK_PROMPTS.map((prompt) => (
-                  <button
-                    key={prompt}
-                    type="button"
-                    onClick={() => handlePromptClick(prompt)}
-                    disabled={loading}
+                )}
+                {messages.map((message) => (
+                  <article
+                    key={message.id}
+                    className={`assistant-message ${message.role}`}
                   >
-                    {prompt}
-                  </button>
+                    <div className="assistant-message-content">
+                      {message.role === 'user' && (
+                        <span className="assistant-message-name">{greeting} →</span>
+                      )}
+                      <div className="assistant-message-body">
+                        {renderContent(message.content, message.id)}
+                      </div>
+                    </div>
+                    {message.metadata?.visualizations?.map((visualization, index) => (
+                      <VisualizationChart
+                        key={`${message.id}-viz-${index}`}
+                        visualization={visualization}
+                      />
+                    ))}
+                    <time dateTime={message.createdAt}>{formatTimestamp(message.createdAt)}</time>
+                  </article>
                 ))}
+                <div ref={bottomRef} />
               </div>
-            </article>
-            <article className="assistant-context-card">
-              <h3>Guardrails</h3>
-              <p>
-                Lumai references only the data you have logged. For medical advice, diagnoses, or urgent questions,
-                please consult a licensed professional.
-              </p>
-            </article>
-          </aside>
-        </div>
+              <form className="assistant-input-bar" onSubmit={handleSubmit}>
+                <textarea
+                  name="message"
+                  className="assistant-input"
+                  placeholder="Ask about your progress, nutrition, or goals…"
+                  rows={2}
+                  value={input}
+                  onChange={(event) => setInput(event.target.value)}
+                  disabled={loading}
+                />
+                <button type="submit" className="assistant-send" disabled={loading || !input.trim()}>
+                  {loading ? 'Sending…' : 'Send'}
+                </button>
+              </form>
+            </section>
+
+            <aside className="assistant-context-panel">
+  
+              <article className="assistant-context-card">
+                <h3>Quick prompts</h3>
+                <div className="assistant-quick-prompts">
+                  {QUICK_PROMPTS.map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      onClick={() => handlePromptClick(prompt)}
+                      disabled={loading}
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              </article>
+              <article className="assistant-context-card">
+                <h3>Guardrails</h3>
+                <p>
+                  Lumai references only the data you have logged. For medical advice, diagnoses, or urgent questions,
+                  please consult a licensed professional.
+                </p>
+              </article>
+            </aside>
+          </div>
+        </main>
       </div>
     </div>
   );

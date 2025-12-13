@@ -396,10 +396,9 @@
     text-align: center;
   }
 
-
   .dashboard-canvas {
     margin-left: 0;
-    padding: 64px 20px
+    padding: 64px 0;
   }
 
   /* On mobile, the sidebar is off-canvas; never push content */

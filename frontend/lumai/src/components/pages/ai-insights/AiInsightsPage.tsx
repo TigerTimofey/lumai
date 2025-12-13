@@ -31,23 +31,23 @@ type GenerateResponse = {
   priority?: "high" | "medium" | "low";
 };
 
-const formatTimestamp = (value?: Timestampish) => {
-  if (!value) return 'moments ago';
-  if (typeof value === 'string') {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
-  }
-  if (typeof value === 'object') {
-    if (typeof value.toDate === 'function') {
-      return value.toDate().toLocaleString();
-    }
-    const seconds = (value._seconds ?? value.seconds) ?? null;
-    if (seconds != null) {
-      return new Date(seconds * 1000).toLocaleString();
-    }
-  }
-  return 'moments ago';
-};
+// const formatTimestamp = (value?: Timestampish) => {
+//   if (!value) return 'moments ago';
+//   if (typeof value === 'string') {
+//     const date = new Date(value);
+//     return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+//   }
+//   if (typeof value === 'object') {
+//     if (typeof value.toDate === 'function') {
+//       return value.toDate().toLocaleString();
+//     }
+//     const seconds = (value._seconds ?? value.seconds) ?? null;
+//     if (seconds != null) {
+//       return new Date(seconds * 1000).toLocaleString();
+//     }
+//   }
+//   return 'moments ago';
+// };
 
 const renderBold = (text: string) => {
   // Replace **text** with <strong>text</strong>
@@ -115,11 +115,11 @@ const InsightCard: React.FC<{
             {insight.status === 'success' ? 'Generated insight' : 'Generation failed'}
           </span>
         </div>
-        <span className="ai-insight-card__meta">
+        {/* <span className="ai-insight-card__meta">
           {`v${insight.version}`}
           {insight.model ? ` · ${insight.model}` : ''}
           {` · ${formatTimestamp(insight.createdAt)}`}
-        </span>
+        </span> */}
         <button type="button" className="ai-insight-card__toggle" onClick={onToggle}>
           {expanded ? 'Collapse' : 'Expand'}
         </button>
@@ -180,7 +180,7 @@ const AiInsightsPage: React.FC<{ user: User }> = ({ user }) => {
   return (
     <div className="dashboard-shell">
       <SideNav activeKey="ai-insights" />
-      <div className="dashboard-canvas">
+      <div className="dashboard-canvas extra-padding">
         <main className="dashboard-main ai-insights-main" role="main">
           <UserSettingBar name={displayName} photoURL={user.photoURL ?? null} />
           <div className="dashboard-left">

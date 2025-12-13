@@ -10,15 +10,15 @@
 
 .analytics-content {
   display: grid;
-  gap: 24px;
 }
 
 .analytics-header {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: space-around;
   align-items: center;
   gap: 24px;
+  padding: 10px;
 }
 
 .analytics-title {
@@ -156,6 +156,7 @@ background: transparent ;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
+  padding: 10px;
 }
 
 .analytics-card {
@@ -274,9 +275,9 @@ background: transparent ;
 }
 
 @media (max-width: 1024px) {
-  /* keep two-column layout on medium screens but allow wide panels to behave normally */
   .analytics-panels {
     grid-template-columns: repeat(2, minmax(260px, 1fr));
+    padding: 10px;
   }
   .analytics-panel--wide {
     grid-column: 1 / -1;
@@ -303,6 +304,7 @@ background: transparent ;
   .analytics-placeholder,
   .analytics-body {
     min-height: 280px;
+    padding: 10px;
   }
 
   .analytics-panels {
@@ -310,6 +312,7 @@ background: transparent ;
   }
   .analytics-panel--wide {
     grid-column: auto;
+    padding: 20px;
   }
 }
 
@@ -448,6 +451,10 @@ background: transparent ;
     align-items: flex-start;
     gap: 8px;
   }
+    .dashboard-canvas.exta-padding {
+  padding-left: 20px;
+  padding-right: 20px;
+}
 
   .milestone-progress {
     flex-direction: column;

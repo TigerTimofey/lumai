@@ -11,18 +11,19 @@
   flex-direction: column;
   padding: 32px 48px;
   gap: 24px;
-  margin-left: 260px;
+  margin-left: 170px;
   transition: margin-left 0.24s ease;
 }
 
 .assistant-shell .sidenav.sidenav-collapsed + .assistant-canvas {
-  margin-left: 90px;
+  margin-left: 50px;
 }
 
 .assistant-header {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding-left: 10px;
 }
 
 .assistant-eyebrow {
@@ -44,10 +45,21 @@
   color: var(--color-text-muted, #4c4f65);
 }
 
+.assistant-main {
+  background: #fff;
+  border-radius: 5px;
+  box-shadow: 0 65px 140px -90px rgba(15, 23, 42, 0.6);
+  padding: 48px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-height: calc(100vh - 112px);
+}
+
 .assistant-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 2.8fr) minmax(280px, 1fr);
+  grid-template-columns: minmax(0, 4fr) minmax(280px, 2fr);
   gap: 24px;
 }
 
@@ -58,11 +70,13 @@
   display: flex;
   flex-direction: column;
   min-height: 540px;
+  height: 100%;
 }
 
 .assistant-messages {
-  flex: 1;
-  padding: 24px 32px;
+  flex: none;
+  max-height: 400px;
+  padding: 20px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -70,7 +84,9 @@
 }
 
 .assistant-message {
-  max-width: 85%;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 16px 18px;
   border-radius: 18px;
   line-height: 1.55;
@@ -86,6 +102,8 @@
   background: var(--color-primary, #5c6ac4);
   color: #fff;
   border-bottom-right-radius: 6px;
+  width: auto;
+  max-width: 85%;
 }
 
 .assistant-message.assistant {
@@ -103,6 +121,7 @@
 
 .assistant-message-body {
   flex: 1;
+  overflow-wrap: anywhere;
 }
 
 .assistant-message-name {
@@ -124,6 +143,7 @@
 
 .assistant-message p {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .assistant-chart-card {
@@ -158,6 +178,12 @@
   height: 240px;
 }
 
+.assistant-chart-canvas canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
 .assistant-chart-empty {
   font-size: 13px;
   color: #94a3b8;
@@ -168,7 +194,6 @@
   padding: 16px 24px;
   display: flex;
   gap: 12px;
-  align-items: flex-end;
 }
 
 .assistant-input {
@@ -290,7 +315,26 @@
     margin-left: 0;
   }
 
+  .assistant-main {
+    padding: 24px;
+    border-radius: 18px;
+  }
+
   .assistant-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .assistant-messages {
+    max-height: 320px;
+  }
+
+  .assistant-chat-card {
+    border-radius: 18px;
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.05);
+  }
+
+  .assistant-context-panel {
+    width: 100%;
   }
 }

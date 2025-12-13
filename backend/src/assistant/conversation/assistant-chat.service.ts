@@ -262,12 +262,11 @@ const extractVisualizationPayload = (payload: unknown): VisualizationPayload | n
 
 const stripFunctionCallArtifacts = (input: string) => {
   let result = input;
-  const pattern = /assistantcommentary to=functions\.[\w-]+commentary\s+json/gi;
-
+  const marker = /assistantcommentary to=functions\.[^\s{]+/gi;
   let match: RegExpExecArray | null;
-  while ((match = pattern.exec(result))) {
+  while ((match = marker.exec(result))) {
     const start = match.index;
-    const jsonStart = result.indexOf("{", pattern.lastIndex);
+    const jsonStart = result.indexOf("{", marker.lastIndex);
     if (jsonStart === -1) {
       break;
     }
@@ -275,10 +274,11 @@ const stripFunctionCallArtifacts = (input: string) => {
     if (jsonEnd === -1) {
       break;
     }
-    result = `${result.slice(0, start)} ${result.slice(jsonEnd + 1)}`;
-    pattern.lastIndex = 0;
+    result = `${result.slice(0, start)} ${result.slice(jsonEnd + 1)}`.trim();
+    marker.lastIndex = 0;
   }
-
+  result = result.replace(/analysiscommentary/gi, " ");
+  result = result.replace(/commentaryjson/gi, " ");
   return result;
 };
 
