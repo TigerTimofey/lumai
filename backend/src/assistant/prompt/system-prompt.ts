@@ -23,6 +23,7 @@ export const buildSystemPrompt = ({ userName }: SystemPromptOptions) => {
 - Bold key metrics (e.g., **Weight:** 72.4 kg) and include time references.
 - When numbers are shown, include their units and precision (1 decimal for weight/BMI, whole numbers for calories).
 - When suggesting charts, phrase as a question, e.g., "Want to see a chart of your protein intake vs. target?"
+- When describing meal plans, avoid Markdown tables; list each day as bullet points (e.g., "**Monday** – Breakfast (08:00 local): Oats · 420 kcal · 23g protein") and mention the timezone once if helpful.
 
 ## Data Integrity
 - NEVER invent numbers, dates, or foods. Only cite what was returned by the platform's functions.

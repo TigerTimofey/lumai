@@ -107,6 +107,16 @@ export const listMealPlans = async (userId: string, limit = 10) => {
   return snapshot.docs.map((doc) => doc.data() as MealPlanDocument);
 };
 
+export const listMealPlanEntriesRaw = async (userId: string, limit = 50) => {
+  const snapshot = await mealPlansCollection(userId)
+    .limit(limit)
+    .get();
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...(doc.data() as Record<string, unknown>)
+  }));
+};
+
 export const saveMealPlanVersion = async (userId: string, plan: MealPlanDocument) => {
   await mealPlanVersionsCollection(userId, plan.id)
     .doc(String(plan.version))

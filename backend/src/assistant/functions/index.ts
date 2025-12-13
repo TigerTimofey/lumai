@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { getProfile } from "../../repositories/profile.repo.js";
 import { getUserById } from "../../repositories/user.repo.js";
 import { listProcessedMetrics } from "../../repositories/processed-metrics.repo.js";
@@ -13,7 +14,8 @@ import {
 } from "../visualizations/chart-builder.js";
 import type { AssistantFunctionContext } from "../types.js";
 import type { AssistantFunctionDefinition } from "../conversation/model.js";
-import type { MealPlanDay, MealPlanMeal, ProcessedMetricsDocument } from "../../domain/types.js";
+import type { MealPlanDay, MealPlanMeal, MealPlanDocument, ProcessedMetricsDocument } from "../../domain/types.js";
+import { listMealPlanEntriesRaw } from "../../repositories/calories.repo.js";
 
 type AssistantFunctionHandler = (
   params: Record<string, unknown>,
@@ -116,6 +118,221 @@ interface MetricEntry {
   status: "ok" | "not_found";
   heightCm?: number | null;
 }
+
+type SimplifiedMealPlan = Pick<
+  MealPlanDocument,
+  "id" | "startDate" | "endDate" | "duration" | "timezone" | "strategySummary" | "analysis" | "days"
+>;
+
+const parseIsoString = (value: unknown): string | null => {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed.length) {
+      return null;
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return `${trimmed}T00:00:00.000Z`;
+    }
+    const parsed = Date.parse(trimmed);
+    if (!Number.isNaN(parsed)) {
+      return new Date(parsed).toISOString();
+    }
+    return null;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return new Date(value).toISOString();
+  }
+  if (value && typeof value === "object" && typeof (value as { toDate?: () => Date }).toDate === "function") {
+    return (value as { toDate: () => Date }).toDate().toISOString();
+  }
+  return null;
+};
+
+const extractDateOnly = (value: unknown): string | null => {
+  const iso = parseIsoString(value);
+  return iso ? iso.slice(0, 10) : null;
+};
+
+const defaultTimeForMealType = (type: string) => {
+  if (type.includes("breakfast")) return "08:00:00.000Z";
+  if (type.includes("lunch")) return "12:30:00.000Z";
+  if (type.includes("snack")) return "15:30:00.000Z";
+  if (type.includes("dinner")) return "19:30:00.000Z";
+  return "12:00:00.000Z";
+};
+
+const buildMealPlanFromDocument = (doc: Record<string, unknown>): SimplifiedMealPlan | null => {
+  const days = Array.isArray(doc.days) ? (doc.days as MealPlanDay[]) : [];
+  if (!days.length) {
+    return null;
+  }
+  const startDate =
+    typeof doc.startDate === "string" && doc.startDate
+      ? doc.startDate
+      : days[0]?.date ?? new Date().toISOString().slice(0, 10);
+  const endDate =
+    typeof doc.endDate === "string" && doc.endDate
+      ? doc.endDate
+      : days[days.length - 1]?.date ?? startDate;
+  const duration =
+    doc.duration === "weekly" || doc.duration === "daily"
+      ? doc.duration
+      : days.length >= 7
+        ? "weekly"
+        : "daily";
+  const timezone = typeof doc.timezone === "string" && doc.timezone ? doc.timezone : "UTC";
+  return {
+    id:
+      typeof doc.id === "string" && doc.id
+        ? doc.id
+        : typeof doc.planId === "string" && doc.planId
+          ? doc.planId
+          : "meal-plan",
+    startDate,
+    endDate,
+    duration,
+    timezone,
+    strategySummary: typeof doc.strategySummary === "string" ? doc.strategySummary : "",
+    analysis: doc.analysis as MealPlanDocument["analysis"] | undefined,
+    days: days.map((day) => ({
+      date: day.date,
+      meals: day.meals ?? []
+    }))
+  };
+};
+
+const buildMealPlanFromLegacyEntries = (entries: Array<Record<string, unknown>>): SimplifiedMealPlan | null => {
+  if (!entries.length) {
+    return null;
+  }
+
+  for (const rawDoc of entries) {
+    const docPlan = buildMealPlanFromDocument(rawDoc);
+    if (docPlan) {
+      return docPlan;
+    }
+  }
+
+  const grouped = new Map<string, MealPlanMeal[]>();
+  let timezone: string | null = null;
+
+  entries.forEach((rawEntry) => {
+    const entry = asRecord(rawEntry);
+    const date =
+      extractDateOnly(entry.date) ??
+      extractDateOnly(entry.scheduledAt) ??
+      extractDateOnly(entry.scheduled_at) ??
+      extractDateOnly(entry.mealDate) ??
+      extractDateOnly(entry.loggedAt);
+    if (!date) {
+      return;
+    }
+
+    const typeValue = String(
+      entry.type ??
+        entry.mealType ??
+        entry.meal_type ??
+        entry.category ??
+        entry.mealCategory ??
+        "meal"
+    ).toLowerCase();
+
+    const scheduledAt =
+      parseIsoString(entry.scheduledAt ?? entry.scheduled_at ?? entry.mealTime ?? entry.loggedAt) ??
+      `${date}T${defaultTimeForMealType(typeValue)}`;
+
+    const macrosRecord = asRecord(entry.macros);
+    const macros = {
+      calories: toNumber(macrosRecord.calories ?? entry.calories ?? entry.kcal) ?? 0,
+      protein: toNumber(macrosRecord.protein ?? entry.protein) ?? 0,
+      carbs: toNumber(macrosRecord.carbs ?? entry.carbs) ?? 0,
+      fats: toNumber(macrosRecord.fats ?? entry.fats) ?? 0
+    };
+
+    const micronutrientsRecord = asRecord(entry.micronutrients);
+    const micronutrients = Object.entries(micronutrientsRecord).reduce<Record<string, number>>((acc, [key, value]) => {
+      const parsed = toNumber(value);
+      if (parsed != null) {
+        acc[key] = parsed;
+      }
+      return acc;
+    }, {});
+
+    const titleSource =
+      entry.title ??
+      entry.mealName ??
+      entry.name ??
+      entry.recipeTitle ??
+      entry.label ??
+      entry.displayName;
+
+    const meal: MealPlanMeal = {
+      id:
+        typeof entry.id === "string" && entry.id
+          ? entry.id
+          : typeof entry.mealId === "string" && entry.mealId
+            ? entry.mealId
+            : randomUUID(),
+      type: typeValue || "meal",
+      title: typeof titleSource === "string" && titleSource.trim().length ? titleSource : "Logged meal",
+      recipeId: typeof entry.recipeId === "string" ? entry.recipeId : undefined,
+      servings: toNumber(entry.servings) ?? 1,
+      scheduledAt,
+      macros,
+      ...(Object.keys(micronutrients).length ? { micronutrients } : {}),
+      ...(typeof entry.notes === "string" && entry.notes.trim().length ? { notes: entry.notes } : {})
+    };
+
+    const bucket = grouped.get(date) ?? [];
+    bucket.push(meal);
+    grouped.set(date, bucket);
+    if (!timezone && typeof entry.timezone === "string") {
+      timezone = entry.timezone;
+    }
+  });
+
+  if (!grouped.size) {
+    return null;
+  }
+
+  const sortedDates = [...grouped.keys()].sort();
+  const days = sortedDates.map((date) => ({
+    date,
+    meals: grouped
+      .get(date)!
+      .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt))
+  }));
+
+  return {
+    id: "logged-meals",
+    startDate: sortedDates[0],
+    endDate: sortedDates[sortedDates.length - 1],
+    duration: days.length >= 7 ? "weekly" : "daily",
+    timezone: timezone ?? "UTC",
+    strategySummary: "Logged meals",
+    analysis: undefined,
+    days
+  };
+};
+
+const loadAssistantMealPlan = async (userId: string): Promise<SimplifiedMealPlan | null> => {
+  const plans = await listUserMealPlans(userId, 1);
+  const latest = plans[0];
+  if (latest) {
+    return {
+      id: latest.id,
+      startDate: latest.startDate,
+      endDate: latest.endDate,
+      duration: latest.duration,
+      timezone: latest.timezone,
+      strategySummary: latest.strategySummary,
+      analysis: latest.analysis,
+      days: latest.days
+    };
+  }
+  const fallbackEntries = await listMealPlanEntriesRaw(userId, 60);
+  return buildMealPlanFromLegacyEntries(fallbackEntries as Array<Record<string, unknown>>);
+};
 
 const buildSnapshotFromProcessedMetrics = (entry: ProcessedMetricsDocument | null): ProfileSnapshot | null => {
   if (!entry) return null;
@@ -574,33 +791,35 @@ const formatMeal = (meal: MealPlanMeal, includeRecipes: boolean) => ({
 });
 
 const getMealPlan: AssistantFunctionHandler = async (params, context) => {
-  const days = await listUserMealPlans(context.userId, 1);
-  const latest = days[0];
-  if (!latest) {
+  const plan = await loadAssistantMealPlan(context.userId);
+  if (!plan) {
     return {
       status: "not_found",
       reason: "No active meal plan found."
     };
   }
-  const requestedDay = typeof params.day === "string" && params.day.trim().length
-    ? params.day.trim()
-    : new Date().toISOString().slice(0, 10);
+
+  const requestedDay =
+    typeof params.day === "string" && params.day.trim().length
+      ? params.day.trim()
+      : new Date().toISOString().slice(0, 10);
   const includeRecipes = params.include_recipes === true;
-  const day = (latest.days as MealPlanDay[]).find((entry) => entry.date === requestedDay) ?? latest.days[0];
+  const day = plan.days.find((entry) => entry.date === requestedDay) ?? plan.days[0];
+
   return {
     status: "ok",
-    planId: latest.id,
+    planId: plan.id,
     range: {
-      start: latest.startDate,
-      end: latest.endDate
+      start: plan.startDate,
+      end: plan.endDate
     },
-    timezone: latest.timezone,
+    timezone: plan.timezone ?? "UTC",
     date: day?.date ?? requestedDay,
     meals: day ? day.meals.map((meal) => formatMeal(meal, includeRecipes)) : [],
     metadata: {
-      duration: latest.duration,
-      strategySummary: latest.strategySummary,
-      analysis: latest.analysis
+      duration: plan.duration,
+      strategySummary: plan.strategySummary,
+      analysis: plan.analysis
     }
   };
 };
