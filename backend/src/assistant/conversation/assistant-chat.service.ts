@@ -45,6 +45,16 @@ const detectMetricRequests = (message: string): HealthMetricRequest[] => {
   return [...new Set(metrics)];
 };
 
+const shouldFetchGoalProgress = (message: string) => {
+  const normalized = message.toLowerCase();
+  return (
+    /\bgoal(s)?\b/.test(normalized) ||
+    /\bmilestone(s)?\b/.test(normalized) ||
+    /\bon track\b/.test(normalized) ||
+    /\btarget\b/.test(normalized)
+  );
+};
+
 const resolveTimePeriod = (message: string, fallback: MetricTimePeriod): MetricTimePeriod => {
   const normalized = message.toLowerCase();
   if (/(last|past)\s+(7|seven)\s+days/.test(normalized) || /\b(last|past)\s+week\b/.test(normalized) || /\bthis week\b/.test(normalized)) {
@@ -209,6 +219,7 @@ export const runAssistantChat = async ({
     createdAt: new Date()
   };
   const requestedMetrics = detectMetricRequests(trimmed);
+  const wantsGoalProgress = shouldFetchGoalProgress(trimmed);
   const visualizationRequest = detectVisualizationRequest(trimmed);
 
   const contextMessages = state.messages.slice(-MAX_CONTEXT_MESSAGES);
@@ -314,6 +325,54 @@ export const runAssistantChat = async ({
     }
   };
   await appendForcedToolCalls();
+
+  const appendGoalProgressCall = async () => {
+    if (!wantsGoalProgress) {
+      return;
+    }
+    const args: Record<string, unknown> = {};
+    const callId = `prefetch-goal-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const traceIndex =
+      trace.functionCalls.push({
+        name: "get_goal_progress",
+        arguments: args,
+        status: "pending"
+      }) - 1;
+    try {
+      const result = await executeAssistantFunction("get_goal_progress", args, { userId, userName });
+      trace.functionCalls[traceIndex] = {
+        ...trace.functionCalls[traceIndex],
+        status: "ok",
+        resultPreview: summarizeFunctionResult(result)
+      };
+      requestMessages.push({
+        role: "assistant",
+        content: "",
+        tool_calls: [
+          {
+            id: callId,
+            function: {
+              name: "get_goal_progress",
+              arguments: JSON.stringify(args)
+            }
+          }
+        ]
+      });
+      requestMessages.push({
+        role: "tool",
+        name: "get_goal_progress",
+        tool_call_id: callId,
+        content: JSON.stringify(result ?? {})
+      });
+    } catch (error) {
+      trace.functionCalls[traceIndex] = {
+        ...trace.functionCalls[traceIndex],
+        status: "error",
+        resultPreview: error instanceof Error ? error.message : "Unknown error"
+      };
+    }
+  };
+  await appendGoalProgressCall();
 
   const appendForcedVisualizationCall = async () => {
     if (!visualizationRequest) {

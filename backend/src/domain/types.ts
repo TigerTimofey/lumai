@@ -176,6 +176,14 @@ export interface GoalProgress {
   completedMilestones: number;
   totalMilestones: number;
   estimatedCompletion?: Date;
+  weightGoal?: {
+    targetWeightKg: number | null;
+    startingWeightKg: number | null;
+    currentWeightKg: number | null;
+    changeKg: number | null;
+    targetDeltaKg: number | null;
+    trend: "toward" | "away" | "stable" | null;
+  };
 }
 
 export interface IngredientDocument {

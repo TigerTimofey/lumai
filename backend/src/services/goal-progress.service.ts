@@ -368,12 +368,39 @@ export async function generateGoalProgress(userId: string): Promise<GoalProgress
           totalMilestones
         : 0;
 
+    const weightChange =
+      startingWeight != null && currentWeight != null ? currentWeight - startingWeight : null;
+    const targetDelta =
+      targetWeight != null && currentWeight != null ? currentWeight - targetWeight : null;
+
+    let weightTrend: "toward" | "away" | "stable" | null = null;
+    if (weightChange != null) {
+      const changeMagnitude = Math.abs(weightChange);
+      if (changeMagnitude < 0.5) {
+        weightTrend = "stable";
+      } else if (primaryGoal === "weight_loss") {
+        weightTrend = weightChange < 0 ? "toward" : "away";
+      } else if (primaryGoal === "weight_gain") {
+        weightTrend = weightChange > 0 ? "toward" : "away";
+      } else {
+        weightTrend = weightChange < 0 ? "toward" : "away";
+      }
+    }
+
     return {
       primaryGoal,
       milestones: allMilestones,
       overallProgress: Math.min(Math.max(overallProgress, 0), 100),
       completedMilestones,
-      totalMilestones
+      totalMilestones,
+      weightGoal: {
+        targetWeightKg: targetWeight ?? null,
+        startingWeightKg: startingWeight ?? null,
+        currentWeightKg: currentWeight ?? null,
+        changeKg: weightChange,
+        targetDeltaKg: targetDelta,
+        trend: weightTrend
+      }
     };
 
   } catch (error) {
