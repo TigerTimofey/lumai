@@ -79,6 +79,22 @@ const parseArguments = (payload: string | null | undefined) => {
   }
 };
 
+const findClosingBrace = (text: string, startIndex: number) => {
+  let depth = 0;
+  for (let index = startIndex; index < text.length; index++) {
+    const char = text[index];
+    if (char === "{") {
+      depth += 1;
+    } else if (char === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+  return -1;
+};
+
 const toChatRole = (value: unknown): ChatRole => {
   if (value === "system" || value === "user" || value === "assistant" || value === "tool") {
     return value;
@@ -144,26 +160,27 @@ const normalizeHfFunctionCalls = (message: Record<string, unknown>) => {
 
   const hfPattern = new RegExp(HF_FUNCTION_PATTERN, "gi");
   const matches = [...message.content.matchAll(hfPattern)];
-  if (!matches.length) {
-    return [];
+  if (matches.length) {
+    let remaining = message.content;
+    const toolCalls = matches.map((match) => {
+      const [fullMatch, rawName, rawArgs] = match;
+      remaining = remaining.replace(fullMatch, "").trim();
+      const mapped = mapHfFunction(rawName, rawArgs);
+      return {
+        id: `hf-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        function: {
+          name: mapped.name,
+          arguments: mapped.arguments
+        }
+      };
+    });
+    message.content = remaining;
+    return toolCalls;
   }
 
-  let remaining = message.content;
-  const toolCalls = matches.map((match) => {
-    const [fullMatch, rawName, rawArgs] = match;
-    remaining = remaining.replace(fullMatch, "").trim();
-    const mapped = mapHfFunction(rawName, rawArgs);
-    return {
-      id: `hf-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      function: {
-        name: mapped.name,
-        arguments: mapped.arguments
-      }
-    };
-  });
-
-  message.content = remaining;
-  return toolCalls;
+  const legacy = extractLegacyFunctionCalls(message.content);
+  message.content = legacy.content;
+  return legacy.calls;
 };
 
 const mapHfFunction = (rawName: string, argsJson: string) => {
@@ -184,10 +201,81 @@ const mapHfFunction = (rawName: string, argsJson: string) => {
       arguments: JSON.stringify(transformed ?? {})
     };
   }
+  if (normalized.startsWith("visualize_")) {
+    const slug = normalized.replace(/^visualize_/, "");
+    const visualizationType = mapVisualizationSlug(slug, parsedArgs);
+    return {
+      name: "get_visualization",
+      arguments: JSON.stringify({
+        ...parsedArgs,
+        visualization_type: visualizationType
+      })
+    };
+  }
   return {
     name: normalized,
     arguments: argsJson
   };
+};
+
+const extractLegacyFunctionCalls = (content: string) => {
+  let working = content;
+  const calls: ChatMessage["tool_calls"] = [];
+  const pattern = /assistantcommentary to=functions\.([^\s{]+)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(working))) {
+    const braceStart = working.indexOf("{", pattern.lastIndex);
+    if (braceStart === -1) {
+      break;
+    }
+    const braceEnd = findClosingBrace(working, braceStart);
+    if (braceEnd === -1) {
+      break;
+    }
+    const rawJson = working.slice(braceStart, braceEnd + 1);
+    let argsJson = rawJson;
+    try {
+      const parsed = JSON.parse(rawJson) as Record<string, unknown>;
+      const args = typeof parsed.arguments === "object" && parsed.arguments
+        ? parsed.arguments
+        : parsed;
+      argsJson = JSON.stringify(args ?? {});
+    } catch {
+      // ignore parse error
+    }
+    const mapped = mapHfFunction(match[1], argsJson);
+    calls.push({
+      id: `hf-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      function: {
+        name: mapped.name,
+        arguments: mapped.arguments
+      }
+    });
+    working = `${working.slice(0, match.index)} ${working.slice(braceEnd + 1)}`.trim();
+    pattern.lastIndex = 0;
+  }
+  return { calls, content: working };
+};
+
+const mapVisualizationSlug = (slug: string, args: Record<string, unknown>) => {
+  const normalizedSlug = slug.toLowerCase();
+  if (normalizedSlug.includes("sleep")) {
+    return "sleep_vs_target";
+  }
+  if (normalizedSlug.includes("protein")) {
+    return "protein_vs_target";
+  }
+  if (normalizedSlug.includes("macro") || normalizedSlug.includes("breakdown")) {
+    return "macro_breakdown";
+  }
+  if (normalizedSlug.includes("weight")) {
+    return "weight_trend";
+  }
+  const provided = args.visualization_type;
+  if (typeof provided === "string" && provided.trim().length) {
+    return provided.trim();
+  }
+  return "weight_trend";
 };
 
 export const runChatCompletion = async ({

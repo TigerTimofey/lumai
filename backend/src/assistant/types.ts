@@ -1,4 +1,5 @@
 import type { Timestamp } from "firebase-admin/firestore";
+import type { VisualizationPayload } from "./visualizations/chart-builder.js";
 
 export type AssistantMessageRole = "user" | "assistant";
 
@@ -7,10 +8,13 @@ export interface AssistantMessage {
   role: AssistantMessageRole;
   content: string;
   createdAt: Date;
-  metadata?: {
-    visualizationType?: string;
-    topics?: string[];
-  };
+  metadata?: AssistantMessageMetadata;
+}
+
+export interface AssistantMessageMetadata {
+  visualizationType?: string;
+  topics?: string[];
+  visualizations?: VisualizationPayload[];
 }
 
 export interface AssistantConversationState {
@@ -44,6 +48,7 @@ export interface AssistantFunctionCallTrace {
   arguments: Record<string, unknown>;
   status: "pending" | "ok" | "error";
   resultPreview?: string;
+  visualization?: VisualizationPayload;
 }
 
 export interface AssistantTrace {

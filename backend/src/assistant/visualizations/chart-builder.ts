@@ -27,7 +27,7 @@ const extractWeightFromSnapshot = (doc: ProcessedMetricsDocument): number | null
   );
 };
 
-export type VisualizationType = "weight_trend" | "protein_vs_target" | "macro_breakdown";
+export type VisualizationType = "weight_trend" | "protein_vs_target" | "macro_breakdown" | "sleep_vs_target";
 
 export interface VisualizationRequest {
   type: VisualizationType;
@@ -123,6 +123,49 @@ const buildMacroBreakdown = async (userId: string): Promise<VisualizationPayload
   };
 };
 
+const buildSleepComparison = async (
+  userId: string,
+  timePeriod: string
+): Promise<VisualizationPayload | null> => {
+  const limit = timePeriod === "30d" ? 30 : 14;
+  const snapshots = await listProcessedMetrics(userId, limit);
+  const series = snapshots
+    .map((entry) => {
+      const metrics = (entry.userMetrics ?? {}) as Record<string, unknown>;
+      const habits = (metrics.habits ?? {}) as Record<string, unknown>;
+      const targets = (metrics.target_state ?? metrics.targets ?? {}) as Record<string, unknown>;
+      const actual = toNumber(habits.sleep_hours ?? habits.sleepHours);
+      const target =
+        toNumber(targets.sleep_hours ?? targets.sleepHours) ??
+        toNumber((metrics.current_state as Record<string, unknown> | undefined)?.sleep_target) ??
+        7;
+      if (actual == null) {
+        return null;
+      }
+      return {
+        date: entry.createdAt.toDate().toISOString().slice(0, 10),
+        actual,
+        target: target ?? 7
+      };
+    })
+    .filter((point): point is { date: string; actual: number; target: number } => Boolean(point))
+    .reverse();
+
+  if (!series.length) {
+    return null;
+  }
+
+  return {
+    type: "sleep_vs_target",
+    title: "Sleep duration vs. target",
+    timePeriod,
+    description: "Line chart comparing your logged sleep to the nightly goal.",
+    data: {
+      series
+    }
+  };
+};
+
 export const buildVisualizationPayload = async (
   userId: string,
   params: VisualizationRequest
@@ -134,6 +177,8 @@ export const buildVisualizationPayload = async (
       return buildProteinComparison(userId, params.timePeriod ?? "7d");
     case "macro_breakdown":
       return buildMacroBreakdown(userId);
+    case "sleep_vs_target":
+      return buildSleepComparison(userId, params.timePeriod ?? "14d");
     default:
       return null;
   }

@@ -5,6 +5,7 @@ import {
   saveConversationState
 } from "../context/conversation-store.js";
 import type { AssistantMessage, AssistantTrace } from "../types.js";
+import type { VisualizationPayload } from "../visualizations/chart-builder.js";
 import { buildSystemPrompt } from "../prompt/system-prompt.js";
 import { FEW_SHOT_MESSAGES } from "../prompt/examples.js";
 import {
@@ -60,7 +61,8 @@ const serializeMessages = (messages: AssistantMessage[]) =>
     id: entry.id,
     role: entry.role,
     content: entry.content,
-    createdAt: entry.createdAt.toISOString()
+    createdAt: entry.createdAt.toISOString(),
+    metadata: entry.metadata
   }));
 
 export const getAssistantConversationSnapshot = async (userId: string) => {
@@ -130,6 +132,7 @@ export const runAssistantChat = async ({
     functionCalls: [],
     responsePlan: undefined
   };
+  let pendingVisualizations: VisualizationPayload[] = [];
 
   const tracedExecutor = async (
     name: string,
@@ -143,11 +146,16 @@ export const runAssistantChat = async ({
     }) - 1;
     try {
       const result = await executeAssistantFunction(name, args, context);
+      const visualization = extractVisualizationPayload(result);
       trace.functionCalls[entryIndex] = {
         ...trace.functionCalls[entryIndex],
         status: "ok",
-        resultPreview: summarizeFunctionResult(result)
+        resultPreview: summarizeFunctionResult(result),
+        ...(visualization ? { visualization } : {})
       };
+      if (visualization) {
+        pendingVisualizations = [...pendingVisualizations, visualization];
+      }
       return result;
     } catch (error) {
       trace.functionCalls[entryIndex] = {
@@ -178,6 +186,13 @@ export const runAssistantChat = async ({
     content: assistantContent,
     createdAt: new Date()
   };
+  if (pendingVisualizations.length) {
+    assistantMessage.metadata = {
+      ...(assistantMessage.metadata ?? {}),
+      visualizations: pendingVisualizations
+    };
+    pendingVisualizations = [];
+  }
 
   let updatedMessages = [...contextMessages, userMessage, assistantMessage];
   let summary = state.summary;
@@ -215,6 +230,8 @@ const sanitizeAssistantContent = (value: string | undefined) => {
   let cleaned = value.replace(/<\|[^>]+>/g, "");
   cleaned = cleaned.replace(/commentaryassistant/gi, "assistant");
   cleaned = stripFunctionCallArtifacts(cleaned);
+  cleaned = cleaned.replace(/\{[^}]*"chart_url"[^}]*\}/gi, "");
+  cleaned = cleaned.replace(/!\[[^\]]*]\([^)]*\)/g, "");
   cleaned = cleaned.replace(/\s+/g, " ").trim();
   return cleaned || "I could not generate a response.";
 };
@@ -227,6 +244,20 @@ const ensurePrefixedResponse = (value: string) => {
     return remainder.length ? `${firstLine}\n${remainder}` : firstLine;
   }
   return `${prefix}\n${value}`;
+};
+
+const extractVisualizationPayload = (payload: unknown): VisualizationPayload | null => {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+  const visualization = (payload as { visualization?: VisualizationPayload }).visualization;
+  if (!visualization || typeof visualization !== "object") {
+    return null;
+  }
+  if (typeof (visualization as VisualizationPayload).type === "string") {
+    return visualization as VisualizationPayload;
+  }
+  return null;
 };
 
 const stripFunctionCallArtifacts = (input: string) => {

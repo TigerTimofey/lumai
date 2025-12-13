@@ -4,6 +4,8 @@ import type { User } from 'firebase/auth';
 import SideNav from '../../navigation/SideNav';
 import { apiFetch } from '../../../utils/api';
 import './AssistantPage.css';
+import VisualizationChart from './VisualizationChart';
+import type { ConversationMessageMetadata, VisualizationPayload } from '../../../types/assistant';
 
 type ConversationRole = 'user' | 'assistant';
 
@@ -12,6 +14,7 @@ interface ConversationMessage {
   role: ConversationRole;
   content: string;
   createdAt: string;
+  metadata?: ConversationMessageMetadata | null;
 }
 
 interface ConversationSnapshot {
@@ -31,10 +34,12 @@ interface AssistantTraceCall {
   arguments: Record<string, unknown>;
   status: TraceStatus;
   resultPreview?: string;
+  visualization?: VisualizationPayload;
 }
 
 interface AssistantTrace {
   request: string;
+  userDisplayName?: string | null;
   responsePlan?: string;
   functionCalls: AssistantTraceCall[];
 }
@@ -217,7 +222,17 @@ const AssistantPage = ({ user }: AssistantPageProps) => {
                   key={message.id}
                   className={`assistant-message ${message.role}`}
                 >
-                  {renderContent(message.content, message.id)}
+                  <div className="assistant-message-content">
+                    <div className="assistant-message-body">
+                      {renderContent(message.content, message.id)}
+                    </div>
+                  </div>
+                  {message.metadata?.visualizations?.map((visualization, index) => (
+                    <VisualizationChart
+                      key={`${message.id}-viz-${index}`}
+                      visualization={visualization}
+                    />
+                  ))}
                   <time dateTime={message.createdAt}>{formatTimestamp(message.createdAt)}</time>
                 </article>
               ))}
@@ -284,6 +299,9 @@ const logTrace = (trace?: AssistantTrace) => {
   const cleanedResponse = sanitizeAssistantOutput(trace.responsePlan);
 
   console.groupCollapsed('[Lumai Assistant] Trace');
+  if (trace.userDisplayName) {
+    console.log('User:', trace.userDisplayName);
+  }
   console.log('Incoming request:', cleanedRequest || '(empty)');
   if (trace.functionCalls?.length) {
     console.groupCollapsed('Function calls');
@@ -293,6 +311,9 @@ const logTrace = (trace?: AssistantTrace) => {
       console.log('Arguments:', call.arguments);
       if (call.resultPreview) {
         console.log('Result preview:', call.resultPreview);
+      }
+      if (call.visualization) {
+        console.log('Visualization data:', call.visualization);
       }
       console.groupEnd();
     });
