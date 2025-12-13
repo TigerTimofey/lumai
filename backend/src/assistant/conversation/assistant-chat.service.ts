@@ -5,7 +5,7 @@ import {
   saveConversationState
 } from "../context/conversation-store.js";
 import type { AssistantMessage, AssistantTrace } from "../types.js";
-import type { VisualizationPayload } from "../visualizations/chart-builder.js";
+import type { VisualizationPayload, VisualizationType } from "../visualizations/chart-builder.js";
 import { buildSystemPrompt } from "../prompt/system-prompt.js";
 import { FEW_SHOT_MESSAGES } from "../prompt/examples.js";
 import {
@@ -25,6 +25,7 @@ const toChatMessage = (message: AssistantMessage): ChatMessage => ({
 const sanitize = (value: string) => value.replace(/\s+/g, " ").trim();
 
 type HealthMetricRequest = "weight" | "height" | "bmi" | "wellness_score";
+type MetricTimePeriod = "current" | "7d" | "30d" | "90d";
 
 const detectMetricRequests = (message: string): HealthMetricRequest[] => {
   const normalized = message.toLowerCase();
@@ -42,6 +43,44 @@ const detectMetricRequests = (message: string): HealthMetricRequest[] => {
     metrics.push("wellness_score");
   }
   return [...new Set(metrics)];
+};
+
+const resolveTimePeriod = (message: string, fallback: MetricTimePeriod): MetricTimePeriod => {
+  const normalized = message.toLowerCase();
+  if (/(last|past)\s+(7|seven)\s+days/.test(normalized) || /\b(last|past)\s+week\b/.test(normalized) || /\bthis week\b/.test(normalized)) {
+    return "7d";
+  }
+  if (/(last|past)\s+30\s+days/.test(normalized) || /\b(last|past)\s+month\b/.test(normalized) || /\bthis month\b/.test(normalized)) {
+    return "30d";
+  }
+  if (/(last|past)\s+90\s+days/.test(normalized) || /\b(last|past)\s+(quarter|three months)\b/.test(normalized)) {
+    return "90d";
+  }
+  return fallback;
+};
+
+const detectVisualizationRequest = (message: string): { type: VisualizationType; timePeriod?: MetricTimePeriod } | null => {
+  const normalized = message.toLowerCase();
+  if (!/(chart|graph|plot|visual)/.test(normalized)) {
+    return null;
+  }
+
+  let type: VisualizationType = "weight_trend";
+  if (normalized.includes("protein")) {
+    type = "protein_vs_target";
+  } else if (normalized.includes("macro")) {
+    type = "macro_breakdown";
+  } else if (normalized.includes("sleep")) {
+    type = "sleep_vs_target";
+  } else if (normalized.includes("weight")) {
+    type = "weight_trend";
+  }
+
+  const period = resolveTimePeriod(message, "30d");
+  return {
+    type,
+    timePeriod: period === "current" ? undefined : period
+  };
 };
 
 const extractDebugMetadata = (functionName: string, payload: unknown) => {
@@ -170,6 +209,7 @@ export const runAssistantChat = async ({
     createdAt: new Date()
   };
   const requestedMetrics = detectMetricRequests(trimmed);
+  const visualizationRequest = detectVisualizationRequest(trimmed);
 
   const contextMessages = state.messages.slice(-MAX_CONTEXT_MESSAGES);
   const requestMessages: ChatMessage[] = [
@@ -202,7 +242,7 @@ export const runAssistantChat = async ({
     for (const metric of requestedMetrics) {
       const args = {
         metric_type: metric,
-        time_period: metric === "wellness_score" ? "30d" : "current"
+        time_period: resolveTimePeriod(trimmed, metric === "wellness_score" ? "30d" : "current")
       };
       const callId = `prefetch-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       const traceIndex =
@@ -254,6 +294,64 @@ export const runAssistantChat = async ({
     }
   };
   await appendForcedToolCalls();
+
+  const appendForcedVisualizationCall = async () => {
+    if (!visualizationRequest) {
+      return;
+    }
+    const args: Record<string, unknown> = {
+      visualization_type: visualizationRequest.type
+    };
+    if (visualizationRequest.timePeriod) {
+      args.time_period = visualizationRequest.timePeriod;
+    }
+    const callId = `prefetch-viz-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const entryIndex =
+      trace.functionCalls.push({
+        name: "get_visualization",
+        arguments: args,
+        status: "pending"
+      }) - 1;
+    try {
+      const result = await executeAssistantFunction("get_visualization", args, { userId, userName });
+      const visualization = extractVisualizationPayload(result);
+      trace.functionCalls[entryIndex] = {
+        ...trace.functionCalls[entryIndex],
+        status: "ok",
+        resultPreview: summarizeFunctionResult(result),
+        ...(visualization ? { visualization } : {})
+      };
+      if (visualization) {
+        pendingVisualizations = [...pendingVisualizations, visualization];
+      }
+      requestMessages.push({
+        role: "assistant",
+        content: "",
+        tool_calls: [
+          {
+            id: callId,
+            function: {
+              name: "get_visualization",
+              arguments: JSON.stringify(args)
+            }
+          }
+        ]
+      });
+      requestMessages.push({
+        role: "tool",
+        name: "get_visualization",
+        tool_call_id: callId,
+        content: JSON.stringify(result ?? {})
+      });
+    } catch (error) {
+      trace.functionCalls[entryIndex] = {
+        ...trace.functionCalls[entryIndex],
+        status: "error",
+        resultPreview: error instanceof Error ? error.message : "Unknown error"
+      };
+    }
+  };
+  await appendForcedVisualizationCall();
 
   const tracedExecutor = async (
     name: string,
