@@ -44,14 +44,6 @@ interface AssistantTrace {
   responsePlan?: string;
   functionCalls: AssistantTraceCall[];
 }
-
-const QUICK_PROMPTS = [
-  'What is my current BMI and how has it changed?',
-  "Show me today's meal plan.",
-  'Am I on track with protein this week?',
-  'Suggest recovery tips for better sleep.'
-];
-
 const formatTimestamp = (value: string) => {
   try {
     const date = new Date(value);
@@ -206,9 +198,7 @@ const AssistantPage = ({ user }: AssistantPageProps) => {
     }
   };
 
-  const handlePromptClick = (prompt: string) => {
-    setInput(prompt);
-  };
+
 
   return (
     <div className="assistant-shell">
@@ -293,22 +283,6 @@ const AssistantPage = ({ user }: AssistantPageProps) => {
             </section>
 
             <aside className="assistant-context-panel">
-  
-              <article className="assistant-context-card">
-                <h3>Quick prompts</h3>
-                <div className="assistant-quick-prompts">
-                  {QUICK_PROMPTS.map((prompt) => (
-                    <button
-                      key={prompt}
-                      type="button"
-                      onClick={() => handlePromptClick(prompt)}
-                      disabled={loading}
-                    >
-                      {prompt}
-                    </button>
-                  ))}
-                </div>
-              </article>
               <article className="assistant-context-card">
                 <h3>Guardrails</h3>
                 <p>

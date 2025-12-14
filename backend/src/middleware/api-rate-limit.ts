@@ -3,8 +3,8 @@ import type { RequestHandler } from "express";
 import env from "../config/env.js";
 import { tooManyRequests } from "../utils/api-error.js";
 
-const DEFAULT_MAX = 60;
-const DEFAULT_WINDOW_MS = 10_000; // 10 seconds
+const DEFAULT_MAX = 500;
+const DEFAULT_WINDOW_MS = 60000; // 60 seconds
 
 type Bucket = {
   count: number;

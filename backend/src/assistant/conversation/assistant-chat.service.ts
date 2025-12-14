@@ -13,6 +13,7 @@ import {
   getAssistantFunctionDefinitions
 } from "../functions/index.js";
 import { runChatCompletion, type ChatMessage } from "./model.js";
+import { logger } from "../../utils/logger.js";
 
 const MAX_CONTEXT_MESSAGES = 12;
 const SUMMARY_THRESHOLD = 14;
@@ -188,14 +189,19 @@ const summarizeConversation = async (
       : []),
     ...history
   ];
-  const result = await runChatCompletion({
-    messages: prompt,
-    temperature: 0.2,
-    topP: 0.7,
-    maxTokens: 220,
-    retryCount: 0
-  });
-  return result.message.content?.trim() || previousSummary;
+  try {
+    const result = await runChatCompletion({
+      messages: prompt,
+      temperature: 0.2,
+      topP: 0.7,
+      maxTokens: 220,
+      retryCount: 0
+    });
+    return result.message.content?.trim() || previousSummary;
+  } catch (error) {
+    logger.warn({ err: error }, "Assistant conversation summary failed");
+    return previousSummary;
+  }
 };
 
 const serializeMessages = (messages: AssistantMessage[]) =>
